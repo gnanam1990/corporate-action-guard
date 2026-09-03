@@ -3,33 +3,33 @@
 Each path has exactly one owning lane. Two sessions must never run against the same
 checkout; parallel work uses a branch or worktree per lane with non-overlapping paths.
 
-| Path | Owner | Responsibility |
-|---|---|---|
-| `packages/domain` | Gnanam | Safety predicate, state machine, reason codes |
-| `packages/xstocks-client` | Gnanam | xStocks API boundary |
-| `packages/xlayer-reader` | Gnanam | Chain reads, indexing, reorg detection |
-| `packages/reconciler` | Gnanam | Canonicality, source comparison, transitions |
-| `packages/receipts` | Gnanam | EIP-712 digest, signer, verifier |
-| `contracts/` | Gnanam | Fixture, adapter, vault |
-| `apps/api` | Gnanam | HTTP surface, OpenAPI contract |
-| `packages/db` | Anandan | Journal, projections, migrations |
-| `apps/worker` | Anandan | Polling, indexing, reconciliation runtime |
-| `packages/observability` | Anandan | Logs, metrics, health, fault injection |
-| `packages/sdk` | Anandan | Integrator SDK and CLI |
-| `infra/`, `.github/` | Anandan | Containers, CI, deployment |
-| `apps/web` | Vasanth | Design system, console routes, accessibility |
-| `docs/` | Shared | Owned by whoever owns the module being documented |
+| Path                      | Owner   | Responsibility                                    |
+| ------------------------- | ------- | ------------------------------------------------- |
+| `packages/domain`         | Gnanam  | Safety predicate, state machine, reason codes     |
+| `packages/xstocks-client` | Gnanam  | xStocks API boundary                              |
+| `packages/xlayer-reader`  | Gnanam  | Chain reads, indexing, reorg detection            |
+| `packages/reconciler`     | Gnanam  | Canonicality, source comparison, transitions      |
+| `packages/receipts`       | Gnanam  | EIP-712 digest, signer, verifier                  |
+| `contracts/`              | Gnanam  | Fixture, adapter, vault                           |
+| `apps/api`                | Gnanam  | HTTP surface, OpenAPI contract                    |
+| `packages/db`             | Anandan | Journal, projections, migrations                  |
+| `apps/worker`             | Anandan | Polling, indexing, reconciliation runtime         |
+| `packages/observability`  | Anandan | Logs, metrics, health, fault injection            |
+| `packages/sdk`            | Anandan | Integrator SDK and CLI                            |
+| `infra/`, `.github/`      | Anandan | Containers, CI, deployment                        |
+| `apps/web`                | Vasanth | Design system, console routes, accessibility      |
+| `docs/`                   | Shared  | Owned by whoever owns the module being documented |
 
 ## Phase order
 
-| Phase | Modules | Lane | Unblocked by |
-|---|---|---|---|
-| Rules and foundation | 00–02 | Gnanam | sequential |
-| Evidence plane | 03–07 | Gnanam + Anandan | 02 |
-| Enforcement plane | 08–10 | Gnanam | 02, shared ABI/typed-data freeze |
-| Product UI | 11–15 | Vasanth | 10, frozen API contract |
-| DX and reliability | 16–19 | Anandan | core modules available |
-| Proof and release | 20–23 | all | every prior required module |
+| Phase                | Modules | Lane             | Unblocked by                     |
+| -------------------- | ------- | ---------------- | -------------------------------- |
+| Rules and foundation | 00–02   | Gnanam           | sequential                       |
+| Evidence plane       | 03–07   | Gnanam + Anandan | 02                               |
+| Enforcement plane    | 08–10   | Gnanam           | 02, shared ABI/typed-data freeze |
+| Product UI           | 11–15   | Vasanth          | 10, frozen API contract          |
+| DX and reliability   | 16–19   | Anandan          | core modules available           |
+| Proof and release    | 20–23   | all              | every prior required module      |
 
 ## Change control
 

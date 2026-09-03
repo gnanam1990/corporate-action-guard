@@ -52,8 +52,8 @@ protect at all.
 
 ## Residual risks accepted for this build
 
-| Risk | Why accepted | Bounded by |
-|---|---|---|
-| Signer key held in process memory | HSM/KMS is out of scope for the event build | Testnet-only writes, short receipt lifetime, single consumption, rotation |
-| Single RPC provider may be dishonest | Multi-provider quorum is out of scope | Chain-ID check, bytecode check, provider recorded per read, fallback for reads |
+| Risk                                                | Why accepted                                  | Bounded by                                                                            |
+| --------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Signer key held in process memory                   | HSM/KMS is out of scope for the event build   | Testnet-only writes, short receipt lifetime, single consumption, rotation             |
+| Single RPC provider may be dishonest                | Multi-provider quorum is out of scope         | Chain-ID check, bytecode check, provider recorded per read, fallback for reads        |
 | Reorg deeper than the configured confirmation depth | X Layer finality details not fully documented | Conservative configurable depth, labelled as an assumption, `REORG_DETECTED` evidence |

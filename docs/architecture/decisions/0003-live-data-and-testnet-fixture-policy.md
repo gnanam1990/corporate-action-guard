@@ -25,7 +25,7 @@ a demo built on mocks would prove nothing.
   schedule / override / activation surface.
 - It is labelled `TESTNET FIXTURE` on chain, in metadata, and in the UI.
 - It does not use the xStocks name, ticker, branding, or addresses in a misleading way.
-- It proves the *guard* rejects stale, mutated, replayed, expired, and unsafe-window
+- It proves the _guard_ rejects stale, mutated, replayed, expired, and unsafe-window
   operations. It does **not** prove compatibility with the production xStocks interface;
   where selectors differ, a narrow `ICorporateActionAsset` interface is defined and the
   production compatibility gap is documented.
@@ -40,7 +40,7 @@ a demo built on mocks would prove nothing.
 
 **Degradation is truthful:** when a live dependency is unavailable the product shows an
 explicit degraded or unavailable state, labels last-known-good data `STALE`, and fails
-closed. Stale data may be *displayed*; it may not *authorize*.
+closed. Stale data may be _displayed_; it may not _authorize_.
 
 ## Consequences
 

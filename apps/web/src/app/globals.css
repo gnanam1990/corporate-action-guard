@@ -1,0 +1,55 @@
+/*
+ * Foundation only. The semantic token system and component primitives arrive in
+ * module 12; nothing here encodes product status colour.
+ */
+:root {
+  --surface-base: #020617;
+  --text-primary: #f8fafc;
+  --focus-ring: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--surface-base);
+  color: var(--text-primary);
+  font-family:
+    'Fira Sans',
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+}
+
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--text-primary);
+  color: var(--surface-base);
+  z-index: 100;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

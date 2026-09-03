@@ -25,21 +25,21 @@ packages — they consume the generated OpenAPI client.
 
 ## Responsibilities
 
-| Component | Single responsibility | Owner lane | Must not |
-|---|---|---|---|
-| `packages/config` | Parse and validate process environment once at startup | Anandan | Expose server secrets to `apps/web` client code |
-| `packages/domain` | Decide ALLOW/BLOCK and lifecycle state, purely | Gnanam | Read clock, network, disk, or env |
-| `packages/db` | Append evidence; rebuild projections | Anandan | Let projections become the source of truth |
-| `packages/xstocks-client` | Validated access to the xStocks production API | Gnanam | Substitute bundled sample data on failure |
-| `packages/xlayer-reader` | Chain observation with block provenance and reorg detection | Gnanam | Contain any mainnet signing code path |
-| `packages/receipts` | Bind one authorization to one exact operation | Gnanam | Sign anything but a re-verified ALLOW |
-| `packages/reconciler` | Turn evidence into deterministic state | Gnanam | Write UI projections directly or sign receipts |
-| `packages/observability` | Structured logs, metrics, health | Anandan | Log secrets or unbounded payloads |
-| `packages/sdk` | Typed integrator client and CLI | Anandan | Duplicate the server safety predicate |
-| `apps/api` | Thin HTTP surface over the packages | Gnanam | Make business decisions in route handlers |
-| `apps/worker` | Poll, index, reconcile, project | Anandan | Reconcile an aggregate without a durable lease |
-| `apps/web` | Explain evidence to humans | Vasanth | Hold hard-coded assets, balances, health, or hashes |
-| `contracts/` | On-chain enforcement + TESTNET FIXTURE | Gnanam | Deploy to or configure chain 196 |
+| Component                 | Single responsibility                                       | Owner lane | Must not                                            |
+| ------------------------- | ----------------------------------------------------------- | ---------- | --------------------------------------------------- |
+| `packages/config`         | Parse and validate process environment once at startup      | Anandan    | Expose server secrets to `apps/web` client code     |
+| `packages/domain`         | Decide ALLOW/BLOCK and lifecycle state, purely              | Gnanam     | Read clock, network, disk, or env                   |
+| `packages/db`             | Append evidence; rebuild projections                        | Anandan    | Let projections become the source of truth          |
+| `packages/xstocks-client` | Validated access to the xStocks production API              | Gnanam     | Substitute bundled sample data on failure           |
+| `packages/xlayer-reader`  | Chain observation with block provenance and reorg detection | Gnanam     | Contain any mainnet signing code path               |
+| `packages/receipts`       | Bind one authorization to one exact operation               | Gnanam     | Sign anything but a re-verified ALLOW               |
+| `packages/reconciler`     | Turn evidence into deterministic state                      | Gnanam     | Write UI projections directly or sign receipts      |
+| `packages/observability`  | Structured logs, metrics, health                            | Anandan    | Log secrets or unbounded payloads                   |
+| `packages/sdk`            | Typed integrator client and CLI                             | Anandan    | Duplicate the server safety predicate               |
+| `apps/api`                | Thin HTTP surface over the packages                         | Gnanam     | Make business decisions in route handlers           |
+| `apps/worker`             | Poll, index, reconcile, project                             | Anandan    | Reconcile an aggregate without a durable lease      |
+| `apps/web`                | Explain evidence to humans                                  | Vasanth    | Hold hard-coded assets, balances, health, or hashes |
+| `contracts/`              | On-chain enforcement + TESTNET FIXTURE                      | Gnanam     | Deploy to or configure chain 196                    |
 
 ## Cross-cutting frozen contracts
 

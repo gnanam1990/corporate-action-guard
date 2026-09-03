@@ -63,7 +63,7 @@ outputs  domain transitions + evidence events
 ```
 
 `MISMATCH` escalates to `MANUAL_REVIEW` and can only reach `RECOVERED` when a later
-*complete* observation agrees. An operator resolution records actor, reason, evidence, and
+_complete_ observation agrees. An operator resolution records actor, reason, evidence, and
 policy version — it cannot fabricate source agreement, and protected actions stay blocked
 while evidence still disagrees.
 

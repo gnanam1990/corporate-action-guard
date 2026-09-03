@@ -1,0 +1,16 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/config" },
+    { "path": "./packages/domain" },
+    { "path": "./packages/observability" },
+    { "path": "./packages/db" },
+    { "path": "./packages/xstocks-client" },
+    { "path": "./packages/xlayer-reader" },
+    { "path": "./packages/receipts" },
+    { "path": "./packages/reconciler" },
+    { "path": "./packages/sdk" },
+    { "path": "./apps/api" },
+    { "path": "./apps/worker" }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "name": "corporate-action-guard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Fail-closed preflight guard that stops integrations acting on stale xStocks corporate-action state on X Layer.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.11.0",
+    "pnpm": ">=10"
+  },
+  "packageManager": "pnpm@11.10.0",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --build --verbose",
+    "test": "vitest run --project unit",
+    "test:watch": "vitest --project unit",
+    "test:integration": "vitest run --project integration",
+    "test:contracts": "cd contracts && forge test -vv",
+    "build": "pnpm -r --filter \"./packages/*\" build && pnpm -r --filter \"./apps/*\" build",
+    "build:contracts": "cd contracts && forge build",
+    "dev": "pnpm -r --parallel dev",
+    "db:migrate": "pnpm --filter @cag/db migrate",
+    "arch:check": "node scripts/check-layering.mjs",
+    "infra:up": "docker compose -f infra/docker-compose.yml up -d",
+    "infra:down": "docker compose -f infra/docker-compose.yml down",
+    "verify": "pnpm format:check && pnpm lint && pnpm arch:check && pnpm typecheck && pnpm test && pnpm test:contracts",
+    "scan:bundle": "node scripts/scan-web-bundle.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.4.1",
+    "eslint": "^10.9.1",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.6",
+    "prettier-plugin-solidity": "^2.4.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.69.0",
+    "vitest": "^4.1.11"
+  }
+}
