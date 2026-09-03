@@ -1,9 +1,15 @@
 # Corporate Action Guard
 
-**Status: implementation in progress.** This is not a production-ready corporate-action
-safety layer, and nothing here has been audited or deployed. See
-[`docs/build-readiness.md`](docs/build-readiness.md) for the honest module-by-module
-inventory.
+**Status: implementation in progress. Nothing is deployed and nothing has been audited.**
+
+The decision core, the evidence journal, the live data boundaries, the EIP-712 receipts,
+the on-chain guard, and the design system are built and tested. The operator console's
+feature pages, the integrator SDK, and any on-chain deployment are **not**. The self-audit
+verdict is **BLOCKED**, because the central claim — that the guard rejects a stale receipt
+in a real transaction on a real chain — has never been executed end to end.
+
+- [`docs/build-readiness.md`](docs/build-readiness.md) — module-by-module inventory
+- [`docs/final-audit.md`](docs/final-audit.md) — claim-to-evidence matrix, PROVEN vs NOT PROVEN
 
 ---
 
@@ -114,6 +120,31 @@ Full instructions, ports, and toolchain notes: [`docs/development.md`](docs/deve
 | [`docs/architecture/decisions/`](docs/architecture/decisions/)               | ADRs 0001–0003                                                 |
 | [`docs/build-readiness.md`](docs/build-readiness.md)                         | What exists, what is absent, what is blocked                   |
 | [`docs/module-ownership.md`](docs/module-ownership.md)                       | Lane assignment and change control                             |
+
+## What is actually verified
+
+Every claim below is backed by a named, runnable check.
+
+| Claim                                                        | Evidence                                                                                   |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| The catalog comes from the live xStocks API                  | 4 live contract tests against `api.xstocks.fi/api/v2`                                      |
+| Chain state comes from live mainnet reads at recorded blocks | 11 live read-only tests against chain 196                                                  |
+| The two sources agree, exactly                               | Chain `1003269012539818700` @18dp = API `1.0032690125398187`                               |
+| Mainnet is never written                                     | No signing method exists on the reader; adapter and deploy script both revert on chain 196 |
+| Missing evidence never becomes an implicit match             | 400-run property test; three bugs of this exact shape found and fixed during the build     |
+| Every guard in the safety predicate is tested                | **23/23 mutation kills**                                                                   |
+| TypeScript and Solidity agree on the operation digest        | Shared golden vectors read by both suites; CI fails on drift                               |
+| A receipt is never issued for a BLOCK                        | Discriminated union makes it unrepresentable; 16 per-reason tests                          |
+| The journal cannot be rewritten                              | Database trigger; integration-tested                                                       |
+| Direct ERC-20 transfers bypass the guard                     | Asserted as a **passing test**, not just documented                                        |
+
+```text
+467 tests total — 402 TypeScript, 65 Solidity
+23/23 mutants killed on the safety predicate
+28 WCAG contrast pairs verified in CI
+```
+
+**Not verified:** any transaction against a deployed contract. See the audit.
 
 ## Licence
 
