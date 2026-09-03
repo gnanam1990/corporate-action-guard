@@ -1,5 +1,9 @@
-/**
- * @cag/observability — entry point.
- * Implemented by its own module; see docs/build-readiness.md for current status.
- */
-export const PACKAGE_NAME = '@cag/observability';
+export {
+  createLogger,
+  type LogContext,
+  type Logger,
+  type LoggerOptions,
+  type LogLevel,
+} from './logger.js';
+export { MetricsRegistry, type MetricDefinition, type MetricType } from './metrics.js';
+export { redact, redactUrl, REDACTED } from './redact.js';
