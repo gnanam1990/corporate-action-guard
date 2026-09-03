@@ -13,10 +13,17 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "vectors"
   ],
   "scripts": {
     "build": "tsc --build",
-    "clean": "rm -rf dist tsconfig.tsbuildinfo"
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "vectors": "tsc --build && node dist/write-vectors.js"
+  },
+  "dependencies": {
+    "@cag/config": "workspace:*",
+    "@cag/domain": "workspace:*",
+    "viem": "^2.56.3"
   }
 }

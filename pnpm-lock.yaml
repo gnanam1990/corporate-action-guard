@@ -103,7 +103,17 @@ importers:
 
   packages/observability: {}
 
-  packages/receipts: {}
+  packages/receipts:
+    dependencies:
+      '@cag/config':
+        specifier: workspace:*
+        version: link:../config
+      '@cag/domain':
+        specifier: workspace:*
+        version: link:../domain
+      viem:
+        specifier: ^2.56.3
+        version: 2.56.3(typescript@6.0.3)(zod@4.5.4)
 
   packages/reconciler:
     dependencies:
