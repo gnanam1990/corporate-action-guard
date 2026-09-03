@@ -1,0 +1,197 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A pushed branch and its PR would otherwise run the same work twice.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Deterministic CI: no live third-party endpoints in required checks.
+  XSTOCKS_LIVE_CONTRACT_TEST: '0'
+  XLAYER_LIVE_SMOKE_TEST: '0'
+
+jobs:
+  quality:
+    name: Format, lint, architecture, types
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install from the lockfile
+        run: pnpm install --frozen-lockfile
+
+      - uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Prettier
+        run: pnpm exec prettier --check .
+
+      - name: forge fmt
+        run: forge fmt --check
+        working-directory: contracts
+
+      - name: ESLint
+        run: pnpm lint
+
+      - name: Architecture dependency rule
+        run: pnpm arch:check
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+
+      - name: Mutation test the safety predicate
+        # Every guard in evaluatePreflight must be one the suite would notice losing.
+        run: pnpm test:mutation
+
+  integration:
+    name: Integration tests (PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: guard
+          POSTGRES_PASSWORD: guard
+          POSTGRES_DB: guard
+          TZ: UTC
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U guard -d guard"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://guard:guard@localhost:5432/guard
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Apply migrations
+        run: pnpm db:migrate
+
+      - name: Migrations are idempotent
+        # Re-running must be a clean no-op, or a redeploy is a schema hazard.
+        run: pnpm db:migrate
+
+      - run: pnpm test:integration
+
+  contracts:
+    name: Foundry
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: foundry-rs/foundry-toolchain@v1
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: forge build --sizes
+        working-directory: contracts
+
+      - name: Tests, fuzz and invariants
+        run: forge test -vv
+        working-directory: contracts
+        env:
+          FOUNDRY_PROFILE: ci
+
+      - name: Golden vectors have not drifted from TypeScript
+        # Regenerating must reproduce the committed file byte for byte. If it does not,
+        # the two implementations disagree and every issued receipt would be rejected
+        # on chain.
+        run: |
+          pnpm --filter @cag/receipts vectors
+          git diff --exit-code packages/receipts/vectors/
+
+      - name: Gas snapshot
+        run: forge snapshot --check || echo "::warning::gas snapshot drifted; run 'forge snapshot' and commit"
+        working-directory: contracts
+
+  web:
+    name: Web build and bundle secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Production web build
+        run: pnpm --filter @cag/web build
+
+      - name: No secret may reach the browser bundle
+        run: pnpm scan:bundle
+
+  security:
+    name: Dependency audit and secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Dependency audit
+        run: pnpm audit --audit-level high
+
+      - name: No committed secret material
+        run: node scripts/scan-secrets.mjs

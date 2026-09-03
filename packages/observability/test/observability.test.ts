@@ -1,13 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { createLogger, MetricsRegistry, redact, redactUrl, REDACTED } from '../src/index.js';
 
-/** Canary values. If any of these ever appears in output, redaction has a hole. */
+/**
+ * Canary values. If any of these ever appears in output, redaction has a hole.
+ *
+ * These are deliberately shaped exactly like real credentials — a redaction test using an
+ * obviously-fake value proves nothing. They are inert strings, and each line carries the
+ * secret-scanner allow marker so the exception is visible to a reviewer rather than hidden
+ * in a scanner allowlist.
+ */
 const CANARY = {
   privateKey: `0x${'ab'.repeat(32)}`,
-  apiKey: 'sk_live_abcdefghijklmnop',
-  bearer: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
-  rpcWithKey: 'https://rpc.example.com/v2/abcdefghijklmnopqrstuvwxyz012345',
-  rpcWithUserinfo: 'https://user:hunter2@rpc.example.com/',
+  apiKey: 'sk_live_abcdefghijklmnop', // secret-scan:allow — inert test canary
+  bearer: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9', // secret-scan:allow — inert test canary
+  rpcWithKey: 'https://rpc.example.com/v2/abcdefghijklmnopqrstuvwxyz012345', // secret-scan:allow
+  rpcWithUserinfo: 'https://user:hunter2@rpc.example.com/', // secret-scan:allow
 } as const;
 
 describe('redaction', () => {

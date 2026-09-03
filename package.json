@@ -29,7 +29,8 @@
     "verify": "pnpm format:check && pnpm lint && pnpm arch:check && pnpm typecheck && pnpm test && pnpm test:contracts",
     "scan:bundle": "node scripts/scan-web-bundle.mjs",
     "test:mutation": "node scripts/mutate-preflight.mjs",
-    "format:sol": "cd contracts && forge fmt"
+    "format:sol": "cd contracts && forge fmt",
+    "scan:secrets": "node scripts/scan-secrets.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
