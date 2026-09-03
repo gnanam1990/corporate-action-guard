@@ -108,11 +108,26 @@ export function summarizeCanonicality(checks: readonly CanonicalityCheck[]): Can
 
 export type SourceAgreement = 'MATCH' | 'MISMATCH' | 'INCOMPLETE';
 
+export const COMPARABLE_FIELDS = [
+  'multiplier',
+  'multiplierNonce',
+  'scheduledActivation',
+  'wrapperAddress',
+] as const;
+
+export type ComparableField = (typeof COMPARABLE_FIELDS)[number];
+
 export interface SourceComparisonField {
-  readonly field: 'multiplier' | 'multiplierNonce' | 'scheduledActivation' | 'wrapperAddress';
+  readonly field: ComparableField;
   readonly agreement: SourceAgreement;
   readonly apiValue: string | undefined;
   readonly chainValue: string | undefined;
+  /**
+   * False when only one source is contractually expected to expose this field, so its
+   * absence is the contract rather than a degradation (ADR 0004). Such a field is shown
+   * for operator visibility but does not contribute to the agreement verdict.
+   */
+  readonly requiredForAgreement: boolean;
 }
 
 export interface SourceComparison {
@@ -125,4 +140,26 @@ export interface TolerancePolicy {
   readonly multiplierTolerance: Multiplier;
   /** Permitted difference between API and chain activation instants, in milliseconds. */
   readonly activationToleranceMs: number;
+  /**
+   * Fields both sources are contractually expected to expose. A required field that either
+   * source cannot supply is INCOMPLETE and blocks. A field outside this set is
+   * chain-authoritative and reported but not scored (ADR 0004).
+   *
+   * Stated explicitly by the caller — there is no implicit default inside the comparison,
+   * because an unstated agreement policy is how "missing became a match" happens.
+   */
+  readonly requiredAgreementFields: readonly ComparableField[];
 }
+
+/**
+ * The default policy for the verified xStocks API v2 contract.
+ *
+ * The nonce is excluded because the API does not publish it. It is instead checked
+ * directly against the caller's operation and re-verified on chain by the adapter, which
+ * is a stronger check than two observers concurring.
+ */
+export const DEFAULT_REQUIRED_AGREEMENT_FIELDS: readonly ComparableField[] = [
+  'multiplier',
+  'scheduledActivation',
+  'wrapperAddress',
+];

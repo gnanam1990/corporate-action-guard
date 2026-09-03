@@ -70,6 +70,8 @@ export {
 
 export {
   CANONICALITY_CHECK_NAMES,
+  COMPARABLE_FIELDS,
+  DEFAULT_REQUIRED_AGREEMENT_FIELDS,
   summarizeCanonicality,
   type ApiObservation,
   type CanonicalityCheck,
@@ -77,6 +79,7 @@ export {
   type CanonicalityResult,
   type ChainObservation,
   type CheckOutcome,
+  type ComparableField,
   type Provenance,
   type SourceAgreement,
   type SourceComparison,

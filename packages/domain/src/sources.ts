@@ -45,7 +45,7 @@ export function compareSources(
   chain: ChainObservation,
   policy: TolerancePolicy,
 ): SourceComparison {
-  const fields: SourceComparisonField[] = [
+  const fields: Omit<SourceComparisonField, 'requiredForAgreement'>[] = [
     {
       field: 'multiplier',
       agreement: compareOptional(api.multiplier, chain.multiplier, (a, b) =>
@@ -79,5 +79,17 @@ export function compareSources(
     },
   ];
 
-  return { agreement: combine(fields.map((f) => f.agreement)), fields };
+  // Only fields both sources are contractually expected to expose contribute to the
+  // verdict (ADR 0004). A chain-authoritative field is reported but not scored — its
+  // absence from the API is the contract, not a degradation.
+  const required = new Set(policy.requiredAgreementFields);
+  const scored: SourceComparisonField[] = fields.map((f) => ({
+    ...f,
+    requiredForAgreement: required.has(f.field),
+  }));
+
+  return {
+    agreement: combine(scored.filter((f) => f.requiredForAgreement).map((f) => f.agreement)),
+    fields: scored,
+  };
 }

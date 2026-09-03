@@ -18,5 +18,10 @@
   "scripts": {
     "build": "tsc --build",
     "clean": "rm -rf dist tsconfig.tsbuildinfo"
+  },
+  "dependencies": {
+    "@cag/config": "workspace:*",
+    "@cag/domain": "workspace:*",
+    "zod": "^4.5.4"
   }
 }

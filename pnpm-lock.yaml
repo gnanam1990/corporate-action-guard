@@ -111,7 +111,17 @@ importers:
 
   packages/xlayer-reader: {}
 
-  packages/xstocks-client: {}
+  packages/xstocks-client:
+    dependencies:
+      '@cag/config':
+        specifier: workspace:*
+        version: link:../config
+      '@cag/domain':
+        specifier: workspace:*
+        version: link:../domain
+      zod:
+        specifier: ^4.5.4
+        version: 4.5.4
 
 packages:
 

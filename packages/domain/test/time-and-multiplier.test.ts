@@ -4,6 +4,7 @@ import {
   addressEquals,
   ageAt,
   compareSources,
+  DEFAULT_REQUIRED_AGREEMENT_FIELDS,
   EXACT_TOLERANCE,
   instant,
   isStale,
@@ -206,27 +207,68 @@ describe('compareSources', () => {
     ...over,
   });
 
-  const policy = { multiplierTolerance: EXACT_TOLERANCE, activationToleranceMs: 0 };
+  const policy = {
+    multiplierTolerance: EXACT_TOLERANCE,
+    activationToleranceMs: 0,
+    requiredAgreementFields: DEFAULT_REQUIRED_AGREEMENT_FIELDS,
+  };
 
   it('reports MATCH when every shared field agrees', () => {
     expect(compareSources(api(), chain(), policy).agreement).toBe('MATCH');
   });
 
-  it('reports MISMATCH on a disagreeing nonce', () => {
-    const result = compareSources(api(), chain({ multiplierNonce: 8n }), policy);
+  it('reports MISMATCH on a disagreeing multiplier', () => {
+    const result = compareSources(
+      api(),
+      chain({ multiplier: { value: 200n, decimals: 2 } }),
+      policy,
+    );
     expect(result.agreement).toBe('MISMATCH');
-    expect(result.fields.find((f) => f.field === 'multiplierNonce')?.agreement).toBe('MISMATCH');
+    expect(result.fields.find((f) => f.field === 'multiplier')?.agreement).toBe('MISMATCH');
   });
 
-  it('reports INCOMPLETE — never MATCH — when a source cannot supply a field', () => {
-    const { multiplierNonce: _drop, ...partial } = api();
+  it('reports INCOMPLETE — never MATCH — when a required field is missing', () => {
+    const { multiplier: _drop, ...partial } = api();
     const result = compareSources(partial as ApiObservation, chain(), policy);
     expect(result.agreement).toBe('INCOMPLETE');
   });
 
   it('MISMATCH dominates INCOMPLETE', () => {
-    const { multiplier: _m, ...partial } = api({ multiplierNonce: 9n });
+    const { multiplier: _m, ...partial } = api();
+    const result = compareSources(
+      partial as ApiObservation,
+      chain({ scheduledActivation: instant(99_000) }),
+      policy,
+    );
+    expect(result.agreement).toBe('MISMATCH');
+  });
+
+  it('the nonce is chain-authoritative: its absence from the API is the contract, not a degradation', () => {
+    // ADR 0004. The API publishes no nonce, so requiring agreement on it would block every
+    // action forever. It is instead checked against the caller's operation and re-verified
+    // on chain by the adapter.
+    const { multiplierNonce: _drop, ...partial } = api();
     const result = compareSources(partial as ApiObservation, chain(), policy);
+    expect(result.agreement).toBe('MATCH');
+    const nonceField = result.fields.find((f) => f.field === 'multiplierNonce');
+    expect(nonceField?.requiredForAgreement).toBe(false);
+    expect(nonceField?.agreement).toBe('INCOMPLETE');
+  });
+
+  it('a chain-authoritative field is still reported for operator visibility', () => {
+    const result = compareSources(api(), chain(), policy);
+    expect(result.fields.map((f) => f.field)).toContain('multiplierNonce');
+  });
+
+  it('removing a field from the required set never makes a disagreement pass', () => {
+    // Only the absent-value case changes. A field present on both sides and differing is
+    // still MISMATCH regardless of policy.
+    const permissive = { ...policy, requiredAgreementFields: ['multiplier' as const] };
+    const result = compareSources(
+      api(),
+      chain({ multiplier: { value: 999n, decimals: 2 } }),
+      permissive,
+    );
     expect(result.agreement).toBe('MISMATCH');
   });
 
