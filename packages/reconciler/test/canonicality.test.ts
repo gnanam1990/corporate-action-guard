@@ -2,7 +2,7 @@ import type { ChainSnapshot } from '@cag/xlayer-reader';
 import type { XStocksAsset, XStocksDeployment } from '@cag/xstocks-client';
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { diffRegistry, toRegistryEntry, verifyCanonicality } from '../src/index.js';
+import { diffRegistry, verifyCanonicality, type RegistrySnapshotEntry } from '../src/index.js';
 
 const TOKEN = '0x9d275685dc284c8eb1c79f6aba7a63dc75ec890a';
 const WRAPPER = '0x943bf64d566c32a2bcd41ac92fb63c111cc9de8f';
@@ -209,7 +209,7 @@ describe('canonicality matrix', () => {
 });
 
 describe('registry diff', () => {
-  const entry = (over: Partial<ReturnType<typeof toRegistryEntry>> = {}) => ({
+  const entry = (over: Partial<RegistrySnapshotEntry> = {}): RegistrySnapshotEntry => ({
     assetId: 'aaplx-id',
     symbol: 'AAPLx',
     tokenAddress: TOKEN,
