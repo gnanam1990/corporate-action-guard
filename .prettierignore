@@ -5,3 +5,7 @@ coverage/
 contracts/out/
 contracts/cache/
 contracts/lib/
+contracts/deployments/
+# Solidity is formatted by `forge fmt`, which owns [fmt] in foundry.toml. Two formatters
+# disagreeing over the same files produces an unwinnable check.
+*.sol
