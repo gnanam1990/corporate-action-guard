@@ -25,3 +25,4 @@ export {
   type EvidenceEventType,
   type EvidenceSourceKind,
 } from './types.js';
+export { acquireLease, releaseLease, renewLease, withLease, type Lease } from './leases.js';

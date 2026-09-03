@@ -13,3 +13,13 @@ export {
   type RegistryChangeKind,
   type RegistrySnapshotEntry,
 } from './registry-diff.js';
+export {
+  canRecover,
+  defaultPolicy,
+  reasonSignature,
+  reconcileAsset,
+  type ReconcileDecision,
+  type ReconcileInput,
+  type ReconcileOutcome,
+  type ReconcilePolicy,
+} from './reconcile.js';

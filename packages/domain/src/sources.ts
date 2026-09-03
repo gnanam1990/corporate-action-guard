@@ -29,7 +29,24 @@ function compareOptional<T>(
   chain: T | undefined,
   equals: (a: T, b: T) => boolean,
 ): SourceAgreement {
+  // Both absent is AGREEMENT that the value is not set — not missing evidence.
+  //
+  // The normal state of an asset is "no corporate action pending", which both sources
+  // report affirmatively: the API sends activationDateTime 0 and the chain returns
+  // newMultiplierActivationTime() 0, and both clients normalize that sentinel to
+  // undefined. Scoring that as INCOMPLETE would block every asset in its ordinary resting
+  // state, which is the same failure mode ADR 0004 was written about.
+  //
+  // This does not weaken the rule that missing evidence is never an implicit match. An
+  // observation that could not be READ is tracked separately by snapshot completeness and
+  // freshness, and blocks there; this function's job is agreement between what the two
+  // sources actually reported.
+  if (api === undefined && chain === undefined) return 'MATCH';
+
+  // One-sided absence is genuine incompleteness: one source has an opinion and the other
+  // does not, so agreement cannot be established.
   if (api === undefined || chain === undefined) return 'INCOMPLETE';
+
   return equals(api, chain) ? 'MATCH' : 'MISMATCH';
 }
 

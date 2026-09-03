@@ -281,3 +281,77 @@ describe('compareSources', () => {
     expect(result.fields.find((f) => f.field === 'wrapperAddress')?.agreement).toBe('MATCH');
   });
 });
+
+/**
+ * Both-absent semantics. The resting state of an asset is "no corporate action pending",
+ * which both sources report affirmatively via a 0 sentinel that each client normalizes to
+ * undefined. Treating that as INCOMPLETE would block every asset in its normal state.
+ */
+describe('compareSources — absence semantics', () => {
+  const policy = {
+    multiplierTolerance: EXACT_TOLERANCE,
+    activationToleranceMs: 0,
+    requiredAgreementFields: DEFAULT_REQUIRED_AGREEMENT_FIELDS,
+  };
+
+  const apiBase = {
+    provenance: {
+      sourceKind: 'XSTOCKS_API' as const,
+      sourceLocator: '/x',
+      observedAt: instant(1_000),
+    },
+    symbol: unsafe.symbol('AAPLx'),
+    tokenAddress: unsafe.address('0x' + 'a'.repeat(40)),
+    wrapperAddress: unsafe.address('0x' + 'b'.repeat(40)),
+    multiplier: { value: 100n, decimals: 2 },
+  };
+
+  const chainBase = {
+    provenance: {
+      sourceKind: 'XLAYER_RPC' as const,
+      sourceLocator: 'p',
+      observedAt: instant(1_000),
+    },
+    chainId: unsafe.chainId(196),
+    blockNumber: unsafe.blockNumber(1n),
+    blockHash: unsafe.blockHash('0x' + '1'.repeat(64)),
+    tokenAddress: unsafe.address('0x' + 'a'.repeat(40)),
+    wrapperAddress: unsafe.address('0x' + 'b'.repeat(40)),
+    tokenHasBytecode: true,
+    wrapperHasBytecode: true,
+    multiplier: { value: 1000n, decimals: 3 },
+  };
+
+  it('both sources reporting no scheduled activation is agreement, not incompleteness', () => {
+    const result = compareSources(apiBase, chainBase, policy);
+    expect(result.agreement).toBe('MATCH');
+    expect(result.fields.find((f) => f.field === 'scheduledActivation')?.agreement).toBe('MATCH');
+  });
+
+  it('one source having a schedule the other does not is INCOMPLETE', () => {
+    const result = compareSources(
+      { ...apiBase, scheduledActivation: instant(50_000) },
+      chainBase,
+      policy,
+    );
+    expect(result.agreement).toBe('INCOMPLETE');
+  });
+
+  it('the mirror case is equally INCOMPLETE', () => {
+    const result = compareSources(
+      apiBase,
+      { ...chainBase, scheduledActivation: instant(50_000) },
+      policy,
+    );
+    expect(result.agreement).toBe('INCOMPLETE');
+  });
+
+  it('a value neither source could report never masks a value they disagree on', () => {
+    const result = compareSources(
+      apiBase,
+      { ...chainBase, multiplier: { value: 999n, decimals: 2 } },
+      policy,
+    );
+    expect(result.agreement).toBe('MISMATCH');
+  });
+});
