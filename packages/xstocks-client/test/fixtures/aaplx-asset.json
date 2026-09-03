@@ -1,0 +1,15 @@
+{
+  "id": "9e43a778-fdc8-44f1-87de-f2e7420bb7f7",
+  "name": "Apple xStock",
+  "symbol": "AAPLx",
+  "isin": "CH1436219187",
+  "isTradingHalted": false,
+  "deployments": [
+    {
+      "address": "0x9d275685dc284c8eb1c79f6aba7a63dc75ec890a",
+      "network": "XLayer",
+      "wrapperAddressV2": "0x943bf64d566c32a2bcd41ac92fb63c111cc9de8f",
+      "supportsAtomicSwaps": true
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "name": "@cag/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Append-only evidence journal, projections, and SQL migrations.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "migrations"
+  ],
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "migrate": "tsc --build && node dist/cli.js"
+  },
+  "dependencies": {
+    "@cag/config": "workspace:*",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.1"
+  }
+}

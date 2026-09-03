@@ -1,0 +1,34 @@
+name: Live probes
+
+# Deliberately NOT part of the required checks. A third-party endpoint being down must
+# never block a merge, and these must never run on an untrusted pull request.
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    name: Live xStocks API and X Layer mainnet reads
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      XSTOCKS_LIVE_CONTRACT_TEST: '1'
+      XLAYER_LIVE_SMOKE_TEST: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Live contract and read-only mainnet probes
+        # Read-only throughout: no signing, no transaction, no mainnet write path exists.
+        run: pnpm exec vitest run --project integration packages/xstocks-client packages/xlayer-reader

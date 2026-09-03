@@ -1,0 +1,38 @@
+# Local development infrastructure only. PostgreSQL and nothing else:
+# worker leases use PostgreSQL advisory locks, so no queue or cache is needed (ADR 0001).
+name: corporate-action-guard
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: cag-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: guard
+      POSTGRES_PASSWORD: guard
+      POSTGRES_DB: guard
+      # Deterministic ordering and UTC everywhere; the product compares instants.
+      POSTGRES_INITDB_ARGS: '--encoding=UTF8 --locale=C'
+      TZ: UTC
+      PGTZ: UTC
+    command:
+      - postgres
+      - -c
+      - timezone=UTC
+      - -c
+      - log_timezone=UTC
+    ports:
+      # 55432 on the host: 5432 is commonly taken by a native PostgreSQL install.
+      - '55432:5432'
+    volumes:
+      - cag-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U guard -d guard']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+volumes:
+  cag-postgres-data:
+    name: cag-postgres-data
