@@ -1,0 +1,150 @@
+/*
+ * Semantic design tokens.
+ *
+ * Components reference ONLY these names. A raw hex value in a component is a bug: it makes
+ * status colour impossible to audit and impossible to change coherently.
+ *
+ * Direction: institutional risk operations. Calm, dense, technical. The visual job is to
+ * make an unsafe state impossible to miss and a safe state unremarkable — the opposite of
+ * a consumer trading UI, where everything competes for attention.
+ *
+ * Dark-first. A light theme is not shipped rather than shipped broken.
+ */
+
+:root {
+  /* --- Surfaces: midnight through slate, four steps of elevation --- */
+  --surface-base: #020617;
+  --surface-raised: #0e1223;
+  --surface-overlay: #161b2e;
+  --surface-muted: #1a1e2f;
+  --surface-inset: #010409;
+
+  /* --- Text --- */
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-inverse: #020617;
+
+  /* --- Borders --- */
+  --border-subtle: #2b3a52;
+  --border-default: #526480;
+  --border-strong: #64748b;
+
+  /*
+   * --- Status ---
+   * Four states, and never colour alone. Every status also carries an icon shape and a
+   * text label, because roughly 1 in 12 men has a colour vision deficiency and because a
+   * screenshot in a report loses colour meaning entirely.
+   */
+
+  /* VERIFIED / ALLOWED — restrained, not celebratory. Safe is the normal case. */
+  --status-verified-fg: #4ade80;
+  --status-verified-bg: #052e16;
+  --status-verified-border: #16a34a;
+
+  /* PENDING / GUARD WINDOW — attention without alarm. */
+  --status-pending-fg: #fbbf24;
+  --status-pending-bg: #451a03;
+  --status-pending-border: #c2670a;
+
+  /* BLOCKED / MISMATCH — the state that must never be missed. */
+  --status-blocked-fg: #f87171;
+  --status-blocked-bg: #450a0a;
+  --status-blocked-border: #dc2626;
+
+  /* CHAIN EVIDENCE / INFORMATIONAL — factual, not a judgement. */
+  --status-chain-fg: #60a5fa;
+  --status-chain-bg: #172554;
+  --status-chain-border: #3b82f6;
+
+  /* UNKNOWN — deliberately its own colour. "Not determined" is not "fine". */
+  --status-unknown-fg: #a78bfa;
+  --status-unknown-bg: #2e1065;
+  --status-unknown-border: #8b5cf6;
+
+  /* --- Interactive --- */
+  --action-primary: #22c55e;
+  --action-primary-hover: #16a34a;
+  --action-primary-fg: #052e16;
+  --action-destructive: #ef4444;
+  --action-destructive-hover: #dc2626;
+
+  /*
+   * Focus ring: white at 3px. High contrast against every surface above, and thick enough
+   * to be unmissable on a dense table — keyboard operation is a requirement here, not a
+   * courtesy.
+   */
+  --focus-ring: #ffffff;
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+
+  /* --- Typography --- */
+  --font-sans: 'Fira Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Monospace ONLY for addresses, hashes, nonces, digests, and evidence ids. */
+  --font-mono: 'Fira Code', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-lg: 1rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  /* --- Spacing: 4px base --- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-8: 3rem;
+
+  /* --- Radius --- */
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --radius-lg: 8px;
+  --radius-full: 9999px;
+
+  /* --- Elevation: subtle. This is an operations console, not a card gallery. --- */
+  --elevation-1: 0 1px 2px rgb(0 0 0 / 40%);
+  --elevation-2: 0 2px 8px rgb(0 0 0 / 45%);
+  --elevation-3: 0 8px 24px rgb(0 0 0 / 50%);
+
+  /* --- Motion: fast, and fully removable --- */
+  --motion-fast: 100ms;
+  --motion-normal: 160ms;
+  --motion-ease: cubic-bezier(0.2, 0, 0.2, 1);
+
+  /* --- Layout --- */
+  --shell-header-height: 3.5rem;
+  --shell-nav-width: 15rem;
+  --content-max-width: 100rem;
+  /* Minimum touch target. 44px is the accessibility floor, not a suggestion. */
+  --touch-target-min: 44px;
+}
+
+/*
+ * Reduced motion is honoured completely: data appears immediately, with no entrance
+ * choreography. An operator investigating an incident should never wait on an animation.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Windows high contrast mode: let the system palette win. */
+@media (forced-colors: active) {
+  :root {
+    --focus-ring: Highlight;
+  }
+}

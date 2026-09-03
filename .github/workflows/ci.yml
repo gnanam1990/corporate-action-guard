@@ -55,6 +55,11 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: WCAG contrast of the design tokens
+        # Asserted, not eyeballed: a palette change that drops a status below readable
+        # fails the build rather than shipping.
+        run: pnpm check:contrast
+
   unit:
     name: Unit tests
     runs-on: ubuntu-latest

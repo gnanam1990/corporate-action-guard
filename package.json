@@ -26,11 +26,12 @@
     "arch:check": "node scripts/check-layering.mjs",
     "infra:up": "docker compose -f infra/docker-compose.yml up -d",
     "infra:down": "docker compose -f infra/docker-compose.yml down",
-    "verify": "pnpm format:check && pnpm lint && pnpm arch:check && pnpm typecheck && pnpm test && pnpm test:contracts",
+    "verify": "pnpm format:check && pnpm lint && pnpm arch:check && pnpm typecheck && pnpm check:contrast && pnpm scan:secrets && pnpm test && pnpm test:contracts",
     "scan:bundle": "node scripts/scan-web-bundle.mjs",
     "test:mutation": "node scripts/mutate-preflight.mjs",
     "format:sol": "cd contracts && forge fmt",
-    "scan:secrets": "node scripts/scan-secrets.mjs"
+    "scan:secrets": "node scripts/scan-secrets.mjs",
+    "check:contrast": "node scripts/check-contrast.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
