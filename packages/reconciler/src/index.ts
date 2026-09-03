@@ -1,5 +1,15 @@
-/**
- * @cag/reconciler — entry point.
- * Implemented by its own module; see docs/build-readiness.md for current status.
- */
-export const PACKAGE_NAME = '@cag/reconciler';
+export {
+  CURRENT_WRAPPER_VERSION,
+  currentWrapperAddress,
+  legacyWrapperAddress,
+  verifyCanonicality,
+  type CanonicalityInput,
+  type CanonicalityRecord,
+} from './canonicality.js';
+export {
+  diffRegistry,
+  toRegistryEntry,
+  type RegistryChange,
+  type RegistryChangeKind,
+  type RegistrySnapshotEntry,
+} from './registry-diff.js';

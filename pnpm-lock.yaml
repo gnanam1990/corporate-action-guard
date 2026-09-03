@@ -105,7 +105,27 @@ importers:
 
   packages/receipts: {}
 
-  packages/reconciler: {}
+  packages/reconciler:
+    dependencies:
+      '@cag/config':
+        specifier: workspace:*
+        version: link:../config
+      '@cag/db':
+        specifier: workspace:*
+        version: link:../db
+      '@cag/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@cag/xlayer-reader':
+        specifier: workspace:*
+        version: link:../xlayer-reader
+      '@cag/xstocks-client':
+        specifier: workspace:*
+        version: link:../xstocks-client
+    devDependencies:
+      fast-check:
+        specifier: ^4.9.0
+        version: 4.9.0
 
   packages/sdk: {}
 

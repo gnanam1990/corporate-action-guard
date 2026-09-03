@@ -18,5 +18,15 @@
   "scripts": {
     "build": "tsc --build",
     "clean": "rm -rf dist tsconfig.tsbuildinfo"
+  },
+  "dependencies": {
+    "@cag/config": "workspace:*",
+    "@cag/db": "workspace:*",
+    "@cag/domain": "workspace:*",
+    "@cag/xlayer-reader": "workspace:*",
+    "@cag/xstocks-client": "workspace:*"
+  },
+  "devDependencies": {
+    "fast-check": "^4.9.0"
   }
 }
