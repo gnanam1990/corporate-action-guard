@@ -340,3 +340,66 @@ describe('multi-chain address formats', () => {
     });
   });
 });
+
+/**
+ * Injected faults must travel the same path a real failure would: through the retry
+ * budget, the error taxonomy, and — in the worker — the source-health signal. A fault that
+ * short-circuits somewhere special proves nothing about production behaviour.
+ */
+describe('fault injection fails closed', () => {
+  const alwaysFail = (kind: string) => ({ shouldFail: (k: string) => k === kind });
+
+  it('an injected timeout produces a real TIMEOUT error, not a special case', async () => {
+    const fetchImpl = stubFetch(() => ({ status: 200, body: assetFixture }));
+    await expect(
+      client({
+        fetchImpl: fetchImpl.impl,
+        maxRetries: 0,
+        faults: alwaysFail('XSTOCKS_TIMEOUT'),
+      }).getAsset('AAPLx', CID),
+    ).rejects.toMatchObject({ kind: 'TIMEOUT' });
+    // The transport was never reached: the fault stands in for the network.
+    expect(fetchImpl.attempts()).toBe(0);
+  });
+
+  it('an injected timeout is retried, exactly like a real one', async () => {
+    const fetchImpl = stubFetch(() => ({ status: 200, body: assetFixture }));
+    await expect(
+      client({
+        fetchImpl: fetchImpl.impl,
+        maxRetries: 2,
+        faults: alwaysFail('XSTOCKS_TIMEOUT'),
+      }).getAsset('AAPLx', CID),
+    ).rejects.toMatchObject({ kind: 'TIMEOUT' });
+  });
+
+  it('an injected malformed body is NOT retried, exactly like a real schema violation', async () => {
+    const fetchImpl = stubFetch(() => ({ status: 200, body: assetFixture }));
+    await expect(
+      client({
+        fetchImpl: fetchImpl.impl,
+        maxRetries: 3,
+        faults: alwaysFail('XSTOCKS_INVALID_PAYLOAD'),
+      }).getAsset('AAPLx', CID),
+    ).rejects.toMatchObject({ kind: 'INVALID_PAYLOAD' });
+  });
+
+  it('a fault never yields data — there is no degraded-but-usable result', async () => {
+    const fetchImpl = stubFetch(() => ({ status: 200, body: assetFixture }));
+    const result = await client({
+      fetchImpl: fetchImpl.impl,
+      maxRetries: 0,
+      faults: alwaysFail('XSTOCKS_RATE_LIMITED'),
+    })
+      .listAssets({ correlationId: CID })
+      .then(() => 'returned data')
+      .catch(() => 'failed closed');
+    expect(result).toBe('failed closed');
+  });
+
+  it('no injector means no injection', async () => {
+    const fetchImpl = stubFetch(() => ({ status: 200, body: assetFixture }));
+    const result = await client({ fetchImpl: fetchImpl.impl }).getAsset('AAPLx', CID);
+    expect(result.value.symbol).toBe('AAPLx');
+  });
+});

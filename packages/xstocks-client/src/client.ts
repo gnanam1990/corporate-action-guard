@@ -31,6 +31,16 @@ export interface XStocksClientOptions {
   /** Injected so retry backoff is deterministic in tests. */
   readonly sleep?: (ms: number) => Promise<void>;
   readonly random?: () => number;
+  /**
+   * Optional fault injector, for the local scenario harness only. It cannot be constructed
+   * in production — `FaultInjector` refuses at its constructor — so this hook is inert
+   * there rather than merely unused.
+   */
+  readonly faults?: {
+    shouldFail(
+      kind: 'XSTOCKS_TIMEOUT' | 'XSTOCKS_RATE_LIMITED' | 'XSTOCKS_INVALID_PAYLOAD',
+    ): boolean;
+  };
 }
 
 export interface Fetched<T> {
@@ -65,6 +75,7 @@ export class XStocksClient {
   private readonly fetchImpl: typeof fetch;
   private readonly sleep: (ms: number) => Promise<void>;
   private readonly random: () => number;
+  private readonly faults: XStocksClientOptions['faults'];
 
   constructor(options: XStocksClientOptions = {}) {
     this.baseUrl = (options.baseUrl ?? XSTOCKS_PRODUCTION_BASE_URL).replace(/\/+$/, '');
@@ -76,6 +87,7 @@ export class XStocksClient {
     this.fetchImpl = options.fetchImpl ?? globalThis.fetch;
     this.sleep = options.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)));
     this.random = options.random ?? Math.random;
+    this.faults = options.faults;
   }
 
   /**
@@ -88,6 +100,42 @@ export class XStocksClient {
     parse: (raw: unknown) => T,
     correlationId: string,
   ): Promise<{ ok: true; value: Fetched<T> } | { ok: false; error: XStocksError }> {
+    // Injected at the I/O boundary, so the fault travels the same path a real failure
+    // would — through the retry budget, the error taxonomy, and the source-health signal.
+    if (this.faults?.shouldFail('XSTOCKS_TIMEOUT') === true) {
+      return {
+        ok: false,
+        error: new XStocksError(
+          'TIMEOUT',
+          'injected fault: request timed out',
+          { locator, injected: true },
+          true,
+        ),
+      };
+    }
+    if (this.faults?.shouldFail('XSTOCKS_RATE_LIMITED') === true) {
+      return {
+        ok: false,
+        error: new XStocksError(
+          'RATE_LIMITED',
+          'injected fault: rate limited',
+          { locator, injected: true },
+          true,
+        ),
+      };
+    }
+    if (this.faults?.shouldFail('XSTOCKS_INVALID_PAYLOAD') === true) {
+      return {
+        ok: false,
+        error: new XStocksError(
+          'INVALID_PAYLOAD',
+          'injected fault: malformed body',
+          { locator, injected: true },
+          false,
+        ),
+      };
+    }
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
 

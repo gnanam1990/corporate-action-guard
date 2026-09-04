@@ -119,8 +119,8 @@
     {
       "id": "19",
       "name": "Observability and fault injection",
-      "status": "PARTIAL",
-      "note": "Redaction, structured logging, bounded-cardinality metrics. Fault-injection harness absent"
+      "status": "IMPLEMENTED",
+      "note": "Redaction, structured logging, bounded-cardinality metrics, and a deterministic fault harness that cannot construct in production; each fault declares its required outcome"
     },
     {
       "id": "20",

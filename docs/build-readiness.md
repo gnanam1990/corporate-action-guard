@@ -18,7 +18,7 @@ The honest inventory. A module is `IMPLEMENTED` only when its code exists in thi
 repository and its own gates have been run. Being described in the prompt pack is not
 evidence that anything exists.
 
-**19 implemented · 2 partial · 3 absent**, of 24 modules.
+**20 implemented · 1 partial · 3 absent**, of 24 modules.
 
 ## Status
 
@@ -43,7 +43,7 @@ evidence that anything exists.
 | 16 | Incident replay and review console | **IMPLEMENTED** | Incident list ordered by deterministic severity, plus deterministic replay from immutable journal rows with a policy-version warning |
 | 17 | AI incident explainer | ABSENT | Optional. Correctly deferred until the deterministic product is complete |
 | 18 | Integrator SDK and CLI | **IMPLEMENTED** | Typed client, local verifier pinned to the shared golden vectors, guard CLI with meaningful exit codes |
-| 19 | Observability and fault injection | **PARTIAL** | Redaction, structured logging, bounded-cardinality metrics. Fault-injection harness absent |
+| 19 | Observability and fault injection | **IMPLEMENTED** | Redaction, structured logging, bounded-cardinality metrics, and a deterministic fault harness that cannot construct in production; each fault declares its required outcome |
 | 20 | Security hardening and threat model | **IMPLEMENTED** | Threat model with per-row test references and recorded residual risks |
 | 21 | CI, containers, deployment | **PARTIAL** | Six-job CI enforcing every gate. Containers and deployment manifests absent |
 | 22 | End-to-end proof and submission package | ABSENT | Blocked on a testnet deployment |
