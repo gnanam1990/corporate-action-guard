@@ -39,6 +39,12 @@ contract ActionGuardAdapter is EIP712, Ownable2Step, ReentrancyGuard {
     uint16 public constant SCHEMA_VERSION = 1;
 
     /// @notice X Layer mainnet. This contract refuses to exist there.
+    /// @dev `execute` deliberately carries no chain-id check. It needs none, and adding one
+    /// would imply the others are insufficient. Chain binding is already enforced twice: the
+    /// EIP-712 domain separator commits to `block.chainid` (and OpenZeppelin recomputes it
+    /// after a fork rather than serving a stale cache), and `operationDigest` commits to
+    /// `block.chainid` and `address(this)` and is recomputed here from the fields presented.
+    /// On a forked or wrong chain both comparisons fail, so the receipt is refused.
     uint256 public constant FORBIDDEN_CHAIN_ID = 196;
 
     struct Receipt {
@@ -86,7 +92,6 @@ contract ActionGuardAdapter is EIP712, Ownable2Step, ReentrancyGuard {
 
     error DeploymentOnMainnetForbidden();
     error Paused();
-    error UnsupportedChain(uint256 actual, uint256 expected);
     error SchemaVersionMismatch(uint16 actual, uint16 expected);
     error UnauthorizedSigner(address signer);
     error TargetNotAllowed(address target);

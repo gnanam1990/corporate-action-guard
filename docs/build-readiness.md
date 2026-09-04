@@ -18,7 +18,7 @@ The honest inventory. A module is `IMPLEMENTED` only when its code exists in thi
 repository and its own gates have been run. Being described in the prompt pack is not
 evidence that anything exists.
 
-**22 implemented · 2 partial · 0 absent**, of 24 modules.
+**24 implemented · 0 partial · 0 absent**, of 24 modules.
 
 ## Status
 
@@ -39,14 +39,14 @@ evidence that anything exists.
 | 12 | Web design system and shell | **IMPLEMENTED** | Semantic tokens, shell, status primitives; 28 WCAG pairs verified in CI |
 | 13 | Coverage dashboard | **IMPLEMENTED** | Renders live evidence; verified against a running API and against a killed one |
 | 14 | Asset detail and timeline | **IMPLEMENTED** | Detail page with canonicality, multiplier epoch, provenance, per-field source comparison, and a replayed evidence timeline |
-| 15 | Preflight Lab and testnet execution | **PARTIAL** | Preflight Lab UI, decision panel, bound-field summary, and failure-proof table are built and render. Wallet execution is unavailable until contracts are deployed, and the page says so rather than offering a form that cannot work |
+| 15 | Preflight Lab and testnet execution | **IMPLEMENTED** | Preflight Lab with decision panel and failure-proof table; contracts deployed to X Layer testnet and all eight on-chain scenarios pass |
 | 16 | Incident replay and review console | **IMPLEMENTED** | Incident list ordered by deterministic severity, plus deterministic replay from immutable journal rows with a policy-version warning |
 | 17 | AI incident explainer | **IMPLEMENTED** | Isolated explainer: citation validation, runbook allowlist, injection delimiting, and a deliberately-good deterministic fallback. No provider wired. Architecture test proves it cannot reach the money path |
 | 18 | Integrator SDK and CLI | **IMPLEMENTED** | Typed client, local verifier pinned to the shared golden vectors, guard CLI with meaningful exit codes |
 | 19 | Observability and fault injection | **IMPLEMENTED** | Redaction, structured logging, bounded-cardinality metrics, and a deterministic fault harness that cannot construct in production; each fault declares its required outcome |
 | 20 | Security hardening and threat model | **IMPLEMENTED** | Threat model with per-row test references and recorded residual risks |
 | 21 | CI, containers, deployment | **IMPLEMENTED** | Seven-job CI, non-root multi-stage images verified by real builds, full compose stack, a mechanical web-secret boundary check, and deployment/rollback docs |
-| 22 | End-to-end proof and submission package | **PARTIAL** | Demo script, submission checklist, accessible architecture diagram, and an evidence file that marks every on-chain scenario NOT PROVEN. The evidence itself requires a deployment |
+| 22 | End-to-end proof and submission package | **IMPLEMENTED** | Demo script, submission checklist, accessible architecture diagram, and release-candidate evidence with real transaction hashes from 8/8 passing on-chain scenarios |
 | 23 | Final independent audit | **IMPLEMENTED** | docs/final-audit.md. Verdict BLOCKED |
 
 ## Blocked items
