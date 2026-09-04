@@ -52,6 +52,11 @@ jobs:
       - name: Architecture dependency rule
         run: pnpm arch:check
 
+      - name: Runtime imports are production dependencies
+        # `pg` was imported by production source and declared dev-only. Every test passed,
+        # because tests install everything; a production install omitted it.
+        run: pnpm check:deps
+
       - name: Typecheck
         run: pnpm typecheck
 

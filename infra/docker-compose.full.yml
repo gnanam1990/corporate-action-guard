@@ -29,7 +29,7 @@ services:
     command: [apps/api/dist/index.js]
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://guard:guard@postgres:5432/guard
+      DATABASE_URL: postgresql://guard:guard@postgres:5432/guard # secret-scan:allow — local compose credential, matches .env.example
       API_PUBLIC_BASE_URL: http://localhost:4000
       NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
       XSTOCKS_API_BASE_URL: https://api.xstocks.fi/api/v2
@@ -66,7 +66,7 @@ services:
     command: [apps/worker/dist/index.js]
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://guard:guard@postgres:5432/guard
+      DATABASE_URL: postgresql://guard:guard@postgres:5432/guard # secret-scan:allow — local compose credential, matches .env.example
       XSTOCKS_API_BASE_URL: https://api.xstocks.fi/api/v2
       # Mainnet RPC reaches the READER only. The worker never signs; there is no signing
       # code path for chain 196 anywhere in the product.
