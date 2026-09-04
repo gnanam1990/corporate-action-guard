@@ -1,128 +1,13 @@
-'use client';
-
-import { useCallback, useId, useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 /**
- * Shared primitives.
+ * Presentational primitives.
  *
- * Every interactive element here is keyboard-operable, has an accessible name, and meets
- * the 44px touch target minimum. Those are requirements of the product, not polish: an
- * operator responding to an incident may well be on a phone.
+ * Server components by default: none of these has interactivity, so shipping them to the
+ * browser would be pure cost. Interactive controls live in their own `'use client'`
+ * modules (see copy-button.tsx), and pure helpers in format.ts, so a server component can
+ * call them.
  */
-
-export interface AddressLinkProps {
-  readonly address: string;
-  readonly chainId: number;
-  readonly label?: string;
-}
-
-const EXPLORER: Readonly<Record<number, string>> = {
-  196: 'https://www.oklink.com/x-layer',
-  1952: 'https://www.oklink.com/x-layer-test',
-};
-
-/** Truncate for display while keeping enough of both ends to be recognisable. */
-export function truncateAddress(address: string): string {
-  return address.length <= 14 ? address : `${address.slice(0, 8)}…${address.slice(-6)}`;
-}
-
-export function AddressLink({ address, chainId, label }: AddressLinkProps) {
-  const base = EXPLORER[chainId];
-  const text = label ?? truncateAddress(address);
-
-  if (base === undefined) {
-    // No explorer for this chain: show the value rather than a dead link.
-    return <span className="mono">{text}</span>;
-  }
-
-  return (
-    <a
-      className="address-link mono"
-      href={`${base}/address/${address}`}
-      target="_blank"
-      rel="noreferrer noopener"
-      // The visible text is truncated, so the accessible name carries the full value.
-      aria-label={`${label ?? 'Address'} ${address}, opens in a new tab`}
-    >
-      {text}
-    </a>
-  );
-}
-
-export interface TxLinkProps {
-  readonly txHash: string;
-  readonly chainId: number;
-}
-
-export function TxLink({ txHash, chainId }: TxLinkProps) {
-  const base = EXPLORER[chainId];
-  if (base === undefined) return <span className="mono">{truncateAddress(txHash)}</span>;
-  return (
-    <a
-      className="address-link mono"
-      href={`${base}/tx/${txHash}`}
-      target="_blank"
-      rel="noreferrer noopener"
-      aria-label={`Transaction ${txHash}, opens in a new tab`}
-    >
-      {truncateAddress(txHash)}
-    </a>
-  );
-}
-
-export interface CopyButtonProps {
-  readonly value: string;
-  readonly label: string;
-}
-
-/**
- * Copy to clipboard.
- *
- * Announces the result in a polite live region rather than moving focus, and reverts after
- * a moment so the control does not permanently read "Copied".
- */
-export function CopyButton({ value, label }: CopyButtonProps) {
-  const [copied, setCopied] = useState(false);
-  const statusId = useId();
-
-  const copy = useCallback(
-    (event: React.MouseEvent) => {
-      // A copy control inside a clickable row must not also navigate.
-      event.stopPropagation();
-      void navigator.clipboard
-        .writeText(value)
-        .then(() => {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2_000);
-        })
-        .catch(() => setCopied(false));
-    },
-    [value],
-  );
-
-  return (
-    <>
-      <button type="button" className="icon-button" onClick={copy} aria-label={`Copy ${label}`}>
-        <svg
-          viewBox="0 0 16 16"
-          width="14"
-          height="14"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          aria-hidden="true"
-          focusable="false"
-        >
-          <rect x="5.5" y="5.5" width="8" height="8" rx="1.5" />
-          <path d="M10.5 5.5V4A1.5 1.5 0 0 0 9 2.5H4A1.5 1.5 0 0 0 2.5 4v5A1.5 1.5 0 0 0 4 10.5h1.5" />
-        </svg>
-      </button>
-      <span id={statusId} role="status" aria-live="polite" className="visually-hidden">
-        {copied ? `${label} copied` : ''}
-      </span>
-    </>
-  );
-}
 
 export interface MetricCardProps {
   readonly label: string;

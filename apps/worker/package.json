@@ -13,6 +13,14 @@
   },
   "dependencies": {
     "@cag/config": "workspace:*",
-    "@cag/db": "workspace:*"
+    "@cag/db": "workspace:*",
+    "@cag/observability": "workspace:*",
+    "@cag/reconciler": "workspace:*",
+    "@cag/xlayer-reader": "workspace:*",
+    "@cag/xstocks-client": "workspace:*",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.1"
   }
 }

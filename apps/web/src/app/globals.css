@@ -475,3 +475,266 @@ body {
     font-size: 10px;
   }
 }
+
+/* --- Page structure --- */
+.page-header {
+  margin-bottom: var(--space-5);
+}
+
+.page-title {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-xl);
+  letter-spacing: -0.01em;
+}
+
+.page-subtitle {
+  margin: 0;
+  color: var(--text-muted);
+  max-width: 70ch;
+}
+
+.section-title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-lg);
+}
+
+.metrics,
+.sources,
+.assets {
+  margin-bottom: var(--space-6);
+}
+
+.metrics__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-4);
+}
+
+/* --- Source health strip --- */
+.sources__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.sources__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.sources__name {
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+
+.sources__detail {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+/* --- Filters --- */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.filters__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.filters__label {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.filters__input {
+  min-height: var(--touch-target-min);
+  padding: 0 var(--space-3);
+  background: var(--surface-inset);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font: inherit;
+}
+
+.filters__submit {
+  min-height: var(--touch-target-min);
+  padding: 0 var(--space-5);
+  background: var(--action-primary);
+  color: var(--action-primary-fg);
+  border: none;
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.filters__submit:hover {
+  background: var(--action-primary-hover);
+}
+
+/* --- Data table --- */
+.table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--space-3);
+  background: var(--surface-muted);
+  border-bottom: 1px solid var(--border-default);
+  text-align: left;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.data-table tbody td,
+.data-table tbody th {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: left;
+  vertical-align: top;
+  font-weight: 400;
+}
+
+.data-table tbody tr:last-child td,
+.data-table tbody tr:last-child th {
+  border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+  background: var(--surface-raised);
+}
+
+.asset-link {
+  display: block;
+  color: var(--text-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.asset-link:hover {
+  text-decoration: underline;
+}
+
+.asset-id {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.address-cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.address-cell__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.address-cell__tag {
+  min-width: 4.25rem;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cell-detail {
+  margin-top: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.served-at {
+  margin: var(--space-2) 0 0;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  text-align: right;
+}
+
+/*
+ * Phone: the same markup becomes cards. One DOM tree, so the two presentations cannot
+ * drift apart, and critical status stays visible without opening anything.
+ */
+@media (max-width: 760px) {
+  .table-scroll {
+    border: none;
+  }
+
+  .data-table thead {
+    /* Not display:none — that would remove the headers from the accessibility tree too. */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .data-table,
+  .data-table tbody,
+  .data-table tr,
+  .data-table td,
+  .data-table th {
+    display: block;
+    width: 100%;
+  }
+
+  .data-table tr {
+    margin-bottom: var(--space-3);
+    background: var(--surface-raised);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2);
+  }
+
+  .data-table tbody td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

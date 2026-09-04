@@ -9,7 +9,8 @@
     "build": "tsc --build",
     "dev": "node --watch --experimental-strip-types src/index.ts",
     "start": "node dist/index.js",
-    "clean": "rm -rf dist tsconfig.tsbuildinfo"
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "openapi": "tsc --build && node dist/write-openapi.js"
   },
   "dependencies": {
     "@cag/config": "workspace:*",
@@ -25,5 +26,9 @@
     "@fastify/rate-limit": "^11.2.0",
     "fastify": "^5.12.1",
     "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.1",
+    "pg": "^8.23.0"
   }
 }

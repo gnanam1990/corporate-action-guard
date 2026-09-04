@@ -118,3 +118,66 @@ describe('manual review requires a real reason', () => {
     ).toBe(true);
   });
 });
+
+/**
+ * The published contract is generated from the SAME schemas the server validates with. A
+ * hand-maintained spec beside runtime validation always ends up describing a slightly
+ * different API than the one that exists, and the difference is found by an integrator in
+ * production.
+ */
+describe('OpenAPI contract', () => {
+  it('regenerating reproduces the committed document exactly', async () => {
+    const { readFileSync } = await import('node:fs');
+    const path = await import('node:path');
+    const { buildOpenApiDocument } = await import('../src/openapi.js');
+
+    const file = path.resolve(import.meta.dirname, '../openapi/openapi.json');
+    const committed = JSON.parse(readFileSync(file, 'utf8')) as unknown;
+    expect(buildOpenApiDocument()).toEqual(committed);
+  });
+
+  it('documents every route the server exposes', async () => {
+    const { buildOpenApiDocument } = await import('../src/openapi.js');
+    const paths = Object.keys((buildOpenApiDocument() as { paths: Record<string, unknown> }).paths);
+    for (const route of [
+      '/v1/health/live',
+      '/v1/health/ready',
+      '/v1/assets',
+      '/v1/assets/{assetId}',
+      '/v1/system/coverage',
+      '/v1/system/source-health',
+      '/v1/incidents',
+      '/v1/preflight',
+      '/v1/incidents/{incidentId}/review-resolution',
+    ]) {
+      expect(paths, `${route} is undocumented`).toContain(route);
+    }
+  });
+
+  it('models the preflight response as a union, so a BLOCK with a receipt is unrepresentable', async () => {
+    const { buildOpenApiDocument } = await import('../src/openapi.js');
+    const doc = buildOpenApiDocument() as { components: { schemas: Record<string, unknown> } };
+    const serialized = JSON.stringify(doc.components.schemas['PreflightResponse']);
+    expect(serialized).toMatch(/anyOf|oneOf/);
+  });
+
+  it('marks the Idempotency-Key header as required on preflight', async () => {
+    const { buildOpenApiDocument } = await import('../src/openapi.js');
+    const doc = buildOpenApiDocument() as {
+      paths: Record<string, { post?: { parameters?: { name: string; required?: boolean }[] } }>;
+    };
+    const header = doc.paths['/v1/preflight']?.post?.parameters?.find(
+      (p) => p.name === 'Idempotency-Key',
+    );
+    expect(header?.required).toBe(true);
+  });
+
+  it('states the enforcement boundary in the contract description itself', async () => {
+    // An integrator reading only the spec must still learn that the guard is bypassable.
+    const { buildOpenApiDocument } = await import('../src/openapi.js');
+    const doc = buildOpenApiDocument() as { info: { description: string } };
+    expect(doc.info.description).toMatch(/ActionGuardAdapter/);
+    expect(doc.info.description).toMatch(/bypass/i);
+    expect(doc.info.description).toMatch(/read-only/i);
+  });
+});
