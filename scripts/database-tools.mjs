@@ -29,8 +29,20 @@ export async function run(command, args, env) {
     if (mount && !path.isAbsolute(mount)) {
       throw new Error('POSTGRES_TOOLS_MOUNT must be an absolute path');
     }
+    const uid = process.getuid?.();
+    const gid = process.getgid?.();
+    if (uid === undefined || gid === undefined) {
+      throw new Error('containerized PostgreSQL tools require a Unix user identity');
+    }
 
-    const dockerArgs = ['run', '--rm', '--network', process.env.POSTGRES_TOOLS_NETWORK || 'host'];
+    const dockerArgs = [
+      'run',
+      '--rm',
+      '--user',
+      `${uid}:${gid}`,
+      '--network',
+      process.env.POSTGRES_TOOLS_NETWORK || 'host',
+    ];
     for (const name of postgresEnvironment) {
       if (env[name] !== undefined) dockerArgs.push('--env', name);
     }
