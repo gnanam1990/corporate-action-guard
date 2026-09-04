@@ -76,6 +76,23 @@ export default function PreflightPage() {
         </InlineAlert>
       </div>
 
+      {deployment === undefined && (
+        <div style={{ marginBottom: 'var(--space-5)' }}>
+          {/*
+            Said BEFORE the form, not after a submission. An operator should learn that
+            execution is unavailable before filling anything in, not once they have.
+          */}
+          <InlineAlert
+            tone="warning"
+            title="Preflight works. Execution does not — nothing is deployed."
+          >
+            You can evaluate any operation and see the decision, the reason codes, and the operation
+            digest. There is no adapter to submit to, so no transaction can be made from this page.
+            Deploy with <code>pnpm testnet:deploy</code>.
+          </InlineAlert>
+        </div>
+      )}
+
       <PreflightForm apiBaseUrl={apiBaseUrl} deployment={deployment} />
 
       <section
