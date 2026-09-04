@@ -147,3 +147,33 @@ describe('disagreement is still caught', () => {
     expect(result.agreement).toBe('MATCH');
   });
 });
+
+/**
+ * The fault harness must be reachable from the worker.
+ *
+ * It was written, tested, and documented in a runbook — and never wired in. The runbook
+ * told an operator to run `FAULTS=XSTOCKS_TIMEOUT node apps/worker/dist/index.js`, and the
+ * command did nothing at all. Found by running the documented command, not by a test.
+ */
+describe('fault injection is reachable from the worker', () => {
+  it('parses FAULTS from the environment', async () => {
+    const { FaultInjector } = await import('@cag/observability');
+    const injector = FaultInjector.fromEnv('XSTOCKS_TIMEOUT');
+    expect(injector?.activeKinds()).toEqual(['XSTOCKS_TIMEOUT']);
+  });
+
+  it('is off when FAULTS is unset, so a normal run is unaffected', async () => {
+    const { FaultInjector } = await import('@cag/observability');
+    expect(FaultInjector.fromEnv(undefined)).toBeUndefined();
+  });
+
+  it('the worker source constructs the injector and passes it to the client', async () => {
+    // A unit test cannot start the worker, so assert the wiring exists in source. Without
+    // this the harness silently detaches again the next time the file is refactored.
+    const { readFileSync } = await import('node:fs');
+    const path = await import('node:path');
+    const src = readFileSync(path.resolve(import.meta.dirname, '../src/index.ts'), 'utf8');
+    expect(src).toMatch(/FaultInjector\.fromEnv\(process\.env\['FAULTS'\]\)/);
+    expect(src).toMatch(/faults === undefined \? \{\} : \{ faults \}/);
+  });
+});
