@@ -1,4 +1,8 @@
 import { spawn } from 'node:child_process';
+import path from 'node:path';
+
+const postgresCommands = new Set(['pg_dump', 'pg_restore', 'psql']);
+const postgresEnvironment = ['PGHOST', 'PGPORT', 'PGUSER', 'PGPASSWORD', 'PGDATABASE', 'PGSSLMODE'];
 
 export function postgresEnv(databaseUrl, databaseOverride) {
   const url = new URL(databaseUrl);
@@ -19,6 +23,25 @@ export function postgresEnv(databaseUrl, databaseOverride) {
 }
 
 export async function run(command, args, env) {
+  const toolsImage = process.env.POSTGRES_TOOLS_IMAGE;
+  if (toolsImage && postgresCommands.has(command)) {
+    const mount = process.env.POSTGRES_TOOLS_MOUNT;
+    if (mount && !path.isAbsolute(mount)) {
+      throw new Error('POSTGRES_TOOLS_MOUNT must be an absolute path');
+    }
+
+    const dockerArgs = ['run', '--rm', '--network', process.env.POSTGRES_TOOLS_NETWORK || 'host'];
+    for (const name of postgresEnvironment) {
+      if (env[name] !== undefined) dockerArgs.push('--env', name);
+    }
+    if (mount) dockerArgs.push('--volume', `${mount}:${mount}:rw`);
+    dockerArgs.push(toolsImage, command, ...args);
+    return runDirect('docker', dockerArgs, env);
+  }
+  return runDirect(command, args, env);
+}
+
+async function runDirect(command, args, env) {
   await new Promise((resolve, reject) => {
     const child = spawn(command, args, { env, stdio: ['ignore', 'pipe', 'pipe'] });
     let stderr = '';

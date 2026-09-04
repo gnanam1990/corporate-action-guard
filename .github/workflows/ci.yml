@@ -100,7 +100,7 @@ jobs:
     timeout-minutes: 20
     services:
       postgres:
-        image: postgres:17-alpine
+        image: postgres:17-alpine@sha256:18cfe3ef5e6815560c98237d6216d1e5119702fb0f3894c8785dd58b8bbe5d73
         env:
           POSTGRES_USER: guard
           POSTGRES_PASSWORD: guard
@@ -138,11 +138,10 @@ jobs:
         env:
           BACKUP_PATH: ${{ runner.temp }}/cag-ci.dump
           DATABASE_ADMIN_URL: postgresql://guard:guard@localhost:5432/guard
+          POSTGRES_TOOLS_IMAGE: postgres:17-alpine@sha256:18cfe3ef5e6815560c98237d6216d1e5119702fb0f3894c8785dd58b8bbe5d73
+          POSTGRES_TOOLS_MOUNT: ${{ runner.temp }}
+          POSTGRES_TOOLS_NETWORK: host
         run: |
-          sudo apt-get update
-          sudo apt-get install --yes postgresql-client-17
-          export PATH="/usr/lib/postgresql/17/bin:$PATH"
-          pg_dump --version
           pnpm db:backup
           pnpm db:restore-drill
 
