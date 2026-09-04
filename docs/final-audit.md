@@ -101,9 +101,8 @@ caps any verdict at CONDITIONAL.
 ## Blocking items
 
 1. No testnet deployment, so scenarios B–H of the proof package cannot be executed.
-2. No console feature pages, so no operator-facing claim can be demonstrated.
-3. No SDK or CLI, so no integration claim can be demonstrated.
-4. Event rules unpublished, capping the verdict independently.
+2. No Preflight Lab, so the on-chain rejection path has no operator-facing demonstration.
+3. Event rules unpublished, capping the verdict independently.
 
 ## What would change the verdict
 

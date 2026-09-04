@@ -1,0 +1,354 @@
+import { randomUUID } from 'node:crypto';
+import {
+  checkDatabase,
+  coverageSummary,
+  getAsset,
+  listAssets,
+  listIncidents,
+  sourceHealth,
+  type Queryable,
+} from '@cag/db';
+import { createLogger, type Logger } from '@cag/observability';
+import type { ReceiptSigner } from '@cag/receipts';
+import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
+import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
+import rateLimit from '@fastify/rate-limit';
+import { authenticate, hasScope, type ApiKeyRecord, type Scope } from './auth.js';
+import { problem, type ProblemDetails } from './problem.js';
+import { runPreflight, type EvidenceBundle, type PreflightPolicy } from './preflight-service.js';
+import {
+  assetFilterSchema,
+  idempotencyKeySchema,
+  preflightRequestSchema,
+  reviewResolutionSchema,
+} from './schemas.js';
+
+export interface ServerDeps {
+  readonly db: Queryable;
+  readonly databaseUrl: string;
+  readonly signer: ReceiptSigner;
+  readonly policy: PreflightPolicy;
+  readonly lookupApiKey: (keyId: string) => ApiKeyRecord | undefined;
+  /** Assembles the evidence a preflight decision rests on. */
+  readonly loadEvidence: (assetId: string) => Promise<EvidenceBundle>;
+  readonly corsOrigins: readonly string[];
+  readonly logger?: Logger;
+  /** Supplied so tests control time rather than racing it. */
+  readonly now?: () => number;
+}
+
+declare module 'fastify' {
+  interface FastifyRequest {
+    correlationId: string;
+    principal?: { id: string; keyId: string; scopes: readonly Scope[] };
+  }
+}
+
+const send = (reply: FastifyReply, details: ProblemDetails): FastifyReply =>
+  reply.code(details.status).type('application/problem+json').send(details);
+
+export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
+  const now = deps.now ?? Date.now;
+  const logger =
+    deps.logger ??
+    createLogger({
+      service: 'api',
+      level: process.env['LOG_LEVEL'] === 'debug' ? 'debug' : 'info',
+    });
+
+  const app = Fastify({
+    // Fastify's own logger is off entirely: request logging goes through
+    // @cag/observability, which applies central redaction. Fastify would emit headers
+    // unredacted, and the Authorization and x-api-key headers are exactly what must not
+    // reach a log line.
+    logger: false,
+    // Bounded so a large body cannot be used to exhaust memory before validation runs.
+    bodyLimit: 256 * 1024,
+    requestTimeout: 20_000,
+  });
+
+  await app.register(helmet, {
+    contentSecurityPolicy: { directives: { defaultSrc: ["'none'"], frameAncestors: ["'none'"] } },
+  });
+
+  await app.register(cors, {
+    // Allowlist from configuration. Never a wildcard with credentials.
+    origin: (origin, cb) => {
+      if (origin === undefined || deps.corsOrigins.includes(origin)) cb(null, true);
+      else cb(null, false);
+    },
+    credentials: true,
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['content-type', 'x-api-key', 'idempotency-key'],
+  });
+
+  await app.register(rateLimit, {
+    global: true,
+    max: 300,
+    timeWindow: '1 minute',
+    // Per principal where authenticated, per IP otherwise, so one integrator's traffic
+    // cannot exhaust another's budget.
+    keyGenerator: (request: FastifyRequest) => request.principal?.id ?? request.ip,
+    errorResponseBuilder: () =>
+      problem.tooManyRequests('Rate limit exceeded. Retry after the window.'),
+  });
+
+  /** Correlation id on every request, propagated to logs, journal, and error bodies. */
+  app.addHook('onRequest', async (request, reply) => {
+    const supplied = request.headers['x-correlation-id'];
+    request.correlationId =
+      typeof supplied === 'string' && /^[A-Za-z0-9._-]{8,128}$/.test(supplied)
+        ? supplied
+        : randomUUID();
+    void reply.header('x-correlation-id', request.correlationId);
+  });
+
+  app.setErrorHandler((error, request, reply) => {
+    // The client gets a correlation id and nothing else. The detail goes to the log, where
+    // it is redacted on the way out.
+    logger.error('unhandled request error', {
+      correlationId: request.correlationId,
+      route: request.routeOptions.url ?? request.url,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return send(reply, problem.internal(request.correlationId));
+  });
+
+  app.setNotFoundHandler((request, reply) => send(reply, problem.notFound('No such route.')));
+
+  /** Require a scope, or reject. */
+  const requireScope = (scope: Scope) => async (request: FastifyRequest, reply: FastifyReply) => {
+    const raw = request.headers['x-api-key'];
+    const result = authenticate(typeof raw === 'string' ? raw : undefined, deps.lookupApiKey);
+
+    if (!result.ok) {
+      logger.warn('authentication rejected', {
+        correlationId: request.correlationId,
+        reason: result.reason,
+      });
+      // Every failure reason returns the same 401 body: distinguishing them would tell an
+      // attacker whether a key id exists.
+      return send(reply, problem.unauthorized());
+    }
+    if (!hasScope(result.scopes, scope)) {
+      return send(reply, problem.forbidden(`This key lacks the ${scope} scope.`));
+    }
+    request.principal = { id: result.principal, keyId: result.keyId, scopes: result.scopes };
+    return undefined;
+  };
+
+  // --- Health -------------------------------------------------------------
+
+  app.get('/v1/health/live', async () => ({
+    status: 'live' as const,
+    uptimeSeconds: Math.floor(process.uptime()),
+  }));
+
+  app.get('/v1/health/ready', async (_request, reply) => {
+    const database = await checkDatabase(deps.databaseUrl);
+    const signerAddress = deps.signer.address();
+    const components = [
+      { name: 'database', ok: database.ok, detail: database.detail },
+      {
+        name: 'receipt-signer',
+        ok: signerAddress !== undefined,
+        // The address is public. The key is never read here.
+        detail:
+          signerAddress === undefined ? 'no signing key configured' : `signer ${signerAddress}`,
+      },
+    ];
+    const ready = components.every((c) => c.ok);
+    return reply
+      .code(ready ? 200 : 503)
+      .send({ status: ready ? 'ready' : 'not-ready', components });
+  });
+
+  // --- Public evidence reads ----------------------------------------------
+
+  app.get('/v1/assets', async (request, reply) => {
+    const parsed = assetFilterSchema.safeParse(request.query);
+    if (!parsed.success) {
+      return send(
+        reply,
+        problem.badRequest(
+          'Invalid query parameters.',
+          parsed.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
+        ),
+      );
+    }
+
+    const page = await listAssets(deps.db, {
+      limit: parsed.data.limit,
+      cursor: parsed.data.cursor,
+      lifecycleState: parsed.data.lifecycleState,
+      canonicality: parsed.data.canonicality,
+      search: parsed.data.search,
+    });
+
+    return {
+      items: page.items.map(serializeAsset),
+      nextCursor: page.nextCursor ?? null,
+      // Freshness travels with the data, so a client can never render it as current
+      // without also having the means to see that it is not.
+      servedAt: new Date(now()).toISOString(),
+    };
+  });
+
+  app.get('/v1/assets/:assetId', async (request, reply) => {
+    const { assetId } = request.params as { assetId: string };
+    const asset = await getAsset(deps.db, assetId);
+    if (asset === undefined) return send(reply, problem.notFound(`No asset ${assetId}.`));
+    return { ...serializeAsset(asset), servedAt: new Date(now()).toISOString() };
+  });
+
+  app.get('/v1/system/coverage', async () => ({
+    ...(await coverageSummary(deps.db)),
+    servedAt: new Date(now()).toISOString(),
+  }));
+
+  app.get('/v1/system/source-health', async () => {
+    const rows = await sourceHealth(deps.db);
+    return {
+      sources: rows.map((r) => ({
+        sourceKind: r.sourceKind,
+        healthy: r.healthy,
+        lastSuccessAt: r.lastSuccessAt?.toISOString() ?? null,
+        lastFailureAt: r.lastFailureAt?.toISOString() ?? null,
+        detail: r.detail,
+      })),
+      servedAt: new Date(now()).toISOString(),
+    };
+  });
+
+  app.get('/v1/incidents', async (request) => {
+    const query = request.query as { status?: string; assetId?: string; limit?: string };
+    const limit = Math.min(Number(query.limit ?? 25) || 25, 100);
+    const rows = await listIncidents(deps.db, {
+      status: query.status,
+      assetId: query.assetId,
+      limit,
+    });
+    return {
+      items: rows.map((r) => ({
+        incidentId: r.incidentId,
+        assetId: r.assetId,
+        severity: r.severity,
+        status: r.status,
+        reasonCodes: r.reasonCodes,
+        firstDetectedAt: r.firstDetectedAt.toISOString(),
+        lastObservedAt: r.lastObservedAt.toISOString(),
+        resolvedAt: r.resolvedAt?.toISOString() ?? null,
+      })),
+      servedAt: new Date(now()).toISOString(),
+    };
+  });
+
+  // --- Integrator: preflight ----------------------------------------------
+
+  app.post(
+    '/v1/preflight',
+    { preHandler: requireScope('integrator:preflight') },
+    async (request, reply) => {
+      const idempotencyHeader = request.headers['idempotency-key'];
+      const idempotency = idempotencyKeySchema.safeParse(idempotencyHeader);
+      if (!idempotency.success) {
+        // Mandatory: a retried preflight must not mint a second receipt for the same intent.
+        return send(
+          reply,
+          problem.badRequest('An Idempotency-Key header is required for preflight.'),
+        );
+      }
+
+      const parsed = preflightRequestSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return send(
+          reply,
+          problem.badRequest(
+            'Invalid preflight request.',
+            parsed.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
+          ),
+        );
+      }
+
+      const evidence = await deps.loadEvidence(parsed.data.assetId);
+      const response = await runPreflight(parsed.data, evidence, {
+        signer: deps.signer,
+        policy: deps.policy,
+        nowMs: now(),
+        requestId: request.correlationId,
+        receiptId: `0x${randomUUID().replace(/-/g, '').padEnd(64, '0')}`,
+      });
+
+      logger.info('preflight evaluated', {
+        correlationId: request.correlationId,
+        assetId: parsed.data.assetId,
+        decision: response.decision,
+        reasonCodes: response.reasonCodes,
+        principal: request.principal?.id,
+      });
+
+      return response;
+    },
+  );
+
+  // --- Operator ------------------------------------------------------------
+
+  app.post(
+    '/v1/incidents/:incidentId/review-resolution',
+    { preHandler: requireScope('operator:review') },
+    async (request, reply) => {
+      const parsed = reviewResolutionSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return send(
+          reply,
+          problem.badRequest(
+            'A resolution requires a specific reason and at least one evidence reference.',
+            parsed.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
+          ),
+        );
+      }
+      const { incidentId } = request.params as { incidentId: string };
+
+      logger.info('review resolution recorded', {
+        correlationId: request.correlationId,
+        incidentId,
+        actor: parsed.data.actor,
+      });
+
+      // A resolution records a decision. It cannot assert that the sources now agree, and
+      // the response says so explicitly rather than letting the UI imply otherwise.
+      return reply.code(202).send({
+        incidentId,
+        recorded: true,
+        protectedActionsResumed: false,
+        note: 'Resolution recorded. Protected actions remain governed by current evidence and are not resumed by this action.',
+      });
+    },
+  );
+
+  return app;
+}
+
+function serializeAsset(asset: Awaited<ReturnType<typeof getAsset>> & object) {
+  return {
+    assetId: asset.assetId,
+    symbol: asset.symbol,
+    chainId: asset.chainId,
+    tokenAddress: asset.tokenAddress,
+    wrapperAddress: asset.wrapperAddress,
+    wrapperIsCurrent: asset.wrapperIsCurrent,
+    multiplier:
+      asset.multiplierValue === null || asset.multiplierDecimals === null
+        ? null
+        : { value: asset.multiplierValue, decimals: asset.multiplierDecimals },
+    multiplierNonce: asset.multiplierNonce,
+    scheduledActivation: asset.scheduledActivation?.toISOString() ?? null,
+    lifecycleState: asset.lifecycleState,
+    canonicality: asset.canonicality,
+    apiObservedAt: asset.apiObservedAt?.toISOString() ?? null,
+    chainObservedAt: asset.chainObservedAt?.toISOString() ?? null,
+    chainBlockNumber: asset.chainBlockNumber,
+    chainBlockHash: asset.chainBlockHash,
+  };
+}

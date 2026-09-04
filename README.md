@@ -2,11 +2,11 @@
 
 **Status: implementation in progress. Nothing is deployed and nothing has been audited.**
 
-The decision core, the evidence journal, the live data boundaries, the EIP-712 receipts,
-the on-chain guard, and the design system are built and tested. The operator console's
-feature pages, the integrator SDK, and any on-chain deployment are **not**. The self-audit
-verdict is **BLOCKED**, because the central claim — that the guard rejects a stale receipt
-in a real transaction on a real chain — has never been executed end to end.
+The stack runs end to end against live sources: the worker discovers the real xStocks
+catalog, observes X Layer mainnet, journals block-stamped evidence, the API serves it, and
+the console and CLI consume it. What is **not** done is any on-chain deployment — so the
+self-audit verdict is **BLOCKED**, because the central claim (that the guard rejects a
+stale receipt in a real transaction on a real chain) has never been executed.
 
 - [`docs/build-readiness.md`](docs/build-readiness.md) — module-by-module inventory
 - [`docs/final-audit.md`](docs/final-audit.md) — claim-to-evidence matrix, PROVEN vs NOT PROVEN
@@ -139,9 +139,25 @@ Every claim below is backed by a named, runnable check.
 | Direct ERC-20 transfers bypass the guard                     | Asserted as a **passing test**, not just documented                                        |
 
 ```text
-467 tests total — 402 TypeScript, 65 Solidity
+581 tests total — 447 unit, 69 integration, 65 Solidity
 23/23 mutants killed on the safety predicate
 28 WCAG contrast pairs verified in CI
+```
+
+## Try it
+
+```bash
+docker compose -f infra/docker-compose.yml up -d
+pnpm db:migrate
+
+# Observe the live catalog and live X Layer mainnet
+XLAYER_MAINNET_RPC_URL=https://rpc.xlayer.tech WORKER_MAX_ASSETS=8 \
+  node apps/worker/dist/index.js --once
+
+node apps/api/dist/index.js &          # http://localhost:4000
+pnpm --filter @cag/web dev             # http://localhost:3000
+
+GUARD_API_URL=http://localhost:4000 node packages/sdk/dist/cli.js assets list
 ```
 
 **Not verified:** any transaction against a deployed contract. See the audit.

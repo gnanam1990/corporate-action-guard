@@ -26,3 +26,16 @@ export {
   type EvidenceSourceKind,
 } from './types.js';
 export { acquireLease, releaseLease, renewLease, withLease, type Lease } from './leases.js';
+export {
+  coverageSummary,
+  getAsset,
+  listAssets,
+  listIncidents,
+  sourceHealth,
+  type AssetFilter,
+  type AssetRow,
+  type CoverageSummary,
+  type IncidentRow,
+  type Page,
+  type SourceHealthRow,
+} from './queries.js';

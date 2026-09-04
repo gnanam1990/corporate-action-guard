@@ -17,6 +17,13 @@
   ],
   "scripts": {
     "build": "tsc --build",
-    "clean": "rm -rf dist tsconfig.tsbuildinfo"
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "cli": "tsc --build && node dist/cli.js"
+  },
+  "dependencies": {
+    "viem": "^2.56.3"
+  },
+  "bin": {
+    "guard": "./dist/cli.js"
   }
 }
