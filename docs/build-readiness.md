@@ -18,7 +18,7 @@ The honest inventory. A module is `IMPLEMENTED` only when its code exists in thi
 repository and its own gates have been run. Being described in the prompt pack is not
 evidence that anything exists.
 
-**16 implemented · 4 partial · 4 absent**, of 24 modules.
+**17 implemented · 3 partial · 4 absent**, of 24 modules.
 
 ## Status
 
@@ -31,7 +31,7 @@ evidence that anything exists.
 | 04 | xStocks API client | **IMPLEMENTED** | Built against the verified live OpenAPI v2 contract; 4 live contract tests |
 | 05 | X Layer reader and indexer | **IMPLEMENTED** | Reads verified live on chain 196; worker observation cycle journals block-stamped evidence |
 | 06 | Canonical asset/wrapper registry | **IMPLEMENTED** | Six-check matrix with PASS/FAIL/UNKNOWN per row, registry diffing |
-| 07 | Reconciler and recovery | **PARTIAL** | Deterministic reconciler, leases, dedup, leased polling worker. The worker does not yet record a source comparison, so agreement reports INCOMPLETE — which blocks |
+| 07 | Reconciler and recovery | **IMPLEMENTED** | Deterministic reconciler, durable leases, incident dedup, and a leased polling worker that records the API/chain comparison per asset |
 | 08 | Operation digest and EIP-712 receipt | **IMPLEMENTED** | Ten bound fields, mutation-tested; golden vectors shared with Solidity and the SDK |
 | 09 | Solidity TESTNET FIXTURE | **IMPLEMENTED** | Asset, wrapper, legacy wrapper; 21 tests including fuzz on nonce monotonicity. Not deployed |
 | 10 | ActionGuardAdapter and ProtectedVault | **IMPLEMENTED** | 34 adversarial tests; digest proven identical to TypeScript. Not deployed |

@@ -1,5 +1,5 @@
 {
-  "$comment": "Single source of truth for module status. docs/build-readiness.md is GENERATED from this file by scripts/generate-readiness.mjs, and CI fails if the two disagree. A hand-maintained status table drifts silently — this one did, for eleven commits, because a formatter realigned its columns and every subsequent string edit no-opped without complaint.",
+  "$comment": "Single source of truth for module status. docs/build-readiness.md is GENERATED from this file by scripts/generate-readiness.mjs, and CI fails if the two disagree. A hand-maintained status table drifts silently \u2014 this one did, for eleven commits, because a formatter realigned its columns and every subsequent string edit no-opped without complaint.",
   "recordedAt": "2026-09-04",
   "modules": [
     {
@@ -47,8 +47,8 @@
     {
       "id": "07",
       "name": "Reconciler and recovery",
-      "status": "PARTIAL",
-      "note": "Deterministic reconciler, leases, dedup, leased polling worker. The worker does not yet record a source comparison, so agreement reports INCOMPLETE — which blocks"
+      "status": "IMPLEMENTED",
+      "note": "Deterministic reconciler, durable leases, incident dedup, and a leased polling worker that records the API/chain comparison per asset"
     },
     {
       "id": "08",

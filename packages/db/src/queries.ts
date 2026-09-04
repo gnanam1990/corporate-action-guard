@@ -25,7 +25,19 @@ export interface AssetRow {
   readonly chainObservedAt: Date | null;
   readonly chainBlockNumber: string | null;
   readonly chainBlockHash: string | null;
+  /** NULL means never compared, which is distinct from INCOMPLETE. Both block. */
+  readonly sourceAgreement: 'MATCH' | 'MISMATCH' | 'INCOMPLETE' | null;
+  readonly comparisonFields: readonly ComparisonField[] | null;
+  readonly comparedAt: Date | null;
   readonly updatedAt: Date;
+}
+
+export interface ComparisonField {
+  readonly field: string;
+  readonly agreement: 'MATCH' | 'MISMATCH' | 'INCOMPLETE';
+  readonly apiValue: string | null;
+  readonly chainValue: string | null;
+  readonly requiredForAgreement: boolean;
 }
 
 export interface AssetFilter {
@@ -79,7 +91,8 @@ export async function listAssets(db: Queryable, filter: AssetFilter): Promise<Pa
     `SELECT asset_id, symbol, chain_id, token_address, wrapper_address, wrapper_is_current,
             multiplier_value, multiplier_decimals, multiplier_nonce, scheduled_activation,
             lifecycle_state, canonicality, api_observed_at, chain_observed_at,
-            chain_block_number, chain_block_hash, updated_at
+            chain_block_number, chain_block_hash,
+            source_agreement, comparison_fields, compared_at, updated_at
      FROM current_assets
      ${conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''}
      ORDER BY asset_id ASC
@@ -114,6 +127,9 @@ function toAssetRow(row: Record<string, unknown>): AssetRow {
     chainObservedAt: (row['chain_observed_at'] as Date | null) ?? null,
     chainBlockNumber: row['chain_block_number'] === null ? null : String(row['chain_block_number']),
     chainBlockHash: (row['chain_block_hash'] as string | null) ?? null,
+    sourceAgreement: (row['source_agreement'] as AssetRow['sourceAgreement']) ?? null,
+    comparisonFields: (row['comparison_fields'] as ComparisonField[] | null) ?? null,
+    comparedAt: (row['compared_at'] as Date | null) ?? null,
     updatedAt: row['updated_at'] as Date,
   };
 }
@@ -123,7 +139,8 @@ export async function getAsset(db: Queryable, assetId: string): Promise<AssetRow
     `SELECT asset_id, symbol, chain_id, token_address, wrapper_address, wrapper_is_current,
             multiplier_value, multiplier_decimals, multiplier_nonce, scheduled_activation,
             lifecycle_state, canonicality, api_observed_at, chain_observed_at,
-            chain_block_number, chain_block_hash, updated_at
+            chain_block_number, chain_block_hash,
+            source_agreement, comparison_fields, compared_at, updated_at
      FROM current_assets WHERE asset_id = $1`,
     [assetId],
   );
@@ -135,6 +152,8 @@ export interface CoverageSummary {
   readonly canonicallyVerified: number;
   readonly pendingOrGuardWindow: number;
   readonly mismatchedOrReview: number;
+  /** Assets where the API and the chain agreed on every required field. */
+  readonly sourcesAgree: number;
 }
 
 /**
@@ -150,7 +169,8 @@ export async function coverageSummary(db: Queryable): Promise<CoverageSummary> {
        count(*)::int AS discovered,
        count(*) FILTER (WHERE canonicality = 'PASS')::int AS canonically_verified,
        count(*) FILTER (WHERE lifecycle_state IN ('PENDING','GUARD_WINDOW'))::int AS pending_or_guard,
-       count(*) FILTER (WHERE lifecycle_state IN ('MISMATCH','MANUAL_REVIEW'))::int AS mismatched
+       count(*) FILTER (WHERE lifecycle_state IN ('MISMATCH','MANUAL_REVIEW'))::int AS mismatched,
+       count(*) FILTER (WHERE source_agreement = 'MATCH')::int AS sources_agree
      FROM current_assets`,
   );
   const row = (rows[0] ?? {}) as Record<string, number>;
@@ -159,6 +179,7 @@ export async function coverageSummary(db: Queryable): Promise<CoverageSummary> {
     canonicallyVerified: row['canonically_verified'] ?? 0,
     pendingOrGuardWindow: row['pending_or_guard'] ?? 0,
     mismatchedOrReview: row['mismatched'] ?? 0,
+    sourcesAgree: row['sources_agree'] ?? 0,
   };
 }
 

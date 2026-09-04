@@ -34,6 +34,7 @@ export {
   sourceHealth,
   type AssetFilter,
   type AssetRow,
+  type ComparisonField,
   type CoverageSummary,
   type IncidentRow,
   type Page,

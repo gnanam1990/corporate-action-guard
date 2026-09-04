@@ -71,7 +71,8 @@ async function loadEvidence(assetId: string): Promise<EvidenceBundle> {
   const { rows } = await pool.query(
     `SELECT token_address, wrapper_address, wrapper_is_current, canonicality,
             multiplier_nonce, scheduled_activation, api_observed_at, chain_observed_at,
-            chain_block_number, chain_block_hash, last_event_id
+            chain_block_number, chain_block_hash, last_event_id,
+            source_agreement, comparison_fields
      FROM current_assets WHERE asset_id = $1`,
     [assetId],
   );
@@ -123,9 +124,33 @@ async function loadEvidence(assetId: string): Promise<EvidenceBundle> {
           ]
         : [],
     ),
-    // The worker has not yet been wired to record a comparison; until it does, agreement is
-    // reported as INCOMPLETE, which blocks. Absence is never rendered as agreement.
-    sourceComparison: { agreement: 'INCOMPLETE', fields: [] },
+    // The recorded comparison, or INCOMPLETE when the worker has not compared this asset
+    // yet. A NULL column means "never compared" — reported as INCOMPLETE, which blocks.
+    // Absence is never rendered as agreement.
+    sourceComparison: {
+      agreement:
+        row['source_agreement'] === 'MATCH' || row['source_agreement'] === 'MISMATCH'
+          ? row['source_agreement']
+          : 'INCOMPLETE',
+      fields: Array.isArray(row['comparison_fields'])
+        ? (
+            row['comparison_fields'] as {
+              field: string;
+              agreement: string;
+              apiValue: string | null;
+              chainValue: string | null;
+              requiredForAgreement: boolean;
+            }[]
+          ).map((f) => ({
+            field: f.field as
+              'multiplier' | 'multiplierNonce' | 'scheduledActivation' | 'wrapperAddress',
+            agreement: f.agreement as 'MATCH' | 'MISMATCH' | 'INCOMPLETE',
+            apiValue: f.apiValue ?? undefined,
+            chainValue: f.chainValue ?? undefined,
+            requiredForAgreement: f.requiredForAgreement,
+          }))
+        : [],
+    },
     ...(row['multiplier_nonce'] === null || row['multiplier_nonce'] === undefined
       ? {}
       : { onChainMultiplierNonce: BigInt(String(row['multiplier_nonce'])) }),

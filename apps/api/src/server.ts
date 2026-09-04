@@ -350,5 +350,8 @@ function serializeAsset(asset: Awaited<ReturnType<typeof getAsset>> & object) {
     chainObservedAt: asset.chainObservedAt?.toISOString() ?? null,
     chainBlockNumber: asset.chainBlockNumber,
     chainBlockHash: asset.chainBlockHash,
+    sourceAgreement: asset.sourceAgreement,
+    comparisonFields: asset.comparisonFields,
+    comparedAt: asset.comparedAt?.toISOString() ?? null,
   };
 }

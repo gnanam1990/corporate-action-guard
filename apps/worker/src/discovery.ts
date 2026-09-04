@@ -1,6 +1,17 @@
 import { randomUUID } from 'node:crypto';
 import { appendEvidence, applyEventToProjections, withTransaction } from '@cag/db';
 import type { Logger } from '@cag/observability';
+import {
+  compareSources,
+  DEFAULT_REQUIRED_AGREEMENT_FIELDS,
+  EXACT_TOLERANCE,
+  instant,
+  parseMultiplier,
+  unsafe,
+  type ApiObservation,
+  type ChainObservation,
+  type SourceComparison,
+} from '@cag/domain';
 import { verifyCanonicality } from '@cag/reconciler';
 import { XLayerError, type XLayerReader } from '@cag/xlayer-reader';
 import type { XStocksClient } from '@cag/xstocks-client';
@@ -35,6 +46,8 @@ export interface CycleResult {
   readonly discovered: number;
   readonly observed: number;
   readonly canonical: number;
+  /** Assets where the API and the chain agreed on every required field. */
+  readonly agreed: number;
   readonly failed: number;
   readonly durationMs: number;
 }
@@ -93,6 +106,7 @@ export async function runDiscoveryCycle(deps: DiscoveryDeps): Promise<CycleResul
       discovered: 0,
       observed: 0,
       canonical: 0,
+      agreed: 0,
       failed: 1,
       durationMs: deps.now() - startedAt,
     };
@@ -110,6 +124,7 @@ export async function runDiscoveryCycle(deps: DiscoveryDeps): Promise<CycleResul
       discovered: assets.length,
       observed: 0,
       canonical: 0,
+      agreed: 0,
       failed: 1,
       durationMs: deps.now() - startedAt,
     };
@@ -118,6 +133,7 @@ export async function runDiscoveryCycle(deps: DiscoveryDeps): Promise<CycleResul
   const limit = deps.maxAssets ?? assets.length;
   let observed = 0;
   let canonical = 0;
+  let agreed = 0;
   let failed = 0;
 
   for (const asset of assets.slice(0, limit)) {
@@ -152,6 +168,18 @@ export async function runDiscoveryCycle(deps: DiscoveryDeps): Promise<CycleResul
       observed++;
       if (record.outcome === 'PASS') canonical++;
 
+      // Compare the two sources. Without this the agreement verdict stays unknown and
+      // every protected action blocks — the correct direction to be wrong in, but a guard
+      // that refuses everything is an outage, not a guard.
+      const comparison = await compareForAsset(
+        deps,
+        asset.symbol,
+        deployment,
+        snapshot,
+        correlationId,
+      );
+      if (comparison.agreement === 'MATCH') agreed++;
+
       await journalAsset(
         deps,
         asset,
@@ -160,6 +188,7 @@ export async function runDiscoveryCycle(deps: DiscoveryDeps): Promise<CycleResul
         record.outcome,
         snapshot,
         correlationId,
+        comparison,
       );
     } catch (err) {
       failed++;
@@ -175,11 +204,109 @@ export async function runDiscoveryCycle(deps: DiscoveryDeps): Promise<CycleResul
     discovered: assets.length,
     observed,
     canonical,
+    agreed,
     failed,
     durationMs: deps.now() - startedAt,
   };
   log.info('discovery cycle complete', { ...result });
   return result;
+}
+
+/**
+ * Build the two observations and compare them.
+ *
+ * The subtle part is the multiplier. The API sends a decimal string and the chain returns
+ * a uint256 scaled by 1e18. `1.0032690125398187` and `1003269012539818700` are the SAME
+ * value at different scales, and `compareSources` rescales exactly — but only if each side
+ * is handed to it as fixed point rather than a float. Converting either through a double
+ * first would reintroduce the loss the whole design avoids.
+ *
+ * A field the API cannot supply is left ABSENT, never filled in from the chain value. That
+ * would be inventing agreement, which is precisely the failure mode the product exists to
+ * prevent.
+ */
+async function compareForAsset(
+  deps: DiscoveryDeps,
+  symbol: string,
+  deployment: { readonly address: string; readonly wrapperAddressV2?: string | undefined },
+  snapshot: Awaited<ReturnType<XLayerReader['observeAsset']>>,
+  correlationId: string,
+): Promise<SourceComparison> {
+  const nowInstant = instant(deps.now());
+
+  // The multiplier endpoint is per symbol and per network, so it is a second call. A
+  // failure here means the API could not supply the field — reported as absent, which
+  // yields INCOMPLETE, which blocks.
+  let apiMultiplier: ReturnType<typeof parseMultiplier> | undefined;
+  let apiActivationMs: number | undefined;
+
+  try {
+    const result = await deps.xstocks.getMultiplier(symbol, 'XLayer', correlationId);
+    // The exact literal from the raw body, not the parsed double.
+    if (result.exactCurrentMultiplier !== undefined) {
+      apiMultiplier = {
+        ok: true,
+        value: {
+          value: result.exactCurrentMultiplier.value,
+          decimals: result.exactCurrentMultiplier.decimals,
+        },
+      };
+    }
+    apiActivationMs = result.scheduledActivationMs;
+  } catch {
+    // Absent, not assumed. The comparison will report INCOMPLETE.
+    apiMultiplier = undefined;
+  }
+
+  const api: ApiObservation = {
+    provenance: {
+      sourceKind: 'XSTOCKS_API',
+      sourceLocator: `/public/assets/${symbol}/multiplier?network=XLayer`,
+      observedAt: nowInstant,
+    },
+    symbol: unsafe.symbol(symbol),
+    tokenAddress: unsafe.address(deployment.address),
+    ...(deployment.wrapperAddressV2 === undefined
+      ? {}
+      : { wrapperAddress: unsafe.address(deployment.wrapperAddressV2) }),
+    ...(apiMultiplier?.ok === true ? { multiplier: apiMultiplier.value } : {}),
+    ...(apiActivationMs === undefined ? {} : { scheduledActivation: instant(apiActivationMs) }),
+  };
+
+  const chain: ChainObservation = {
+    provenance: {
+      sourceKind: 'XLAYER_RPC',
+      sourceLocator: snapshot.providerName,
+      observedAt: nowInstant,
+    },
+    chainId: unsafe.chainId(snapshot.chainId),
+    blockNumber: unsafe.blockNumber(snapshot.blockNumber),
+    blockHash: unsafe.blockHash(snapshot.blockHash),
+    tokenAddress: unsafe.address(snapshot.tokenAddress),
+    wrapperAddress: unsafe.address(snapshot.wrapperAddress),
+    tokenHasBytecode: snapshot.tokenHasBytecode,
+    wrapperHasBytecode: snapshot.wrapperHasBytecode,
+    ...(snapshot.wrapperAsset === undefined
+      ? {}
+      : { wrapperAsset: unsafe.address(snapshot.wrapperAsset) }),
+    // The chain multiplier is a uint256 scaled by the token's own decimals.
+    ...(snapshot.currentMultiplier === undefined || snapshot.tokenDecimals === undefined
+      ? {}
+      : { multiplier: { value: snapshot.currentMultiplier, decimals: snapshot.tokenDecimals } }),
+    ...(snapshot.multiplierNonce === undefined
+      ? {}
+      : { multiplierNonce: snapshot.multiplierNonce }),
+    ...(snapshot.scheduledActivationMs === undefined
+      ? {}
+      : { scheduledActivation: instant(snapshot.scheduledActivationMs) }),
+  };
+
+  return compareSources(api, chain, {
+    // Exact for enforcement. A tolerance here would be a licence to disagree.
+    multiplierTolerance: EXACT_TOLERANCE,
+    activationToleranceMs: 0,
+    requiredAgreementFields: DEFAULT_REQUIRED_AGREEMENT_FIELDS,
+  });
 }
 
 async function journalAsset(
@@ -190,6 +317,7 @@ async function journalAsset(
   canonicality: 'PASS' | 'FAIL' | 'UNKNOWN',
   snapshot: Awaited<ReturnType<XLayerReader['observeAsset']>> | undefined,
   correlationId: string,
+  comparison?: SourceComparison,
 ): Promise<void> {
   const bucket = observationBucket(deps.now());
 
@@ -245,6 +373,20 @@ async function journalAsset(
         failedReads: snapshot.failedReads,
         confirmationDepth: snapshot.confirmationDepth,
         settled: snapshot.settled,
+        ...(comparison === undefined
+          ? {}
+          : {
+              sourceAgreement: comparison.agreement,
+              // Per-field values, so an operator can see WHICH field disagrees rather than
+              // only that something did.
+              comparisonFields: comparison.fields.map((f) => ({
+                field: f.field,
+                agreement: f.agreement,
+                apiValue: f.apiValue ?? null,
+                chainValue: f.chainValue ?? null,
+                requiredForAgreement: f.requiredForAgreement,
+              })),
+            }),
         observationBucket: bucket,
       },
       correlationId,

@@ -76,6 +76,11 @@ export async function applyEventToProjections(db: Queryable, event: EvidenceEven
     }
 
     case 'CHAIN_SNAPSHOT_OBSERVED': {
+      // The comparison is written here rather than as its own event: it is a property OF
+      // this observation, derived from the same two snapshots, and separating them would
+      // let a projection show an agreement verdict from one block beside chain values from
+      // another.
+      const hasComparison = p['sourceAgreement'] !== undefined;
       await db.query(
         `UPDATE current_assets SET
            chain_observed_at = $2,
@@ -83,6 +88,9 @@ export async function applyEventToProjections(db: Queryable, event: EvidenceEven
            chain_block_hash = $4,
            canonicality = COALESCE($5::check_outcome, canonicality),
            multiplier_nonce = COALESCE($6, multiplier_nonce),
+           source_agreement = COALESCE($8::source_agreement, source_agreement),
+           comparison_fields = COALESCE($9::jsonb, comparison_fields),
+           compared_at = CASE WHEN $8 IS NULL THEN compared_at ELSE $2 END,
            last_event_id = $7,
            updated_at = now()
          WHERE asset_id = $1`,
@@ -94,6 +102,8 @@ export async function applyEventToProjections(db: Queryable, event: EvidenceEven
           str(p['canonicality']),
           num(p['multiplierNonce']),
           event.id,
+          str(p['sourceAgreement']),
+          hasComparison ? JSON.stringify(p['comparisonFields'] ?? []) : null,
         ],
       );
       return;

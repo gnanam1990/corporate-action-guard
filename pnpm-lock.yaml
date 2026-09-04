@@ -112,6 +112,9 @@ importers:
       '@cag/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@cag/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@cag/observability':
         specifier: workspace:*
         version: link:../../packages/observability
