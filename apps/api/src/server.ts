@@ -5,6 +5,7 @@ import {
   getAsset,
   listAssets,
   listIncidents,
+  replayAsset,
   sourceHealth,
   type Queryable,
 } from '@cag/db';
@@ -240,6 +241,40 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
         lastObservedAt: r.lastObservedAt.toISOString(),
         resolvedAt: r.resolvedAt?.toISOString() ?? null,
       })),
+      servedAt: new Date(now()).toISOString(),
+    };
+  });
+
+  /**
+   * The evidence timeline for one asset, and its deterministic replay.
+   *
+   * Replay reads immutable journal rows only. It never calls a live source — a "replay"
+   * that does is a fresh observation wearing a historical label.
+   */
+  app.get('/v1/assets/:assetId/timeline', async (request, reply) => {
+    const { assetId } = request.params as { assetId: string };
+    const query = request.query as { upToEventId?: string; limit?: string };
+
+    const asset = await getAsset(deps.db, assetId);
+    if (asset === undefined) return send(reply, problem.notFound(`No asset ${assetId}.`));
+
+    if (query.upToEventId !== undefined && !/^[0-9a-f-]{36}$/i.test(query.upToEventId)) {
+      return send(reply, problem.badRequest('upToEventId must be a UUID.'));
+    }
+
+    const limit = Math.min(Number(query.limit ?? 200) || 200, 500);
+    const replay = await replayAsset(deps.db, assetId, {
+      upToEventId: query.upToEventId,
+      limit,
+    });
+
+    return {
+      ...replay,
+      // Surfaced, not hidden: a replay spanning a code change may have been produced by
+      // logic that no longer exists.
+      policyNote: replay.singleProducerVersion
+        ? 'All events in this range were produced by one code version.'
+        : 'This range spans more than one producer version; the original decision may have been produced by logic that no longer exists.',
       servedAt: new Date(now()).toISOString(),
     };
   });

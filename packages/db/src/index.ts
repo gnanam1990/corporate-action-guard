@@ -40,3 +40,4 @@ export {
   type Page,
   type SourceHealthRow,
 } from './queries.js';
+export { replayAsset, type ReplayEvent, type ReplayResult } from './replay.js';

@@ -26,6 +26,10 @@ export interface Asset {
   readonly chainObservedAt: string | null;
   readonly chainBlockNumber: string | null;
   readonly chainBlockHash: string | null;
+  /** null means never compared, which is distinct from INCOMPLETE. Both block. */
+  readonly sourceAgreement: 'MATCH' | 'MISMATCH' | 'INCOMPLETE' | null;
+  readonly comparisonFields: readonly ComparisonField[] | null;
+  readonly comparedAt: string | null;
 }
 
 export type LifecycleState =
@@ -49,6 +53,8 @@ export interface Coverage {
   readonly canonicallyVerified: number;
   readonly pendingOrGuardWindow: number;
   readonly mismatchedOrReview: number;
+  /** Assets where the API and the chain agreed on every required field. */
+  readonly sourcesAgree: number;
   readonly servedAt: string;
 }
 
@@ -74,6 +80,46 @@ export interface Incident {
   readonly firstDetectedAt: string;
   readonly lastObservedAt: string;
   readonly resolvedAt: string | null;
+}
+
+export interface ReplayEvent {
+  readonly eventId: string;
+  readonly eventType: string;
+  readonly observedAt: string;
+  readonly sourceKind: string;
+  readonly sourceLocator: string;
+  readonly blockNumber: string | null;
+  readonly blockHash: string | null;
+  readonly correlationId: string;
+  readonly causationId: string | null;
+  readonly payload: Record<string, unknown>;
+}
+
+export interface Timeline {
+  readonly assetId: string;
+  readonly cutoffEventId?: string;
+  readonly eventCount: number;
+  readonly events: readonly ReplayEvent[];
+  readonly stateAtCutoff: {
+    readonly canonicality: string | null;
+    readonly sourceAgreement: string | null;
+    readonly multiplierNonce: string | null;
+    readonly lastApiObservationAt: string | null;
+    readonly lastChainObservationAt: string | null;
+    readonly lastBlockNumber: string | null;
+  };
+  readonly singleProducerVersion: boolean;
+  readonly producerVersions: readonly string[];
+  readonly policyNote: string;
+  readonly servedAt: string;
+}
+
+export interface ComparisonField {
+  readonly field: string;
+  readonly agreement: 'MATCH' | 'MISMATCH' | 'INCOMPLETE';
+  readonly apiValue: string | null;
+  readonly chainValue: string | null;
+  readonly requiredForAgreement: boolean;
 }
 
 export type ApiResult<T> =
@@ -152,6 +198,9 @@ const isCoverage = (raw: unknown): raw is Coverage =>
 const isSourceHealth = (raw: unknown): raw is SourceHealthResponse =>
   isRecord(raw) && Array.isArray(raw['sources']) && typeof raw['servedAt'] === 'string';
 
+const isTimeline = (raw: unknown): raw is Timeline =>
+  isRecord(raw) && Array.isArray(raw['events']) && isRecord(raw['stateAtCutoff']);
+
 const isIncidentPage = (raw: unknown): raw is { items: Incident[]; servedAt: string } =>
   isRecord(raw) && Array.isArray(raw['items']) && typeof raw['servedAt'] === 'string';
 
@@ -164,6 +213,10 @@ export const api = {
   },
   asset: (assetId: string) => request<Asset>(`/v1/assets/${encodeURIComponent(assetId)}`, isAsset),
   coverage: () => request<Coverage>('/v1/system/coverage', isCoverage),
+  timeline: (assetId: string, upToEventId?: string) => {
+    const qs = upToEventId === undefined ? '' : `?upToEventId=${encodeURIComponent(upToEventId)}`;
+    return request<Timeline>(`/v1/assets/${encodeURIComponent(assetId)}/timeline${qs}`, isTimeline);
+  },
   sourceHealth: () => request<SourceHealthResponse>('/v1/system/source-health', isSourceHealth),
   incidents: (query: Record<string, string | undefined> = {}) => {
     const params = new URLSearchParams();

@@ -5,6 +5,7 @@ import { truncateAddress } from '@/components/format';
 import { AddressLink } from '@/components/links';
 import { ErrorState, InlineAlert } from '@/components/primitives';
 import { EvidenceAge, outcomeTone, ReasonCode, StatusBadge } from '@/components/status';
+import { ComparisonMatrix, EvidenceTimeline } from '@/components/timeline';
 import { api, formatMultiplier, lifecycleTone, type Asset } from '@/lib/api';
 
 /**
@@ -22,11 +23,19 @@ const CHAIN_STALE_AFTER_MS = 120_000;
 
 export default async function AssetDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ assetId: string }>;
+  searchParams: Promise<{ upToEventId?: string }>;
 }) {
   const { assetId } = await params;
-  const result = await api.asset(assetId);
+  const { upToEventId } = await searchParams;
+
+  // Fetched together, so the header and the timeline describe the same moment.
+  const [result, timeline] = await Promise.all([
+    api.asset(assetId),
+    api.timeline(assetId, upToEventId),
+  ]);
 
   if (!result.ok && result.reason === 'NOT_FOUND') notFound();
 
@@ -38,7 +47,48 @@ export default async function AssetDetailPage({
           description={`The evidence for ${assetId} could not be read from the API (${result.detail}). No cached or partial state is shown in its place.`}
         />
       ) : (
-        <AssetDetail asset={result.data} />
+        <>
+          <AssetDetail asset={result.data} />
+
+          <section aria-labelledby="comparison-heading" className="detail-section">
+            <h2 id="comparison-heading" className="section-title">
+              Source comparison
+            </h2>
+            {result.data.comparisonFields === null ? (
+              <InlineAlert tone="warning" title="These sources have never been compared.">
+                Never compared is not the same as compared-and-agreed. Protected actions are refused
+                until a complete observation of both sources exists.
+              </InlineAlert>
+            ) : (
+              <>
+                <ComparisonMatrix fields={[...result.data.comparisonFields]} />
+                <p className="detail-note">
+                  Compared at {result.data.comparedAt ?? 'unknown'}. Agreement is scored only over
+                  fields both sources are contractually expected to expose; a chain-authoritative
+                  field is shown for visibility but does not contribute to the verdict.
+                </p>
+              </>
+            )}
+          </section>
+
+          <section aria-labelledby="timeline-heading" className="detail-section">
+            <h2 id="timeline-heading" className="section-title">
+              Evidence timeline
+            </h2>
+            <p className="detail-note" style={{ marginTop: 0, marginBottom: 'var(--space-4)' }}>
+              Replayed from immutable journal rows. No live source is consulted — a replay that
+              called one would be a fresh observation wearing a historical label.
+            </p>
+            {!timeline.ok ? (
+              <ErrorState
+                title="Timeline unavailable"
+                description={`The evidence journal could not be read (${timeline.detail}).`}
+              />
+            ) : (
+              <EvidenceTimeline timeline={timeline.data} />
+            )}
+          </section>
+        </>
       )}
     </AppShell>
   );

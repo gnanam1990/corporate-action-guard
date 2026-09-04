@@ -89,8 +89,8 @@
     {
       "id": "14",
       "name": "Asset detail and timeline",
-      "status": "PARTIAL",
-      "note": "Detail page with canonicality, multiplier epoch, provenance, readiness summary. The event timeline needs a journal endpoint"
+      "status": "IMPLEMENTED",
+      "note": "Detail page with canonicality, multiplier epoch, provenance, per-field source comparison, and a replayed evidence timeline"
     },
     {
       "id": "15",
@@ -101,8 +101,8 @@
     {
       "id": "16",
       "name": "Incident replay and review console",
-      "status": "ABSENT",
-      "note": "API route exists; the console view does not"
+      "status": "IMPLEMENTED",
+      "note": "Incident list ordered by deterministic severity, plus deterministic replay from immutable journal rows with a policy-version warning"
     },
     {
       "id": "17",

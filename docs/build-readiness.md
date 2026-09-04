@@ -18,7 +18,7 @@ The honest inventory. A module is `IMPLEMENTED` only when its code exists in thi
 repository and its own gates have been run. Being described in the prompt pack is not
 evidence that anything exists.
 
-**17 implemented · 3 partial · 4 absent**, of 24 modules.
+**19 implemented · 2 partial · 3 absent**, of 24 modules.
 
 ## Status
 
@@ -38,9 +38,9 @@ evidence that anything exists.
 | 11 | Fastify API and OpenAPI contract | **IMPLEMENTED** | Nine routes, OpenAPI generated from the runtime schemas, 36 HTTP integration tests |
 | 12 | Web design system and shell | **IMPLEMENTED** | Semantic tokens, shell, status primitives; 28 WCAG pairs verified in CI |
 | 13 | Coverage dashboard | **IMPLEMENTED** | Renders live evidence; verified against a running API and against a killed one |
-| 14 | Asset detail and timeline | **PARTIAL** | Detail page with canonicality, multiplier epoch, provenance, readiness summary. The event timeline needs a journal endpoint |
+| 14 | Asset detail and timeline | **IMPLEMENTED** | Detail page with canonicality, multiplier epoch, provenance, per-field source comparison, and a replayed evidence timeline |
 | 15 | Preflight Lab and testnet execution | ABSENT | Blocked on a testnet deployment |
-| 16 | Incident replay and review console | ABSENT | API route exists; the console view does not |
+| 16 | Incident replay and review console | **IMPLEMENTED** | Incident list ordered by deterministic severity, plus deterministic replay from immutable journal rows with a policy-version warning |
 | 17 | AI incident explainer | ABSENT | Optional. Correctly deferred until the deterministic product is complete |
 | 18 | Integrator SDK and CLI | **IMPLEMENTED** | Typed client, local verifier pinned to the shared golden vectors, guard CLI with meaningful exit codes |
 | 19 | Observability and fault injection | **PARTIAL** | Redaction, structured logging, bounded-cardinality metrics. Fault-injection harness absent |
