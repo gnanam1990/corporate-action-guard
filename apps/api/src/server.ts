@@ -5,6 +5,7 @@ import {
   getAsset,
   listAssets,
   listIncidents,
+  replayAsset,
   sourceHealth,
   type Queryable,
 } from '@cag/db';
@@ -16,6 +17,7 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { authenticate, hasScope, type ApiKeyRecord, type Scope } from './auth.js';
 import { problem, type ProblemDetails } from './problem.js';
+import { API_VERSION } from './openapi.js';
 import { runPreflight, type EvidenceBundle, type PreflightPolicy } from './preflight-service.js';
 import {
   assetFilterSchema,
@@ -145,6 +147,24 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     uptimeSeconds: Math.floor(process.uptime()),
   }));
 
+  /**
+   * Build provenance.
+   *
+   * Every claim about "the deployed version" needs something to point at. Values come from
+   * build-time environment; when absent the endpoint reports `unknown` rather than
+   * inventing a plausible SHA. A wrong commit hash is worse than none — it sends an
+   * investigation to the wrong code.
+   */
+  app.get('/v1/system/version', async () => ({
+    gitSha: process.env['GIT_SHA'] ?? 'unknown',
+    buildTime: process.env['BUILD_TIME'] ?? 'unknown',
+    nodeVersion: process.version,
+    apiContractVersion: API_VERSION,
+    // Stated in the response, so a reader of the API alone learns the boundary.
+    enforcementBoundary:
+      'Enforceable only for paths routing through ActionGuardAdapter. A direct ERC-20 transfer bypasses the guard. X Layer mainnet is read-only.',
+  }));
+
   app.get('/v1/health/ready', async (_request, reply) => {
     const database = await checkDatabase(deps.databaseUrl);
     const signerAddress = deps.signer.address();
@@ -240,6 +260,40 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
         lastObservedAt: r.lastObservedAt.toISOString(),
         resolvedAt: r.resolvedAt?.toISOString() ?? null,
       })),
+      servedAt: new Date(now()).toISOString(),
+    };
+  });
+
+  /**
+   * The evidence timeline for one asset, and its deterministic replay.
+   *
+   * Replay reads immutable journal rows only. It never calls a live source — a "replay"
+   * that does is a fresh observation wearing a historical label.
+   */
+  app.get('/v1/assets/:assetId/timeline', async (request, reply) => {
+    const { assetId } = request.params as { assetId: string };
+    const query = request.query as { upToEventId?: string; limit?: string };
+
+    const asset = await getAsset(deps.db, assetId);
+    if (asset === undefined) return send(reply, problem.notFound(`No asset ${assetId}.`));
+
+    if (query.upToEventId !== undefined && !/^[0-9a-f-]{36}$/i.test(query.upToEventId)) {
+      return send(reply, problem.badRequest('upToEventId must be a UUID.'));
+    }
+
+    const limit = Math.min(Number(query.limit ?? 200) || 200, 500);
+    const replay = await replayAsset(deps.db, assetId, {
+      upToEventId: query.upToEventId,
+      limit,
+    });
+
+    return {
+      ...replay,
+      // Surfaced, not hidden: a replay spanning a code change may have been produced by
+      // logic that no longer exists.
+      policyNote: replay.singleProducerVersion
+        ? 'All events in this range were produced by one code version.'
+        : 'This range spans more than one producer version; the original decision may have been produced by logic that no longer exists.',
       servedAt: new Date(now()).toISOString(),
     };
   });
@@ -350,5 +404,8 @@ function serializeAsset(asset: Awaited<ReturnType<typeof getAsset>> & object) {
     chainObservedAt: asset.chainObservedAt?.toISOString() ?? null,
     chainBlockNumber: asset.chainBlockNumber,
     chainBlockHash: asset.chainBlockHash,
+    sourceAgreement: asset.sourceAgreement,
+    comparisonFields: asset.comparisonFields,
+    comparedAt: asset.comparedAt?.toISOString() ?? null,
   };
 }

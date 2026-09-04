@@ -1,0 +1,103 @@
+# Full local stack: database, API, worker, console.
+#
+# The compose file is where the credential boundary becomes concrete. Note which services
+# receive which secrets — the web container gets exactly one variable, and it is public.
+
+name: corporate-action-guard-full
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: guard
+      POSTGRES_PASSWORD: guard
+      POSTGRES_DB: guard
+      TZ: UTC
+    command: [postgres, -c, timezone=UTC, -c, log_timezone=UTC]
+    ports: ['55432:5432']
+    volumes: [cag-postgres-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U guard -d guard']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  api:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    command: [apps/api/dist/index.js]
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://guard:guard@postgres:5432/guard # secret-scan:allow — local compose credential, matches .env.example
+      API_PUBLIC_BASE_URL: http://localhost:4000
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+      XSTOCKS_API_BASE_URL: https://api.xstocks.fi/api/v2
+      # The API signs receipts, so it holds the signer key. The worker and the web
+      # container do not.
+      RECEIPT_SIGNER_PRIVATE_KEY: ${RECEIPT_SIGNER_PRIVATE_KEY:-}
+      RECEIPT_SIGNER_ADDRESS: ${RECEIPT_SIGNER_ADDRESS:-}
+      GUARD_ADAPTER_TESTNET_ADDRESS: ${GUARD_ADAPTER_TESTNET_ADDRESS:-}
+      DEV_API_KEYS: ${DEV_API_KEYS:-}
+    ports: ['4000:4000']
+    depends_on:
+      postgres: { condition: service_healthy }
+    # The application never writes to its own filesystem.
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:4000/v1/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+
+  worker:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    command: [apps/worker/dist/index.js]
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://guard:guard@postgres:5432/guard # secret-scan:allow — local compose credential, matches .env.example
+      XSTOCKS_API_BASE_URL: https://api.xstocks.fi/api/v2
+      # Mainnet RPC reaches the READER only. The worker never signs; there is no signing
+      # code path for chain 196 anywhere in the product.
+      XLAYER_MAINNET_RPC_URL: ${XLAYER_MAINNET_RPC_URL:-https://rpc.xlayer.tech}
+      WORKER_POLL_INTERVAL_MS: ${WORKER_POLL_INTERVAL_MS:-60000}
+      WORKER_MAX_ASSETS: ${WORKER_MAX_ASSETS:-}
+    depends_on:
+      postgres: { condition: service_healthy }
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+
+  web:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.web
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+    environment:
+      NODE_ENV: production
+      # EXACTLY ONE variable, and it is public by definition. No database URL, no signer
+      # key, no operator secret reaches this container — enforced by what is absent here
+      # rather than by a comment in the application.
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+    ports: ['3000:3000']
+    depends_on:
+      api: { condition: service_healthy }
+    read_only: true
+    tmpfs: [/tmp, /app/apps/web/.next/cache]
+    security_opt: [no-new-privileges:true]
+
+volumes:
+  cag-postgres-data:
+    name: cag-postgres-data-full

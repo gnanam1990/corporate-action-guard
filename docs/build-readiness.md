@@ -18,7 +18,7 @@ The honest inventory. A module is `IMPLEMENTED` only when its code exists in thi
 repository and its own gates have been run. Being described in the prompt pack is not
 evidence that anything exists.
 
-**16 implemented · 4 partial · 4 absent**, of 24 modules.
+**21 implemented · 0 partial · 3 absent**, of 24 modules.
 
 ## Status
 
@@ -31,21 +31,21 @@ evidence that anything exists.
 | 04 | xStocks API client | **IMPLEMENTED** | Built against the verified live OpenAPI v2 contract; 4 live contract tests |
 | 05 | X Layer reader and indexer | **IMPLEMENTED** | Reads verified live on chain 196; worker observation cycle journals block-stamped evidence |
 | 06 | Canonical asset/wrapper registry | **IMPLEMENTED** | Six-check matrix with PASS/FAIL/UNKNOWN per row, registry diffing |
-| 07 | Reconciler and recovery | **PARTIAL** | Deterministic reconciler, leases, dedup, leased polling worker. The worker does not yet record a source comparison, so agreement reports INCOMPLETE — which blocks |
+| 07 | Reconciler and recovery | **IMPLEMENTED** | Deterministic reconciler, durable leases, incident dedup, and a leased polling worker that records the API/chain comparison per asset |
 | 08 | Operation digest and EIP-712 receipt | **IMPLEMENTED** | Ten bound fields, mutation-tested; golden vectors shared with Solidity and the SDK |
 | 09 | Solidity TESTNET FIXTURE | **IMPLEMENTED** | Asset, wrapper, legacy wrapper; 21 tests including fuzz on nonce monotonicity. Not deployed |
 | 10 | ActionGuardAdapter and ProtectedVault | **IMPLEMENTED** | 34 adversarial tests; digest proven identical to TypeScript. Not deployed |
 | 11 | Fastify API and OpenAPI contract | **IMPLEMENTED** | Nine routes, OpenAPI generated from the runtime schemas, 36 HTTP integration tests |
 | 12 | Web design system and shell | **IMPLEMENTED** | Semantic tokens, shell, status primitives; 28 WCAG pairs verified in CI |
 | 13 | Coverage dashboard | **IMPLEMENTED** | Renders live evidence; verified against a running API and against a killed one |
-| 14 | Asset detail and timeline | **PARTIAL** | Detail page with canonicality, multiplier epoch, provenance, readiness summary. The event timeline needs a journal endpoint |
+| 14 | Asset detail and timeline | **IMPLEMENTED** | Detail page with canonicality, multiplier epoch, provenance, per-field source comparison, and a replayed evidence timeline |
 | 15 | Preflight Lab and testnet execution | ABSENT | Blocked on a testnet deployment |
-| 16 | Incident replay and review console | ABSENT | API route exists; the console view does not |
+| 16 | Incident replay and review console | **IMPLEMENTED** | Incident list ordered by deterministic severity, plus deterministic replay from immutable journal rows with a policy-version warning |
 | 17 | AI incident explainer | ABSENT | Optional. Correctly deferred until the deterministic product is complete |
 | 18 | Integrator SDK and CLI | **IMPLEMENTED** | Typed client, local verifier pinned to the shared golden vectors, guard CLI with meaningful exit codes |
-| 19 | Observability and fault injection | **PARTIAL** | Redaction, structured logging, bounded-cardinality metrics. Fault-injection harness absent |
+| 19 | Observability and fault injection | **IMPLEMENTED** | Redaction, structured logging, bounded-cardinality metrics, and a deterministic fault harness that cannot construct in production; each fault declares its required outcome |
 | 20 | Security hardening and threat model | **IMPLEMENTED** | Threat model with per-row test references and recorded residual risks |
-| 21 | CI, containers, deployment | **PARTIAL** | Six-job CI enforcing every gate. Containers and deployment manifests absent |
+| 21 | CI, containers, deployment | **IMPLEMENTED** | Seven-job CI, non-root multi-stage images verified by real builds, full compose stack, a mechanical web-secret boundary check, and deployment/rollback docs |
 | 22 | End-to-end proof and submission package | ABSENT | Blocked on a testnet deployment |
 | 23 | Final independent audit | **IMPLEMENTED** | docs/final-audit.md. Verdict BLOCKED |
 

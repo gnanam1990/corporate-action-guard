@@ -1,5 +1,5 @@
 {
-  "$comment": "Single source of truth for module status. docs/build-readiness.md is GENERATED from this file by scripts/generate-readiness.mjs, and CI fails if the two disagree. A hand-maintained status table drifts silently — this one did, for eleven commits, because a formatter realigned its columns and every subsequent string edit no-opped without complaint.",
+  "$comment": "Single source of truth for module status. docs/build-readiness.md is GENERATED from this file by scripts/generate-readiness.mjs, and CI fails if the two disagree. A hand-maintained status table drifts silently \u2014 this one did, for eleven commits, because a formatter realigned its columns and every subsequent string edit no-opped without complaint.",
   "recordedAt": "2026-09-04",
   "modules": [
     {
@@ -47,8 +47,8 @@
     {
       "id": "07",
       "name": "Reconciler and recovery",
-      "status": "PARTIAL",
-      "note": "Deterministic reconciler, leases, dedup, leased polling worker. The worker does not yet record a source comparison, so agreement reports INCOMPLETE — which blocks"
+      "status": "IMPLEMENTED",
+      "note": "Deterministic reconciler, durable leases, incident dedup, and a leased polling worker that records the API/chain comparison per asset"
     },
     {
       "id": "08",
@@ -89,8 +89,8 @@
     {
       "id": "14",
       "name": "Asset detail and timeline",
-      "status": "PARTIAL",
-      "note": "Detail page with canonicality, multiplier epoch, provenance, readiness summary. The event timeline needs a journal endpoint"
+      "status": "IMPLEMENTED",
+      "note": "Detail page with canonicality, multiplier epoch, provenance, per-field source comparison, and a replayed evidence timeline"
     },
     {
       "id": "15",
@@ -101,8 +101,8 @@
     {
       "id": "16",
       "name": "Incident replay and review console",
-      "status": "ABSENT",
-      "note": "API route exists; the console view does not"
+      "status": "IMPLEMENTED",
+      "note": "Incident list ordered by deterministic severity, plus deterministic replay from immutable journal rows with a policy-version warning"
     },
     {
       "id": "17",
@@ -119,8 +119,8 @@
     {
       "id": "19",
       "name": "Observability and fault injection",
-      "status": "PARTIAL",
-      "note": "Redaction, structured logging, bounded-cardinality metrics. Fault-injection harness absent"
+      "status": "IMPLEMENTED",
+      "note": "Redaction, structured logging, bounded-cardinality metrics, and a deterministic fault harness that cannot construct in production; each fault declares its required outcome"
     },
     {
       "id": "20",
@@ -131,8 +131,8 @@
     {
       "id": "21",
       "name": "CI, containers, deployment",
-      "status": "PARTIAL",
-      "note": "Six-job CI enforcing every gate. Containers and deployment manifests absent"
+      "status": "IMPLEMENTED",
+      "note": "Seven-job CI, non-root multi-stage images verified by real builds, full compose stack, a mechanical web-secret boundary check, and deployment/rollback docs"
     },
     {
       "id": "22",

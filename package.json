@@ -26,7 +26,7 @@
     "arch:check": "node scripts/check-layering.mjs",
     "infra:up": "docker compose -f infra/docker-compose.yml up -d",
     "infra:down": "docker compose -f infra/docker-compose.yml down",
-    "verify": "pnpm format:check && pnpm lint && pnpm arch:check && pnpm typecheck && pnpm check:contrast && pnpm scan:secrets && pnpm docs:check && pnpm test && pnpm test:contracts",
+    "verify": "pnpm format:check && pnpm lint && pnpm arch:check && pnpm typecheck && pnpm check:contrast && pnpm check:compose && pnpm check:deps && pnpm scan:secrets && pnpm docs:check && pnpm test && pnpm test:contracts",
     "scan:bundle": "node scripts/scan-web-bundle.mjs",
     "test:mutation": "node scripts/mutate-preflight.mjs",
     "format:sol": "cd contracts && forge fmt",
@@ -37,7 +37,9 @@
     "audit:deps": "node scripts/dependency-audit.mjs",
     "testnet:status": "node scripts/testnet-status.mjs",
     "testnet:deploy": "bash scripts/testnet-deploy.sh",
-    "testnet:prove": "node scripts/testnet-prove.mjs"
+    "testnet:prove": "node scripts/testnet-prove.mjs",
+    "check:compose": "node scripts/check-compose-secrets.mjs",
+    "check:deps": "node scripts/check-runtime-deps.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
