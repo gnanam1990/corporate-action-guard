@@ -1,20 +1,31 @@
 # Final audit
 
-**Audited revision:** `7f7c0fb62829c1b41882d46fca22595daf3c3e05` (branch `build/corporate-action-guard`)
-**Date:** 2026-09-03
+**Audited revision:** `2ba1a49a944de8e45558a0e988c91ed0e7a9931c` (branch `main`)
+**Date:** 2026-09-04 (re-audited after deployment)
 **Auditor:** the implementing team. **This is not an independent audit.**
 
 ## Verdict
 
-## **BLOCKED** — not ready for submission review.
+## **CONDITIONAL** — technically evidenced; cannot exceed CONDITIONAL while event rules are unpublished.
 
-Not because a defect was found, but because **the build is incomplete and its central claim
-is unproven end to end.** The guard has never executed against a deployed contract on a
-real chain. Everything below the "proven" line is real; everything above the "not proven"
-line is honest about not existing.
+Previously **BLOCKED**, because the central claim had never executed. It now has.
 
-The event's final rules were also unavailable when this was written, which independently
-caps any verdict at CONDITIONAL.
+The contracts are deployed to X Layer testnet and **all eight failure scenarios pass
+against a real chain**, reproducibly across consecutive runs. See
+`docs/evidence/release-candidate.md` for transaction hashes and explorer links.
+
+The verdict is capped at CONDITIONAL, not raised further, for reasons that remain true:
+
+- The event's final rules and submission deadline are still unpublished.
+- Enforcement is proven against a labelled `TESTNET FIXTURE`, not against production
+  xStocks scheduling semantics, which are not published in a verifiable form.
+- No external party has audited this. The threat model is the team reviewing its own code.
+- The MVP signer still holds its key in process memory (ADR 0002).
+
+**Five of the eight scenarios initially failed.** Every one was a defect in the proof
+runner, not in the contracts — verified individually against on-chain state before any fix
+was made. They are recorded below rather than quietly corrected, because "we fixed it until
+it passed" is exactly the shape a reader should distrust.
 
 ## Claim-to-evidence matrix
 
@@ -103,11 +114,27 @@ same reason: hand edits against a formatter-realigned table.
     limitation, the footer repeats it, the contract NatSpec states what it cannot verify,
     and the bypass is a passing test.
 
-## Blocking items
+## The five proof-runner defects, and how each was distinguished from a contract bug
 
-1. No testnet deployment, so scenarios B–H of the proof package cannot be executed.
-2. No Preflight Lab, so the on-chain rejection path has no operator-facing demonstration.
-3. Event rules unpublished, capping the verdict independently.
+Recorded because the distinction is the whole point of running it.
+
+| Scenario    | Symptom                                         | Actual cause                                                                                                                                      | How it was distinguished                                                                |
+| ----------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| B           | "expected a revert, but the call would succeed" | Read-after-write lag: `waitForTransactionReceipt` proves a tx was mined, not that the load-balanced RPC node serving the next read has applied it | Read `consumed(receiptId)` directly: it was `true`. The contract had refused correctly. |
+| B (2nd run) | first submit reverted                           | Receipt ids were a per-run counter, so every run reused id `0x…01`, consumed by run one                                                           | The revert was `ReceiptAlreadyConsumed` — correct behaviour for a reused id             |
+| D           | "would succeed"                                 | Validity built from `Date.now()` while the adapter compares `block.timestamp`; a 1–2s skew left a "just expired" receipt still valid on chain     | Compared wall clock to `block.timestamp` directly                                       |
+| F           | "would succeed"                                 | The scenario scheduled an activation +3600s against a ±900s window, so `now` was legitimately outside it                                          | Computed the window bounds from the on-chain values                                     |
+| D, G        | reverted, but reported as the wrong error       | viem returns a **decoded** error object where the decoder expected hex, so every revert read as unnamed                                           | Inspected the raw error shape                                                           |
+
+None required a contract change. The fixes were: wait for state visibility, use chain time,
+seed receipt ids per run, correct scenario F's setup, and decode viem's error shape.
+
+## Remaining limitations
+
+1. Event rules unpublished, capping the verdict at CONDITIONAL.
+2. Enforcement is proven against a , not production scheduling semantics.
+3. No external audit.
+4. No deployed public URL for the console.
 
 ## What would change the verdict
 

@@ -120,9 +120,23 @@ const digestOf = (r) =>
     ]).slice(2)}`,
   );
 
+/**
+ * Receipt ids must be unique across RUNS, not just within one.
+ *
+ * A per-run counter starting at 1 meant every run reused id 0x…01 — consumed by the first
+ * run's scenario B — so the second run's valid-receipt scenario reverted with
+ * ReceiptAlreadyConsumed. The contract was right; the runner was not idempotent.
+ *
+ * Seeded from the current time so ids never collide with an earlier run's.
+ */
+const RUN_SEED = BigInt(Date.now());
 let receiptCounter = 0n;
 async function buildReceipt(over = {}) {
-  const now = BigInt(Math.floor(Date.now() / 1000));
+  // Chain time, not wall clock. The adapter compares against block.timestamp, and even a
+  // one-second skew makes a "just expired" receipt still valid on chain — which reported
+  // scenario D as a contract failure when the contract was right.
+  const head = await publicClient.getBlock();
+  const now = head.timestamp;
   const nonce = await publicClient.readContract({
     address: ASSET,
     abi: assetAbi,
@@ -132,7 +146,7 @@ async function buildReceipt(over = {}) {
 
   const receipt = {
     schemaVersion: 1,
-    receiptId: `0x${receiptCounter.toString(16).padStart(64, '0')}`,
+    receiptId: `0x${((RUN_SEED << 32n) + receiptCounter).toString(16).padStart(64, '0')}`,
     caller: caller.address,
     target: VAULT,
     asset: ASSET,
@@ -177,6 +191,23 @@ async function scenario(id, title, expectation, run) {
   }
 }
 
+/**
+ * Wait until a state change is actually VISIBLE to reads.
+ *
+ * `waitForTransactionReceipt` proves a transaction was mined. It does NOT prove the node
+ * serving the next read has applied it — X Layer's public RPC is load balanced, and a
+ * read-after-write can land on a node a block behind. Without this the runner reported
+ * "expected a revert, but the call would succeed" for a receipt that was in fact consumed,
+ * which reads as a contract bug and is not one.
+ */
+async function waitForState(check, description, attempts = 20) {
+  for (let i = 0; i < attempts; i++) {
+    if (await check()) return;
+    await new Promise((r) => setTimeout(r, 1_000));
+  }
+  throw new Error(`state never became visible to reads: ${description}`);
+}
+
 /** Submit and expect success. */
 async function submit(receipt, signature) {
   const hash = await wallet.writeContract({
@@ -187,19 +218,42 @@ async function submit(receipt, signature) {
   });
   const rcpt = await publicClient.waitForTransactionReceipt({ hash });
   if (rcpt.status !== 'success') throw new Error(`expected success, transaction reverted: ${hash}`);
+
+  await waitForState(
+    () =>
+      publicClient.readContract({
+        address: ADAPTER,
+        abi: adapterAbi,
+        functionName: 'consumed',
+        args: [receipt.receiptId],
+      }),
+    `receipt ${receipt.receiptId} marked consumed`,
+  );
   return { txHash: hash, block: rcpt.blockNumber.toString() };
 }
 
 /** Decode a custom error name from revert data, falling back to the client's own message. */
 function decodeRevertName(data, err) {
-  try {
-    return decodeErrorResult({
-      abi: adapterAbi,
-      data: typeof data === 'string' ? data : data?.data,
-    }).errorName;
-  } catch {
-    return err?.cause?.shortMessage ?? err?.shortMessage ?? 'revert without decodable error';
+  // viem often decodes the custom error itself and hands back an object carrying the ABI
+  // item, not raw hex. Reading only hex reported every revert as an unnamed failure, which
+  // made "reverted for the wrong reason" indistinguishable from "reverted correctly".
+  if (data !== null && typeof data === 'object') {
+    if (typeof data.errorName === 'string') return data.errorName;
+    if (typeof data.abiItem?.name === 'string') return data.abiItem.name;
   }
+  // Walk the cause chain: viem nests the decoded error several levels down.
+  for (let e = err; e !== undefined && e !== null; e = e.cause) {
+    if (typeof e.data?.errorName === 'string') return e.data.errorName;
+    if (typeof e.data?.abiItem?.name === 'string') return e.data.abiItem.name;
+    if (typeof e.errorName === 'string') return e.errorName;
+  }
+  try {
+    const hex = typeof data === 'string' ? data : data?.data;
+    if (typeof hex === 'string') return decodeErrorResult({ abi: adapterAbi, data: hex }).errorName;
+  } catch {
+    // fall through to the client's own message
+  }
+  return err?.cause?.shortMessage ?? err?.shortMessage ?? 'revert without decodable error';
 }
 
 /** Expect a revert, and expect it to name a specific custom error. */
@@ -232,6 +286,39 @@ async function main() {
   console.log(`adapter ${ADAPTER}`);
   console.log(`vault   ${VAULT}`);
   console.log(`asset   ${ASSET}`);
+
+  // Clear leftover state from a previous run.
+  //
+  // Scenario F deliberately schedules an activation INSIDE the guard window, and that
+  // persists on chain. On a re-run it correctly refuses scenario B's fresh receipt — the
+  // contract behaving properly, reported as a failure. Push any pending activation far
+  // enough out that the run starts outside every window.
+  const pending = await publicClient.readContract({
+    address: ASSET,
+    abi: assetAbi,
+    functionName: 'newMultiplierActivationTime',
+  });
+  if (pending > 0n) {
+    const head = await publicClient.getBlock();
+    const farOut = head.timestamp + 30n * 24n * 3600n;
+    console.log(`\nclearing a pending activation from a previous run (was ${pending})`);
+    const h = await wallet.writeContract({
+      address: ASSET,
+      abi: assetAbi,
+      functionName: 'scheduleMultiplier',
+      args: [10n ** 18n, farOut],
+    });
+    await publicClient.waitForTransactionReceipt({ hash: h });
+    await waitForState(
+      async () =>
+        (await publicClient.readContract({
+          address: ASSET,
+          abi: assetAbi,
+          functionName: 'newMultiplierActivationTime',
+        })) === farOut,
+      'pending activation pushed outside the guard window',
+    );
+  }
 
   // Fund the caller with fixture tokens and approve the vault, once.
   const balance = await publicClient.readContract({
@@ -314,6 +401,16 @@ async function main() {
         args: [2n * 10n ** 18n, activation],
       });
       const r = await publicClient.waitForTransactionReceipt({ hash: h });
+      // The nonce advances at SCHEDULE time. Wait for that to be readable before asserting.
+      await waitForState(
+        async () =>
+          (await publicClient.readContract({
+            address: ASSET,
+            abi: assetAbi,
+            functionName: 'newMultiplierNonce',
+          })) > receipt.expectedMultiplierNonce,
+        'multiplier nonce advanced',
+      );
       const out = await expectRevert(receipt, signature, 'MultiplierNonceMismatch');
       return {
         ...out,
@@ -329,6 +426,37 @@ async function main() {
     'Inside the guard window, even a fresh receipt is refused',
     'reverts with InsideGuardWindow',
     async () => {
+      // The window is [activation - before, activation + after]. Scenario E scheduled an
+      // activation an hour out, which is OUTSIDE a 15-minute window — so the contract
+      // correctly allowed the action, and this scenario previously failed for the wrong
+      // reason. Schedule an activation that actually puts "now" inside the window.
+      const windowBefore = await publicClient.readContract({
+        address: ADAPTER,
+        abi: adapterAbi,
+        functionName: 'guardWindowBefore',
+      });
+      const head = await publicClient.getBlock();
+      const activation = head.timestamp + BigInt(windowBefore) / 2n;
+
+      const h = await wallet.writeContract({
+        address: ASSET,
+        abi: assetAbi,
+        functionName: 'scheduleMultiplier',
+        args: [3n * 10n ** 18n, activation],
+      });
+      await publicClient.waitForTransactionReceipt({ hash: h });
+      await waitForState(
+        async () =>
+          (await publicClient.readContract({
+            address: ASSET,
+            abi: assetAbi,
+            functionName: 'newMultiplierActivationTime',
+          })) === activation,
+        'activation time visible',
+      );
+
+      // Built AFTER the schedule, so its nonce is current — the only thing that can refuse
+      // it is the guard window itself.
       const { receipt, signature } = await buildReceipt();
       return expectRevert(receipt, signature, 'InsideGuardWindow');
     },

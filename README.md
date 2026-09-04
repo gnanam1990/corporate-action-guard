@@ -1,12 +1,14 @@
 # Corporate Action Guard
 
-**Status: implementation in progress. Nothing is deployed and nothing has been audited.**
+**Status: deployed to X Layer testnet. All eight on-chain failure scenarios pass. Not audited.**
 
-The stack runs end to end against live sources: the worker discovers the real xStocks
-catalog, observes X Layer mainnet, journals block-stamped evidence, the API serves it, and
-the console and CLI consume it. What is **not** done is any on-chain deployment — so the
-self-audit verdict is **BLOCKED**, because the central claim (that the guard rejects a
-stale receipt in a real transaction on a real chain) has never been executed.
+The stack runs end to end against live sources, and the guard is deployed and proven on
+chain: **8/8 failure scenarios pass reproducibly on X Layer testnet**, including a
+scheduled corporate action killing an outstanding receipt.
+
+The self-audit verdict is **CONDITIONAL** — it cannot go higher while the event's rules are
+unpublished, enforcement is proven against a labelled `TESTNET FIXTURE` rather than
+production scheduling semantics, and no external party has audited this.
 
 - [`docs/build-readiness.md`](docs/build-readiness.md) — module-by-module inventory
 - [`docs/final-audit.md`](docs/final-audit.md) — claim-to-evidence matrix, PROVEN vs NOT PROVEN
@@ -160,7 +162,24 @@ pnpm --filter @cag/web dev             # http://localhost:3000
 GUARD_API_URL=http://localhost:4000 node packages/sdk/dist/cli.js assets list
 ```
 
-**Not verified:** any transaction against a deployed contract. See the audit.
+### Proven on chain — X Layer testnet, chain 1952
+
+| Scenario                                                    | Result                                    |
+| ----------------------------------------------------------- | ----------------------------------------- |
+| Valid receipt accepted exactly once                         | executed, replay `ReceiptAlreadyConsumed` |
+| Recipient changed after issuance                            | `OperationDigestMismatch`                 |
+| Amount changed after issuance                               | `OperationDigestMismatch`                 |
+| Receipt expired                                             | `ReceiptExpired`                          |
+| **Scheduled corporate action kills an outstanding receipt** | `MultiplierNonceMismatch`                 |
+| Inside the guard window                                     | `InsideGuardWindow`                       |
+| Unauthorized signer                                         | `UnauthorizedSigner`                      |
+| Direct ERC-20 transfer                                      | **succeeds** — the documented bypass      |
+
+Adapter `0x5419941472c4a42FF0D68694c2A88F1b4716C337`. Transaction hashes and explorer links
+in [`docs/evidence/release-candidate.md`](docs/evidence/release-candidate.md).
+
+**Still not verified:** production xStocks scheduling compatibility, and any external
+audit.
 
 ## Licence
 

@@ -95,8 +95,8 @@
     {
       "id": "15",
       "name": "Preflight Lab and testnet execution",
-      "status": "PARTIAL",
-      "note": "Preflight Lab UI, decision panel, bound-field summary, and failure-proof table are built and render. Wallet execution is unavailable until contracts are deployed, and the page says so rather than offering a form that cannot work"
+      "status": "IMPLEMENTED",
+      "note": "Preflight Lab with decision panel and failure-proof table; contracts deployed to X Layer testnet and all eight on-chain scenarios pass"
     },
     {
       "id": "16",
@@ -137,8 +137,8 @@
     {
       "id": "22",
       "name": "End-to-end proof and submission package",
-      "status": "PARTIAL",
-      "note": "Demo script, submission checklist, accessible architecture diagram, and an evidence file that marks every on-chain scenario NOT PROVEN. The evidence itself requires a deployment"
+      "status": "IMPLEMENTED",
+      "note": "Demo script, submission checklist, accessible architecture diagram, and release-candidate evidence with real transaction hashes from 8/8 passing on-chain scenarios"
     },
     {
       "id": "23",

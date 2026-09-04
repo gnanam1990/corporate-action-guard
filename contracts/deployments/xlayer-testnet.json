@@ -1,0 +1,11 @@
+{
+  "chainId": 1952,
+  "deployedAtBlock": 40037372,
+  "deployer": "0x766842aa3d5eD37c4a8fDB0400764C276015591C",
+  "fixtureAsset": "0x16626cD009e3917C90Aa7c3d3c30A67aF7B508E1",
+  "fixtureWrapper": "0xcC59385004f017cd46525f5120c15D7DBB9BeB0A",
+  "legacyFixtureWrapper": "0x2639fCBa64f913eCf4F9c7C4a006b8B492B9Fe7B",
+  "actionGuardAdapter": "0x5419941472c4a42FF0D68694c2A88F1b4716C337",
+  "protectedVault": "0x2Dcb9Fb8044069B4A0eECf3CEaB7db9792Cf1f02",
+  "receiptSigner": "0x0415718DD0546177dAB5B4eFD435074FE907b624"
+}
