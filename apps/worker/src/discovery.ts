@@ -6,7 +6,6 @@ import {
   DEFAULT_REQUIRED_AGREEMENT_FIELDS,
   EXACT_TOLERANCE,
   instant,
-  parseMultiplier,
   unsafe,
   type ApiObservation,
   type ChainObservation,
@@ -237,7 +236,8 @@ async function compareForAsset(
   // The multiplier endpoint is per symbol and per network, so it is a second call. A
   // failure here means the API could not supply the field — reported as absent, which
   // yields INCOMPLETE, which blocks.
-  let apiMultiplier: ReturnType<typeof parseMultiplier> | undefined;
+  // Fixed point, carried straight from the exact literal in the raw body. Never a float.
+  let apiMultiplier: { readonly value: bigint; readonly decimals: number } | undefined;
   let apiActivationMs: number | undefined;
 
   try {
@@ -245,11 +245,8 @@ async function compareForAsset(
     // The exact literal from the raw body, not the parsed double.
     if (result.exactCurrentMultiplier !== undefined) {
       apiMultiplier = {
-        ok: true,
-        value: {
-          value: result.exactCurrentMultiplier.value,
-          decimals: result.exactCurrentMultiplier.decimals,
-        },
+        value: result.exactCurrentMultiplier.value,
+        decimals: result.exactCurrentMultiplier.decimals,
       };
     }
     apiActivationMs = result.scheduledActivationMs;
@@ -269,7 +266,7 @@ async function compareForAsset(
     ...(deployment.wrapperAddressV2 === undefined
       ? {}
       : { wrapperAddress: unsafe.address(deployment.wrapperAddressV2) }),
-    ...(apiMultiplier?.ok === true ? { multiplier: apiMultiplier.value } : {}),
+    ...(apiMultiplier === undefined ? {} : { multiplier: apiMultiplier }),
     ...(apiActivationMs === undefined ? {} : { scheduledActivation: instant(apiActivationMs) }),
   };
 
