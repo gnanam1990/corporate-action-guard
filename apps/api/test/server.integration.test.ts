@@ -457,3 +457,55 @@ describe('security headers and CORS', () => {
     expect(res.headers['access-control-allow-origin']).toBe('http://localhost:3000');
   });
 });
+
+describe('build provenance', () => {
+  it('reports unknown rather than inventing a SHA', async () => {
+    // A wrong commit hash is worse than none: it sends an investigation to the wrong code.
+    const res = await get('/v1/system/version');
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.gitSha).toBe('unknown');
+    expect(body.buildTime).toBe('unknown');
+    expect(body.nodeVersion).toMatch(/^v\d+/);
+  });
+
+  it('states the enforcement boundary in the response itself', async () => {
+    // An integrator reading only the API must still learn the guard is bypassable.
+    const body = (await get('/v1/system/version')).json();
+    expect(body.enforcementBoundary).toMatch(/ActionGuardAdapter/);
+    expect(body.enforcementBoundary).toMatch(/bypass/i);
+    expect(body.enforcementBoundary).toMatch(/read-only/i);
+  });
+});
+
+/**
+ * The published contract and the running server must not drift.
+ *
+ * This test exists because they DID: the OpenAPI document gained
+ * `/v1/system/version` while the route itself failed to land, so the spec advertised an
+ * endpoint that returned 404. A generated spec prevents the schemas drifting; only a test
+ * against a live server prevents the ROUTES drifting.
+ */
+describe('every documented route exists on the running server', () => {
+  it('serves a response for each documented GET path', async () => {
+    const { buildOpenApiDocument } = await import('../src/openapi.js');
+    const doc = buildOpenApiDocument() as {
+      paths: Record<string, Record<string, unknown>>;
+    };
+
+    // Substitute a known-present asset for path parameters.
+    const sample: Record<string, string> = { assetId: 'AAPLx', incidentId: 'inc-1' };
+    const documented = Object.entries(doc.paths)
+      .filter(([, ops]) => 'get' in ops)
+      .map(([path]) => path.replace(/\{(\w+)\}/g, (_m, name: string) => sample[name] ?? 'x'));
+
+    expect(documented.length).toBeGreaterThan(5);
+
+    for (const path of documented) {
+      const res = await get(path);
+      // 404 means the route is not registered at all. Any other status is the route
+      // answering, which is what this test checks for.
+      expect(res.statusCode, `${path} is documented but returns 404`).not.toBe(404);
+    }
+  });
+});

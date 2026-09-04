@@ -164,6 +164,41 @@ jobs:
         run: forge snapshot --check || echo "::warning::gas snapshot drifted; run 'forge snapshot' and commit"
         working-directory: contracts
 
+  containers:
+    name: Container images build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: API and worker image
+        # Built, not assumed. The first version of this Dockerfile failed on `pnpm prune`
+        # in a non-TTY container, which only a real build reveals.
+        run: docker build -f infra/Dockerfile -t cag-api:ci .
+
+      - name: Console image
+        run: docker build -f infra/Dockerfile.web -t cag-web:ci .
+
+      - name: Images run as a non-root user
+        run: |
+          for image in cag-api:ci cag-web:ci; do
+            user=$(docker run --rm --entrypoint sh "$image" -c 'id -un')
+            echo "$image runs as $user"
+            [ "$user" = "guard" ] || { echo "::error::$image runs as $user, expected guard"; exit 1; }
+          done
+
+      - name: No secret material baked into an image
+        run: |
+          for image in cag-api:ci cag-web:ci; do
+            if docker run --rm --entrypoint sh "$image" -c 'env' | grep -Ei 'PRIVATE_KEY=.|DATABASE_URL=.|API_KEY=.'; then
+              echo "::error::$image has a credential baked into its environment"
+              exit 1
+            fi
+          done
+          echo "no baked credentials in either image"
+
   web:
     name: Web build and bundle secret scan
     runs-on: ubuntu-latest
@@ -209,3 +244,7 @@ jobs:
 
       - name: No committed secret material
         run: node scripts/scan-secrets.mjs
+
+      - name: The web container cannot see a server secret
+        # Asserted against the compose file, because "we were careful" is not a control.
+        run: node scripts/check-compose-secrets.mjs

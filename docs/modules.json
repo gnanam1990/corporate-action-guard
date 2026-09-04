@@ -131,8 +131,8 @@
     {
       "id": "21",
       "name": "CI, containers, deployment",
-      "status": "PARTIAL",
-      "note": "Six-job CI enforcing every gate. Containers and deployment manifests absent"
+      "status": "IMPLEMENTED",
+      "note": "Seven-job CI, non-root multi-stage images verified by real builds, full compose stack, a mechanical web-secret boundary check, and deployment/rollback docs"
     },
     {
       "id": "22",

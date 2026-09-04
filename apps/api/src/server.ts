@@ -17,6 +17,7 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { authenticate, hasScope, type ApiKeyRecord, type Scope } from './auth.js';
 import { problem, type ProblemDetails } from './problem.js';
+import { API_VERSION } from './openapi.js';
 import { runPreflight, type EvidenceBundle, type PreflightPolicy } from './preflight-service.js';
 import {
   assetFilterSchema,
@@ -144,6 +145,24 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
   app.get('/v1/health/live', async () => ({
     status: 'live' as const,
     uptimeSeconds: Math.floor(process.uptime()),
+  }));
+
+  /**
+   * Build provenance.
+   *
+   * Every claim about "the deployed version" needs something to point at. Values come from
+   * build-time environment; when absent the endpoint reports `unknown` rather than
+   * inventing a plausible SHA. A wrong commit hash is worse than none — it sends an
+   * investigation to the wrong code.
+   */
+  app.get('/v1/system/version', async () => ({
+    gitSha: process.env['GIT_SHA'] ?? 'unknown',
+    buildTime: process.env['BUILD_TIME'] ?? 'unknown',
+    nodeVersion: process.version,
+    apiContractVersion: API_VERSION,
+    // Stated in the response, so a reader of the API alone learns the boundary.
+    enforcementBoundary:
+      'Enforceable only for paths routing through ActionGuardAdapter. A direct ERC-20 transfer bypasses the guard. X Layer mainnet is read-only.',
   }));
 
   app.get('/v1/health/ready', async (_request, reply) => {

@@ -159,6 +159,17 @@ export function buildOpenApiDocument(): Record<string, unknown> {
           },
         },
       },
+      '/v1/system/version': {
+        get: {
+          tags: ['health'],
+          summary: 'Build provenance and the enforcement boundary.',
+          description:
+            'Reports the git SHA and build time from build-time environment. Absent values are ' +
+            'reported as "unknown" rather than invented — a wrong commit hash sends an ' +
+            'investigation to the wrong code.',
+          responses: { '200': { description: 'Version metadata.' } },
+        },
+      },
       '/v1/system/coverage': {
         get: {
           tags: ['evidence'],
