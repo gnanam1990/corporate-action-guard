@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560" width="900" height="560" role="img" aria-labelledby="title desc">
+  <title id="title">Corporate Action Guard architecture</title>
+  <desc id="desc">
+    Two untrusted external sources feed a worker: the live xStocks production API and X Layer
+    mainnet, chain 196, which is read only. The worker writes to an append-only evidence
+    journal in PostgreSQL. The Fastify API reads that journal, evaluates the pure domain
+    safety predicate, and issues a short-lived EIP-712 receipt only for an ALLOW decision. An
+    integrator submits that receipt to ActionGuardAdapter on X Layer testnet, chain 1952,
+    which independently re-verifies the multiplier nonce, the wrapper-to-asset relation, the
+    guard window, the operation binding, and single consumption before permitting a protected
+    action on the vault. The console reads the API over HTTP only and holds no server secret.
+    An optional AI explainer receives redacted evidence and is structurally excluded from the
+    decision path. A direct ERC-20 transfer bypasses the adapter entirely.
+  </desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#526480"/>
+    </marker>
+  </defs>
+  <style>
+    .t { font: 600 13px 'Fira Sans', system-ui, sans-serif; fill: #f8fafc; }
+    .s { font: 400 10px 'Fira Code', ui-monospace, monospace; fill: #94a3b8; }
+    .l { font: 400 10px 'Fira Sans', system-ui, sans-serif; fill: #cbd5e1; }
+    .h { font: 600 11px 'Fira Sans', system-ui, sans-serif; fill: #94a3b8; letter-spacing: .08em; }
+  </style>
+  <rect width="900" height="560" fill="#020617"/>
+
+  <text x="24" y="30" class="h">UNTRUSTED SOURCES</text>
+  
+  <g>
+    <rect x="24" y="44" width="180" height="56" rx="6" fill="#0e1223" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="114" y="66" text-anchor="middle" class="t">xStocks API</text>
+    <text x="114" y="84" text-anchor="middle" class="s">api.xstocks.fi/api/v2</text>
+  </g>
+  
+  <g>
+    <rect x="24" y="116" width="180" height="56" rx="6" fill="#0e1223" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="114" y="138" text-anchor="middle" class="t">X Layer mainnet</text>
+    <text x="114" y="156" text-anchor="middle" class="s">chain 196 · READ ONLY</text>
+  </g>
+
+  <text x="300" y="30" class="h">SERVICE</text>
+  
+  <g>
+    <rect x="300" y="44" width="170" height="56" rx="6" fill="#0e1223" stroke="#526480" stroke-width="1.5"/>
+    <text x="385" y="66" text-anchor="middle" class="t">Worker</text>
+    <text x="385" y="84" text-anchor="middle" class="s">observe · compare · journal</text>
+  </g>
+  
+  <g>
+    <rect x="300" y="130" width="170" height="56" rx="6" fill="#0e1223" stroke="#526480" stroke-width="1.5"/>
+    <text x="385" y="152" text-anchor="middle" class="t">Fastify API</text>
+    <text x="385" y="170" text-anchor="middle" class="s">evaluatePreflight</text>
+  </g>
+  
+  <g>
+    <rect x="300" y="216" width="170" height="56" rx="6" fill="#0e1223" stroke="#c2670a" stroke-width="1.5"/>
+    <text x="385" y="238" text-anchor="middle" class="t">Receipt signer</text>
+    <text x="385" y="256" text-anchor="middle" class="s">EIP-712 · ALLOW only</text>
+  </g>
+
+  <text x="300" y="330" class="h">DURABLE EVIDENCE</text>
+  
+  <g>
+    <rect x="300" y="344" width="170" height="56" rx="6" fill="#0e1223" stroke="#16a34a" stroke-width="1.5"/>
+    <text x="385" y="366" text-anchor="middle" class="t">Evidence journal</text>
+    <text x="385" y="384" text-anchor="middle" class="s">append-only · trigger</text>
+  </g>
+
+  <text x="560" y="30" class="h">ON CHAIN · 1952</text>
+  
+  <g>
+    <rect x="560" y="44" width="200" height="70" rx="6" fill="#0e1223" stroke="#16a34a" stroke-width="1.5"/>
+    <text x="660" y="66" text-anchor="middle" class="t">ActionGuardAdapter</text>
+    <text x="660" y="84" text-anchor="middle" class="s">re-verifies chain facts</text>
+  </g>
+  
+  <g>
+    <rect x="560" y="130" width="200" height="56" rx="6" fill="#0e1223" stroke="#526480" stroke-width="1.5"/>
+    <text x="660" y="152" text-anchor="middle" class="t">ProtectedVault</text>
+    <text x="660" y="170" text-anchor="middle" class="s">deposit · withdraw</text>
+  </g>
+
+  <text x="560" y="230" class="h">CONSUMERS</text>
+  
+  <g>
+    <rect x="560" y="244" width="200" height="56" rx="6" fill="#0e1223" stroke="#526480" stroke-width="1.5"/>
+    <text x="660" y="266" text-anchor="middle" class="t">Console</text>
+    <text x="660" y="284" text-anchor="middle" class="s">HTTP only · no secret</text>
+  </g>
+  
+  <g>
+    <rect x="560" y="316" width="200" height="56" rx="6" fill="#0e1223" stroke="#526480" stroke-width="1.5"/>
+    <text x="660" y="338" text-anchor="middle" class="t">Integrator SDK</text>
+    <text x="660" y="356" text-anchor="middle" class="s">verifies before gas</text>
+  </g>
+  
+  <g>
+    <rect x="560" y="400" width="200" height="56" rx="6" fill="#0e1223" stroke="#8b5cf6" stroke-width="1.5"/>
+    <text x="660" y="422" text-anchor="middle" class="t">AI explainer</text>
+    <text x="660" y="440" text-anchor="middle" class="s">non-authoritative</text>
+  </g>
+
+  
+  <g>
+    <line x1="204" y1="72" x2="300" y2="72" stroke="#526480" stroke-width="1.5" marker-end="url(#a)"/>
+    <text x="252" y="66" text-anchor="middle" class="l">validated</text>
+  </g>
+  
+  <g>
+    <line x1="204" y1="144" x2="300" y2="90" stroke="#526480" stroke-width="1.5" marker-end="url(#a)"/>
+    
+  </g>
+  
+  <g>
+    <line x1="385" y1="100" x2="385" y2="344" stroke="#526480" stroke-width="1.5" marker-end="url(#a)"/>
+    <text x="385" y="216" text-anchor="middle" class="l">journal</text>
+  </g>
+  
+  <g>
+    <line x1="385" y1="344" x2="385" y2="186" stroke="#526480" stroke-width="1.5" marker-end="url(#a)"/>
+    <text x="385" y="259" text-anchor="middle" class="l">read</text>
+  </g>
+  
+  <g>
+    <line x1="470" y1="158" x2="300" y2="230" stroke="#526480" stroke-width="1.5" marker-end="url(#a)"/>
+    
+  </g>
+  
+  <g>
+    <line x1="470" y1="244" x2="560" y2="100" stroke="#526480" stroke-width="1.5" marker-end="url(#a)"/>
+    <text x="515" y="166" text-anchor="middle" class="l">receipt</text>
+  </g>
+  
+  <g>
+    <line x1="660" y1="114" x2="660" y2="130" stroke="#526480" stroke-width="1.5" marker-end="url(#a)"/>
+    
+  </g>
+  
+  <g>
+    <line x1="470" y1="158" x2="560" y2="272" stroke="#526480" stroke-width="1.5" marker-end="url(#a)"/>
+    <text x="515" y="209" text-anchor="middle" class="l">HTTP</text>
+  </g>
+  
+  <g>
+    <line x1="470" y1="372" x2="560" y2="428" stroke="#526480" stroke-width="1.5" marker-end="url(#a)"/>
+    <text x="515" y="394" text-anchor="middle" class="l">redacted</text>
+  </g>
+
+  <g>
+    <line x1="24" y1="470" x2="240" y2="470" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#a)"/>
+    <text x="24" y="492" class="l" style="fill:#f87171">Direct ERC-20 transfer</text>
+    <text x="24" y="508" class="s" style="fill:#f87171">bypasses the adapter entirely</text>
+  </g>
+
+  <text x="300" y="492" class="s">Mainnet is never written. The adapter cannot verify that the</text>
+  <text x="300" y="506" class="s">off-chain API agreed — see ADR 0002 residual risks.</text>
+</svg>
