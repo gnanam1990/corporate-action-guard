@@ -33,7 +33,8 @@
     "scan:secrets": "node scripts/scan-secrets.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
     "docs:readiness": "node scripts/generate-readiness.mjs",
-    "docs:check": "node scripts/generate-readiness.mjs --check"
+    "docs:check": "node scripts/generate-readiness.mjs --check",
+    "audit:deps": "node scripts/dependency-audit.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

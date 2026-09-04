@@ -202,7 +202,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Dependency audit
-        run: pnpm audit --audit-level high
+        # Fails on a real finding; warns and continues when the npm advisory service is
+        # unreachable. A third party being down must never take main red — the same rule
+        # that keeps the live probes out of required checks.
+        run: pnpm audit:deps
 
       - name: No committed secret material
         run: node scripts/scan-secrets.mjs
