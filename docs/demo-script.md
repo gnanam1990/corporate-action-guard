@@ -85,8 +85,8 @@ Do not skip this. It is the most credible thing in the demo.
 - Enforceable **only** for paths routing through `ActionGuardAdapter`. A direct ERC-20
   transfer bypasses it — and that is a **passing test** in the repository, not a footnote.
 - X Layer mainnet is **read-only**. No signing path for chain 196 exists.
-- The MVP signer can assert off-chain agreement the adapter cannot verify. Production needs
-  HSM/KMS or threshold signing.
+- The signer can assert off-chain agreement the adapter cannot verify. Production keeps the
+  private key in AWS KMS, but least-privilege IAM, audit logs, and rotation remain critical.
 
 ## What must never be said
 

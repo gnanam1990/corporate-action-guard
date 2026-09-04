@@ -5,11 +5,11 @@
 Three processes, three different sets of secrets. The separation is enforced by _what each
 container is given_, not by discipline inside the application.
 
-|            | Database URL | Signer key |  Mainnet RPC   | Public API URL |
-| ---------- | :----------: | :--------: | :------------: | :------------: |
-| **api**    |      ✅      |     ✅     |       ✕        |       ✅       |
-| **worker** |      ✅      |     ✕      | ✅ (read only) |       ✕        |
-| **web**    |      ✕       |     ✕      |       ✕        |       ✅       |
+|            | Database URL | KMS sign access |  Mainnet RPC   | Public API URL |
+| ---------- | :----------: | :-------------: | :------------: | :------------: |
+| **api**    |      ✅      |       ✅        |       ✕        |       ✅       |
+| **worker** |      ✅      |        ✕        | ✅ (read only) |       ✕        |
+| **web**    |      ✕       |        ✕        |       ✕        |       ✅       |
 
 The web container receives **exactly one** variable and it is public by definition. That is
 asserted mechanically: `node scripts/check-compose-secrets.mjs` fails if any server secret
@@ -66,35 +66,76 @@ deploy. Once, deliberately, before the new replicas roll.
 
 ## Chain configuration
 
-| Variable                          | Given to            | Note                                           |
-| --------------------------------- | ------------------- | ---------------------------------------------- |
-| `XLAYER_MAINNET_RPC_URL`          | worker only         | **Read only.** Chain 196 is never written.     |
-| `XLAYER_TESTNET_RPC_URL`          | deploy tooling      | The only chain this build writes to            |
-| `RECEIPT_SIGNER_PRIVATE_KEY`      | api only            | Separate identity from the testnet broadcaster |
-| `TESTNET_DEPLOYER_PRIVATE_KEY`    | deploy tooling only | Never in a long-running service                |
-| `INTEGRATOR_API_KEY_HASH`         | api only            | Bootstrap hash for key id `integ001`           |
-| `OPERATOR_API_KEY_HASH`           | api only            | Bootstrap hash for key id `operator`           |
-| `GUARD_ADAPTER_TESTNET_ADDRESS`   | api only            | Must name the current compatible adapter       |
-| `PROTECTED_VAULT_TESTNET_ADDRESS` | api only            | The only target authorized by the API policy   |
+| Variable                          | Given to            | Note                                             |
+| --------------------------------- | ------------------- | ------------------------------------------------ |
+| `XLAYER_MAINNET_RPC_URL`          | worker only         | **Read only.** Chain 196 is never written.       |
+| `XLAYER_TESTNET_RPC_URL`          | deploy tooling      | The only chain this build writes to              |
+| `RECEIPT_SIGNER_MODE`             | api only            | Production requires `aws-kms`                    |
+| `AWS_KMS_KEY_ID`, `AWS_REGION`    | api only            | KMS reference; the private key never leaves KMS  |
+| `RECEIPT_SIGNER_ADDRESS`          | api only            | Must match the KMS public key and adapter signer |
+| `TESTNET_DEPLOYER_PRIVATE_KEY`    | deploy tooling only | Never in a long-running service                  |
+| `INTEGRATOR_API_KEY_HASH`         | api only            | Bootstrap hash for key id `integ001`             |
+| `OPERATOR_API_KEY_HASH`           | api only            | Bootstrap hash for key id `operator`             |
+| `FIXTURE_API_KEY_HASH`            | api only            | Dedicated `admin:fixture` principal only         |
+| `GUARD_ADAPTER_TESTNET_ADDRESS`   | api only            | Must name the current compatible adapter         |
+| `PROTECTED_VAULT_TESTNET_ADDRESS` | api only            | The only target authorized by the API policy     |
 
-The receipt signer and the testnet broadcaster are **separate identities**, so compromising
-the one that deploys does not grant the one that authorizes. `pnpm testnet:status` fails if
-they are ever the same key.
+The receipt signer, fixture-intent administrator, and testnet broadcaster are separate
+roles. Do not combine them in production IAM or reuse their credentials.
+
+Generate each API key independently. The command prints the raw value once for the client
+secret manager and the SHA-256 value for the API environment:
+
+```bash
+pnpm api-key:generate integrator
+pnpm api-key:generate operator
+pnpm api-key:generate fixture
+```
+
+## AWS KMS receipt signer
+
+Production configuration refuses `RECEIPT_SIGNER_PRIVATE_KEY`. Create an asymmetric KMS
+key with `ECC_SECG_P256K1` / `SIGN_VERIFY`, then derive the Ethereum identity without
+exporting a private key:
+
+```bash
+AWS_REGION=ap-south-1 AWS_KMS_KEY_ID=alias/cag-receipt-signer \
+  pnpm signer:kms-address
+```
+
+Set the printed checksummed address as `RECEIPT_SIGNER_ADDRESS`, authorize that address on
+the deployed adapter, and grant the API runtime only the policy in
+[`runbooks/kms-signer.md`](runbooks/kms-signer.md). `/v1/health/ready` actively fetches the
+public key and checks its type, usage, algorithm, and address; a configured alias alone is
+not considered ready.
 
 ## Backup and restore
 
-Only one table must survive: `evidence_events`. Every projection is reproducible from it.
+The append-only `evidence_events` journal is the source of truth. The archive includes the
+whole database so schema, authentication, cursors, and projections return consistently;
+projections remain reproducible from the journal.
 
 ```bash
-# Backup
-pg_dump "$DATABASE_URL" --format=custom --file=guard-$(date -u +%Y%m%dT%H%M%SZ).dump
+# Refuses overwrite, verifies pg_restore can parse the archive, and writes SHA-256.
+DATABASE_URL="$DATABASE_URL" BACKUP_PATH=/secure/guard.dump pnpm db:backup
 
-# Restore, then rebuild projections FROM the journal
-pg_restore --dbname="$DATABASE_URL" --clean --if-exists guard-<timestamp>.dump
+# Creates, verifies, and always drops a disposable database. It never touches production.
+DATABASE_ADMIN_URL="$DATABASE_ADMIN_URL" BACKUP_PATH=/secure/guard.dump \
+  pnpm db:restore-drill
 ```
 
-Projections are never restored independently of the journal: a projection row with no
-journal row behind it is a fabricated claim.
+CI runs this exact archive-and-restore drill. Production must additionally encrypt and copy
+the archive and checksum to versioned object storage, enable WAL/PITR according to the
+platform's controls, set retention, and schedule recurring restore drills. Those are
+deployment responsibilities and are not claimed by this repository.
+
+## Monitoring and alerts
+
+The API exposes Prometheus text at `/metrics`. `infra/monitoring/prometheus.yml` scrapes it,
+and `infra/monitoring/alerts.yml` declares critical alerts for API/component readiness plus
+a no-preflight-traffic warning. Validate and deploy those rules in the target monitoring
+platform, route critical alerts to the on-call service, and test the route before launch.
+Checked-in rules are configuration evidence, not evidence that anyone will be paged.
 
 ## Rollback
 

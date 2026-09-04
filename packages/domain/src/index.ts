@@ -90,6 +90,8 @@ export {
 
 export { compareSources } from './sources.js';
 
+export { fixtureEvidenceMessage, type FixtureEvidencePayload } from './fixture-evidence.js';
+
 export {
   allLegalTransitions,
   deriveGuardWindow,

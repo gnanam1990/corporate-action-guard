@@ -7,8 +7,8 @@ import { z } from 'zod';
  *  1. A server secret may never be published to the browser. Any variable whose name
  *     starts with `NEXT_PUBLIC_` is compiled into the web bundle, so the secret keys are
  *     checked against that prefix at load time (see `assertNoPublicSecrets`).
- *  2. X Layer mainnet is read-only. The mainnet chain id is pinned and a signer key may
- *     never be paired with it (see `assertNoMainnetSigner`).
+ *  2. X Layer mainnet is read-only. The mainnet and testnet chain ids are pinned; no
+ *     broadcast target for chain 196 exists (see `assertNoMainnetSigner`).
  */
 
 /** X Layer mainnet. Read-only for the entire lifetime of this product. */
@@ -66,15 +66,26 @@ export const envSchema = z.object({
   INTEGRATOR_API_KEY_HASH: optional(
     z.string().regex(/^[0-9a-fA-F]{64}$/, 'must be a 64-character SHA-256 hex digest'),
   ),
+  FIXTURE_API_KEY_HASH: optional(
+    z.string().regex(/^[0-9a-fA-F]{64}$/, 'must be a 64-character SHA-256 hex digest'),
+  ),
 
   RECEIPT_SIGNER_PRIVATE_KEY: optional(hexPrivateKey),
   RECEIPT_SIGNER_ADDRESS: optional(hexAddress),
+  RECEIPT_SIGNER_MODE: z.enum(['local', 'aws-kms']).default('local'),
+  AWS_KMS_KEY_ID: optional(z.string().min(1)),
+  AWS_REGION: optional(z.string().min(1)),
 
   GUARD_ADAPTER_TESTNET_ADDRESS: optional(hexAddress),
   GUARD_ADAPTER_DEPLOYED_AT_BLOCK: optional(z.coerce.number().int().nonnegative()),
   PROTECTED_VAULT_TESTNET_ADDRESS: optional(hexAddress),
   FIXTURE_ASSET_TESTNET_ADDRESS: optional(hexAddress),
   FIXTURE_WRAPPER_TESTNET_ADDRESS: optional(hexAddress),
+  FIXTURE_ADMIN_ADDRESS: optional(hexAddress),
+  FIXTURE_ASSET_ID: z
+    .string()
+    .regex(/^[A-Za-z0-9._-]{1,64}$/)
+    .default('CAG-FIXTURE'),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -87,6 +98,8 @@ export const SERVER_SECRET_KEYS = [
   'DATABASE_URL',
   'OPERATOR_API_KEY_HASH',
   'INTEGRATOR_API_KEY_HASH',
+  'FIXTURE_API_KEY_HASH',
+  'AWS_KMS_KEY_ID',
   'RECEIPT_SIGNER_PRIVATE_KEY',
   'XLAYER_MAINNET_RPC_URL',
   'XLAYER_TESTNET_RPC_URL',

@@ -57,6 +57,9 @@ jobs:
         # because tests install everything; a production install omitted it.
         run: pnpm check:deps
 
+      - name: Monitoring configuration
+        run: pnpm check:monitoring
+
       - name: Typecheck
         run: pnpm typecheck
 
@@ -130,6 +133,14 @@ jobs:
         run: pnpm db:migrate
 
       - run: pnpm test:integration
+
+      - name: Backup archive and disposable restore drill
+        env:
+          BACKUP_PATH: ${{ runner.temp }}/cag-ci.dump
+          DATABASE_ADMIN_URL: postgresql://guard:guard@localhost:5432/guard
+        run: |
+          pnpm db:backup
+          pnpm db:restore-drill
 
   contracts:
     name: Foundry

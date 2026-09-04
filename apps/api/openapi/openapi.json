@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Corporate Action Guard API",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Fail-closed preflight authorization for integrations acting on xStocks corporate-action state. A receipt is issued only for an ALLOW decision. The guard is enforceable only for paths that route through ActionGuardAdapter; a direct ERC-20 transfer bypasses it. X Layer mainnet is read-only.",
     "license": {
       "name": "MIT"
@@ -30,6 +30,10 @@
     {
       "name": "operator",
       "description": "Incident review"
+    },
+    {
+      "name": "fixture",
+      "description": "Explicitly testnet-only fixture control plane"
     }
   ],
   "components": {
@@ -497,6 +501,75 @@
         },
         "required": ["reason", "evidenceIds"],
         "additionalProperties": false
+      },
+      "FixtureEvidence": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "assetId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._-]{1,64}$"
+          },
+          "chainId": {
+            "type": "number",
+            "const": 1952
+          },
+          "tokenAddress": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "wrapperAddress": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "multiplierValue": {
+            "type": "string",
+            "pattern": "^[0-9]{1,78}$"
+          },
+          "multiplierDecimals": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 36
+          },
+          "multiplierNonce": {
+            "type": "string",
+            "pattern": "^[0-9]{1,78}$"
+          },
+          "scheduledActivation": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "signature": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{130}$"
+          }
+        },
+        "required": [
+          "assetId",
+          "chainId",
+          "tokenAddress",
+          "wrapperAddress",
+          "multiplierValue",
+          "multiplierDecimals",
+          "multiplierNonce",
+          "scheduledActivation",
+          "observedAt",
+          "signature"
+        ],
+        "additionalProperties": false
       }
     }
   },
@@ -540,6 +613,24 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "tags": ["health"],
+        "summary": "Prometheus metrics with bounded labels and dependency readiness gauges.",
+        "responses": {
+          "200": {
+            "description": "Prometheus text exposition.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
                 }
               }
             }
@@ -858,6 +949,83 @@
           },
           "409": {
             "description": "The idempotency key is in progress or was reused for a different request.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/testnet/fixture-evidence": {
+      "post": {
+        "tags": ["fixture"],
+        "summary": "Ingest separately signed fixture-admin intent for chain 1952 only.",
+        "description": "The worker independently compares this signed control-plane intent with a confirmation-safe chain read. This endpoint cannot accept mainnet evidence, and an accepted intent cannot by itself produce an ALLOW decision.",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FixtureEvidence"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "The signed intent was journaled."
+          },
+          "400": {
+            "description": "The request or source timestamp is invalid.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key lacks scope, identity differs, or signature is invalid.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Fixture evidence ingestion is not configured.",
             "content": {
               "application/problem+json": {
                 "schema": {

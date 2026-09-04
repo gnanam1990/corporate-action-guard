@@ -1,0 +1,28 @@
+groups:
+  - name: corporate-action-guard
+    rules:
+      - alert: CorporateActionGuardApiDown
+        expr: up{job="corporate-action-guard-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Corporate Action Guard API metrics endpoint is unavailable
+
+      - alert: CorporateActionGuardComponentNotReady
+        expr: cag_component_ready == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: Corporate Action Guard required component is not ready
+
+      - alert: CorporateActionGuardNoPreflightTraffic
+        # `sum()` over no series is absent rather than numeric zero. Include `absent()` so
+        # a service that has never handled a preflight still alerts after the grace period.
+        expr: sum(increase(cag_preflight_decisions_total[30m])) == 0 or absent(cag_preflight_decisions_total)
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: No preflight decisions have been observed for one hour

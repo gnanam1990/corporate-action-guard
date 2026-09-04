@@ -1,6 +1,6 @@
 # Internal release audit
 
-**Review basis:** uncommitted working tree based on `ae7948d6ec4e4cf378b265397a86d72864eb5518`
+**Review basis:** working tree based on `1d265d25c0e4ee7e6dbad7f37b89842fbb7d358b`
 **Date:** 2026-09-04
 **Reviewer:** implementing team. This is **not** an independent security audit.
 
@@ -15,26 +15,29 @@ check, deployment recorder, and proof runner deliberately reject that obsolete a
 
 Release readiness remains blocked until an explicitly authorized, funded v2 testnet
 deployment is followed by a fresh proof run. Production readiness also requires an
-independent audit, hardened signer custody, and production retention/backup operations.
+independent audit, a deployed monitoring/retention environment, and operating history.
 
 ## Current evidence
 
-| Claim                                                                                                             | Status                  | Evidence                                                                                               |
-| ----------------------------------------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------ |
-| Missing, stale, mismatched, unknown, cross-chain, unsupported-target, or unsupported-action evidence cannot ALLOW | **PROVEN locally**      | Unit/property tests and 27/27 safety-predicate mutation kills                                          |
-| A retry with the same actor, key, and body returns the exact response without minting another receipt             | **PROVEN locally**      | PostgreSQL-backed HTTP integration test; command result and journal event commit atomically            |
-| Reusing an idempotency key for another body is rejected                                                           | **PROVEN locally**      | HTTP integration test returns conflict                                                                 |
-| Production authentication stores hashes and durable scopes, not raw keys                                          | **PROVEN locally**      | `api_keys` constraints and database integration tests; production rejects `DEV_API_KEYS`               |
-| Operator identity comes from authentication rather than the request body                                          | **PROVEN locally**      | Strict schema and journal assertion in HTTP integration tests                                          |
-| Scheduled actions remain blocked after the nominal guard window until applied                                     | **PROVEN locally**      | Domain regression, mutation kill, and Solidity regression                                              |
-| Adapter pause cannot trap an account's existing vault balance                                                     | **PROVEN locally**      | Direct owner-balance withdrawal regression in Foundry                                                  |
-| Worker lease loss prevents a stale worker from committing                                                         | **PROVEN locally**      | Fencing assertion plus renewal/takeover integration tests                                              |
-| Worker observations drive reconciliation, incidents, and recovery states                                          | **PROVEN locally**      | Reconciler and projection regressions; worker composition is wired                                     |
-| The web app can encode and submit the exact ALLOW receipt                                                         | **PROVEN locally**      | Production TypeScript build and SDK calldata test; execution stays disabled for an obsolete deployment |
-| The current v2 adapter works on X Layer testnet                                                                   | **NOT PROVEN**          | No v2 deployment or v2 transaction evidence exists                                                     |
-| Live chain-196 evidence authorizes testnet execution                                                              | **INTENTIONALLY FALSE** | Evidence-chain binding returns `EVIDENCE_CHAIN_MISMATCH`; mainnet is monitoring-only                   |
-| Receipt consumption and reorg recovery update projections from finalized adapter logs                             | **PROVEN locally**      | Database-backed index, rewind, compensation, and full-rebuild regression                               |
-| The system is production ready or externally audited                                                              | **NOT PROVEN**          | No external audit, HSM/KMS signer, public deployment, or operating history                             |
+| Claim                                                                                                             | Status                  | Evidence                                                                                                 |
+| ----------------------------------------------------------------------------------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------- |
+| Missing, stale, mismatched, unknown, cross-chain, unsupported-target, or unsupported-action evidence cannot ALLOW | **PROVEN locally**      | Unit/property tests and 27/27 safety-predicate mutation kills                                            |
+| A retry with the same actor, key, and body returns the exact response without minting another receipt             | **PROVEN locally**      | PostgreSQL-backed HTTP integration test; command result and journal event commit atomically              |
+| Reusing an idempotency key for another body is rejected                                                           | **PROVEN locally**      | HTTP integration test returns conflict                                                                   |
+| Production authentication stores hashes and durable scopes, not raw keys                                          | **PROVEN locally**      | `api_keys` constraints and database integration tests; production rejects `DEV_API_KEYS`                 |
+| Operator identity comes from authentication rather than the request body                                          | **PROVEN locally**      | Strict schema and journal assertion in HTTP integration tests                                            |
+| Scheduled actions remain blocked after the nominal guard window until applied                                     | **PROVEN locally**      | Domain regression, mutation kill, and Solidity regression                                                |
+| Adapter pause cannot trap an account's existing vault balance                                                     | **PROVEN locally**      | Direct owner-balance withdrawal regression in Foundry                                                    |
+| Worker lease loss prevents a stale worker from committing                                                         | **PROVEN locally**      | Fencing assertion plus renewal/takeover integration tests                                                |
+| Worker observations drive reconciliation, incidents, and recovery states                                          | **PROVEN locally**      | Reconciler and projection regressions; worker composition is wired                                       |
+| The web app can encode and submit the exact ALLOW receipt                                                         | **PROVEN locally**      | Production TypeScript build and SDK calldata test; execution stays disabled for an obsolete deployment   |
+| The current v2 adapter works on X Layer testnet                                                                   | **NOT PROVEN**          | No v2 deployment or v2 transaction evidence exists                                                       |
+| Live chain-196 evidence authorizes testnet execution                                                              | **INTENTIONALLY FALSE** | Evidence-chain binding returns `EVIDENCE_CHAIN_MISMATCH`; mainnet is monitoring-only                     |
+| Receipt consumption and reorg recovery update projections from finalized adapter logs                             | **PROVEN locally**      | Database-backed index, rewind, compensation, and full-rebuild regression                                 |
+| Production mode keeps a raw receipt key out of the process                                                        | **PROVEN locally**      | Production config rejects local keys; AWS KMS DER recovery and active public-key/address readiness tests |
+| A database backup can be parsed and restored into a disposable database                                           | **PROVEN locally**      | Checksummed custom archive and schema/journal restore drill; repeated in CI                              |
+| Signed chain-1952 intent is independently compared with finalized chain state                                     | **PROVEN locally**      | Dedicated scope, EIP-191 verification, append-only source time, match/mismatch/partial worker tests      |
+| The system is production ready or externally audited                                                              | **NOT PROVEN**          | No external audit, public deployment, deployed alerting/retention, or operating history                  |
 
 ## Historical evidence boundary
 
@@ -46,12 +49,12 @@ evidence.
 ## Residual risks and missing work
 
 1. Deploy implementation v2 to X Layer testnet and regenerate all on-chain failure proofs.
-2. Add a same-chain testnet fixture observation path before presenting API-to-wallet
-   execution as end to end; live mainnet evidence must remain unable to cross-authorize.
-3. Move the receipt signer from process memory to HSM/KMS or threshold custody with
-   rotation and revocation operations.
-4. Add production journal partitioning, WAL/object-store backup, restore drills, alerts,
-   and a deployed public service.
+2. Run the signed same-chain fixture intent publisher and worker against that deployment;
+   live mainnet evidence must remain unable to cross-authorize.
+3. Provision the documented AWS KMS key/IAM policy, authorize its derived address on the
+   adapter, and exercise the two-step rotation procedure.
+4. Deploy WAL/object-store retention, the supplied Prometheus alerts, and a public service;
+   schedule recurring restore drills rather than relying only on CI.
 5. Obtain an independent smart-contract and service security audit.
 
 ## Claims that remain forbidden

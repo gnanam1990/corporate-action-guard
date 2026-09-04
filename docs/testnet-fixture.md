@@ -91,6 +91,40 @@ valid again.
   would be indistinguishable from a real asset to anything reading it.
 - It does not use the xStocks name, ticker, or branding.
 
+## Independent same-chain evidence
+
+The fixture does not manufacture “source agreement” by copying one RPC read into both
+sides of a comparison. The administrator signs an explicit EIP-191 intent containing the
+asset id, chain id, token, wrapper, multiplier, decimals, nonce, schedule, and source time.
+The API accepts it only when all of these are true:
+
+- the API key has the dedicated `admin:fixture` scope;
+- chain id is exactly 1952 and addresses match the configured deployment;
+- the source timestamp is fresh; and
+- the signature recovers `FIXTURE_ADMIN_ADDRESS`.
+
+The worker separately reads the fixture at `head - confirmationDepth` and compares the
+four required agreement fields. It reads the signed side from the append-only journal,
+not from the mixed current-state projection, so a chain observation cannot overwrite the
+intent it is being compared with. A partial read is `INCOMPLETE`; a differing field is
+`MISMATCH`; neither can authorize a receipt.
+
+Publish intent from an operator workstation, never from an API/worker container:
+
+```bash
+# FIXTURE_API_KEY is the raw cag_fixadm01_... value. The API stores only its SHA-256 hash.
+# FIXTURE_ADMIN_PRIVATE_KEY must derive FIXTURE_ADMIN_ADDRESS.
+FIXTURE_MULTIPLIER_VALUE=1000000 \
+FIXTURE_MULTIPLIER_DECIMALS=6 \
+FIXTURE_MULTIPLIER_NONCE=7 \
+FIXTURE_SCHEDULED_ACTIVATION=none \
+pnpm fixture:evidence:publish
+```
+
+The values are operator-declared intent, not values auto-copied from RPC. After an on-chain
+schedule transaction, wait until the transaction is confirmation-safe, publish the exact
+intended new state, and verify the worker records `MATCH` before running preflight.
+
 ## On `block.timestamp`
 
 The guard window is inherently a statement about time, and `block.timestamp` is the only

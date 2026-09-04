@@ -17,7 +17,7 @@ import type {
 import type { Multiplier, MultiplierNonce } from './multiplier.js';
 import type { Instant } from './time.js';
 
-export type SourceKind = 'XSTOCKS_API' | 'XLAYER_RPC';
+export type SourceKind = 'XSTOCKS_API' | 'FIXTURE_CONTROL_PLANE' | 'XLAYER_RPC';
 
 export interface Provenance {
   readonly sourceKind: SourceKind;
@@ -30,7 +30,9 @@ export interface Provenance {
 }
 
 export interface ApiObservation {
-  readonly provenance: Provenance & { readonly sourceKind: 'XSTOCKS_API' };
+  readonly provenance: Provenance & {
+    readonly sourceKind: 'XSTOCKS_API' | 'FIXTURE_CONTROL_PLANE';
+  };
   readonly symbol: TickerSymbol;
   readonly tokenAddress: Address;
   /** Present only when the API exposes it. Absent is UNKNOWN, never "no wrapper". */

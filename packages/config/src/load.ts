@@ -52,6 +52,34 @@ function assertNoMainnetSigner(env: Env): void {
 }
 
 /**
+ * API-only signer validation.
+ *
+ * Kept separate from `loadEnv`: the worker and one-shot migration image share the config
+ * package but must not need signer credentials. The API calls this before constructing a
+ * signer.
+ */
+export function assertApiSignerConfig(env: Env): void {
+  const issues: string[] = [];
+  if (env.NODE_ENV === 'production' && env.RECEIPT_SIGNER_MODE !== 'aws-kms') {
+    issues.push('production API requires RECEIPT_SIGNER_MODE=aws-kms');
+  }
+  if (env.NODE_ENV === 'production' && env.RECEIPT_SIGNER_PRIVATE_KEY !== undefined) {
+    issues.push('RECEIPT_SIGNER_PRIVATE_KEY is forbidden in production');
+  }
+  if (env.RECEIPT_SIGNER_MODE === 'aws-kms') {
+    if (env.AWS_KMS_KEY_ID === undefined) issues.push('AWS_KMS_KEY_ID is required for aws-kms');
+    if (env.AWS_REGION === undefined) issues.push('AWS_REGION is required for aws-kms');
+    if (env.RECEIPT_SIGNER_ADDRESS === undefined) {
+      issues.push('RECEIPT_SIGNER_ADDRESS is required for aws-kms');
+    }
+    if (env.RECEIPT_SIGNER_PRIVATE_KEY !== undefined) {
+      issues.push('RECEIPT_SIGNER_PRIVATE_KEY must be absent in aws-kms mode');
+    }
+  }
+  if (issues.length > 0) throw new ConfigError('Invalid API signer configuration.', issues);
+}
+
+/**
  * Parse and validate the process environment exactly once, at startup.
  * Throws `ConfigError` listing every problem rather than failing on the first.
  */

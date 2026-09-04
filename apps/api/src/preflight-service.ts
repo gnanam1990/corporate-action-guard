@@ -10,7 +10,7 @@ import {
   type PreflightInput,
   type SourceComparison,
 } from '@cag/domain';
-import { computeOperationDigest, type Operation, type ReceiptSigner } from '@cag/receipts';
+import { computeOperationDigest, type Operation, type ReceiptSigningProvider } from '@cag/receipts';
 import type { PreflightRequest, PreflightResponse } from './schemas.js';
 
 /**
@@ -53,7 +53,7 @@ export interface PreflightPolicy {
 }
 
 export interface PreflightDeps {
-  readonly signer: ReceiptSigner;
+  readonly signer: ReceiptSigningProvider;
   readonly policy: PreflightPolicy;
   /** Supplied by the caller; nothing here reads a clock. */
   readonly nowMs: number;

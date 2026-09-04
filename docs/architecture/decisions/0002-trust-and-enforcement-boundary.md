@@ -30,9 +30,11 @@ protect at all.
    but it cannot verify that the xStocks API agreed. A compromised signer could issue a
    receipt asserting agreement that never existed. Mitigations in this build are limited to
    short receipt lifetimes, operation binding, single consumption, authorized-signer
-   configuration, and two-step rotation. **The MVP signer is therefore not a final
-   production trust architecture.** Production requires HSM/KMS custody or threshold
-   signing plus an auditable rotation procedure. This gap is documented, not implemented.
+   configuration, and two-step rotation. Production mode uses AWS KMS
+   `ECC_SECG_P256K1`; a raw process-memory key is rejected at startup and readiness checks
+   the KMS public key against the configured Ethereum address. **KMS improves custody but
+   does not remove signer trust:** an IAM principal allowed to sign can still lie about
+   off-chain agreement, so access control, audit logs, and rotation remain critical.
 
 5. **Direct ERC-20 transfers bypass the optional adapter.** A holder can move an xStock
    without touching the guard. The guarantee covers only paths that route through
@@ -54,6 +56,6 @@ protect at all.
 
 | Risk                                                | Why accepted                                  | Bounded by                                                                            |
 | --------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Signer key held in process memory                   | HSM/KMS is out of scope for the event build   | Testnet-only writes, short receipt lifetime, single consumption, rotation             |
+| KMS signing IAM principal is compromised            | Adapter cannot prove off-chain agreement      | Least-privilege `kms:Sign`, CloudTrail, short receipts, single consumption, rotation  |
 | Single RPC provider may be dishonest                | Multi-provider quorum is out of scope         | Chain-ID check, bytecode check, provider recorded per read, fallback for reads        |
 | Reorg deeper than the configured confirmation depth | X Layer finality details not fully documented | Conservative configurable depth, labelled as an assumption, `REORG_DETECTED` evidence |

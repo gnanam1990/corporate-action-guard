@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   assetFilterSchema,
+  fixtureEvidenceSchema,
   healthResponseSchema,
   preflightRequestSchema,
   preflightResponseSchema,
@@ -19,7 +20,7 @@ import {
  * CI regenerates this and fails on any diff.
  */
 
-export const API_VERSION = '1.0.0';
+export const API_VERSION = '1.1.0';
 
 function jsonSchema(schema: z.ZodType): Record<string, unknown> {
   return z.toJSONSchema(schema, { io: 'input', target: 'draft-2020-12' }) as Record<
@@ -75,6 +76,7 @@ export function buildOpenApiDocument(): Record<string, unknown> {
       { name: 'evidence', description: 'Public read-only evidence' },
       { name: 'preflight', description: 'Operation authorization' },
       { name: 'operator', description: 'Incident review' },
+      { name: 'fixture', description: 'Explicitly testnet-only fixture control plane' },
     ],
     components: {
       securitySchemes: {
@@ -95,6 +97,7 @@ export function buildOpenApiDocument(): Record<string, unknown> {
         // A discriminated union: a BLOCK carrying a receipt is not representable.
         PreflightResponse: jsonSchema(preflightResponseSchema),
         ReviewResolution: jsonSchema(reviewResolutionSchema),
+        FixtureEvidence: jsonSchema(fixtureEvidenceSchema),
       },
     },
     paths: {
@@ -112,6 +115,18 @@ export function buildOpenApiDocument(): Record<string, unknown> {
           responses: {
             '200': json('Health', 'Every mandatory dependency is reachable.'),
             '503': json('Health', 'A mandatory dependency is unavailable.'),
+          },
+        },
+      },
+      '/metrics': {
+        get: {
+          tags: ['health'],
+          summary: 'Prometheus metrics with bounded labels and dependency readiness gauges.',
+          responses: {
+            '200': {
+              description: 'Prometheus text exposition.',
+              content: { 'text/plain': { schema: { type: 'string' } } },
+            },
           },
         },
       },
@@ -272,6 +287,33 @@ export function buildOpenApiDocument(): Record<string, unknown> {
             '409': problemResponse(
               'The idempotency key is in progress or was reused for a different request.',
             ),
+            '429': problemResponse('Rate limited.'),
+          },
+        },
+      },
+      '/v1/testnet/fixture-evidence': {
+        post: {
+          tags: ['fixture'],
+          summary: 'Ingest separately signed fixture-admin intent for chain 1952 only.',
+          description:
+            'The worker independently compares this signed control-plane intent with a confirmation-safe ' +
+            'chain read. This endpoint cannot accept mainnet evidence, and an accepted intent cannot by ' +
+            'itself produce an ALLOW decision.',
+          security: [{ apiKey: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/FixtureEvidence' } },
+            },
+          },
+          responses: {
+            '202': { description: 'The signed intent was journaled.' },
+            '400': problemResponse('The request or source timestamp is invalid.'),
+            '401': problemResponse('Authentication failed.'),
+            '403': problemResponse(
+              'The key lacks scope, identity differs, or signature is invalid.',
+            ),
+            '404': problemResponse('Fixture evidence ingestion is not configured.'),
             '429': problemResponse('Rate limited.'),
           },
         },

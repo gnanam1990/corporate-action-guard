@@ -14,18 +14,21 @@ import {
   payloadHash,
   withTransaction,
 } from '@cag/db';
-import { createLogger, type Logger } from '@cag/observability';
-import type { ReceiptSigner } from '@cag/receipts';
+import { fixtureEvidenceMessage } from '@cag/domain';
+import { createLogger, MetricsRegistry, type Logger } from '@cag/observability';
+import type { ReceiptSigningProvider } from '@cag/receipts';
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
+import { verifyMessage } from 'viem';
 import { authenticate, hasScope, type ApiKeyRecord, type Scope } from './auth.js';
 import { problem, type ProblemDetails } from './problem.js';
 import { API_VERSION } from './openapi.js';
 import { runPreflight, type EvidenceBundle, type PreflightPolicy } from './preflight-service.js';
 import {
   assetFilterSchema,
+  fixtureEvidenceSchema,
   idempotencyKeySchema,
   incidentFilterSchema,
   preflightRequestSchema,
@@ -37,7 +40,7 @@ import type { Pool } from 'pg';
 export interface ServerDeps {
   readonly db: Pool;
   readonly databaseUrl: string;
-  readonly signer: ReceiptSigner;
+  readonly signer: ReceiptSigningProvider;
   readonly policy: PreflightPolicy;
   readonly lookupApiKey: (
     keyId: string,
@@ -46,6 +49,14 @@ export interface ServerDeps {
   readonly loadEvidence: (assetId: string) => Promise<EvidenceBundle>;
   readonly corsOrigins: readonly string[];
   readonly logger?: Logger;
+  readonly metrics?: MetricsRegistry;
+  readonly fixtureEvidence?: {
+    readonly assetId: string;
+    readonly chainId: 1952;
+    readonly tokenAddress: string;
+    readonly wrapperAddress: string;
+    readonly adminAddress: string;
+  };
   /** Supplied so tests control time rather than racing it. */
   readonly now?: () => number;
 }
@@ -68,6 +79,25 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       service: 'api',
       level: process.env['LOG_LEVEL'] === 'debug' ? 'debug' : 'info',
     });
+  const metrics = deps.metrics ?? new MetricsRegistry();
+  metrics.register({
+    name: 'cag_http_requests_total',
+    help: 'HTTP responses by bounded route, method, and status code.',
+    type: 'counter',
+    labelNames: ['route', 'method', 'status'],
+  });
+  metrics.register({
+    name: 'cag_preflight_decisions_total',
+    help: 'Preflight decisions by deterministic outcome.',
+    type: 'counter',
+    labelNames: ['decision'],
+  });
+  metrics.register({
+    name: 'cag_component_ready',
+    help: 'Whether a required API component is ready (1) or unavailable (0).',
+    type: 'gauge',
+    labelNames: ['component'],
+  });
 
   const app = Fastify({
     // Fastify's own logger is off entirely: request logging goes through
@@ -99,9 +129,9 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     global: true,
     max: 300,
     timeWindow: '1 minute',
-    // Per principal where authenticated, per IP otherwise, so one integrator's traffic
-    // cannot exhaust another's budget.
-    keyGenerator: (request: FastifyRequest) => request.principal?.id ?? request.ip,
+    // Authentication happens in the route pre-handler, after the global limiter. Rate
+    // limit by network identity here rather than pretending a principal is available.
+    keyGenerator: (request: FastifyRequest) => request.ip,
     errorResponseBuilder: () =>
       problem.tooManyRequests('Rate limit exceeded. Retry after the window.'),
   });
@@ -114,6 +144,14 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
         ? supplied
         : randomUUID();
     void reply.header('x-correlation-id', request.correlationId);
+  });
+
+  app.addHook('onResponse', async (request, reply) => {
+    metrics.increment('cag_http_requests_total', {
+      route: request.routeOptions.url ?? 'unmatched',
+      method: request.method,
+      status: String(reply.statusCode),
+    });
   });
 
   app.setErrorHandler((error, request, reply) => {
@@ -175,17 +213,17 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       'Enforceable only for paths routing through ActionGuardAdapter. A direct ERC-20 transfer bypasses the guard. X Layer mainnet is read-only.',
   }));
 
-  app.get('/v1/health/ready', async (_request, reply) => {
-    const database = await checkDatabase(deps.databaseUrl);
-    const signerAddress = deps.signer.address();
-    const components = [
+  const readinessComponents = async () => {
+    const [database, signer] = await Promise.all([
+      checkDatabase(deps.databaseUrl),
+      deps.signer.health(),
+    ]);
+    return [
       { name: 'database', ok: database.ok, detail: database.detail },
       {
         name: 'receipt-signer',
-        ok: signerAddress !== undefined,
-        // The address is public. The key is never read here.
-        detail:
-          signerAddress === undefined ? 'no signing key configured' : `signer ${signerAddress}`,
+        ok: signer.ok,
+        detail: signer.detail,
       },
       {
         name: 'guard-adapter',
@@ -204,10 +242,22 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
             : `${deps.policy.supportedTargets.length} target(s) configured`,
       },
     ];
+  };
+
+  app.get('/v1/health/ready', async (_request, reply) => {
+    const components = await readinessComponents();
     const ready = components.every((c) => c.ok);
     return reply
       .code(ready ? 200 : 503)
       .send({ status: ready ? 'ready' : 'not-ready', components });
+  });
+
+  app.get('/metrics', async (_request, reply) => {
+    const components = await readinessComponents();
+    for (const component of components) {
+      metrics.set('cag_component_ready', component.ok ? 1 : 0, { component: component.name });
+    }
+    return reply.type('text/plain; version=0.0.4; charset=utf-8').send(metrics.render());
   });
 
   // --- Public evidence reads ----------------------------------------------
@@ -461,8 +511,142 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
         reasonCodes: response.reasonCodes,
         principal: request.principal?.id,
       });
+      metrics.increment('cag_preflight_decisions_total', { decision: response.decision });
 
       return response;
+    },
+  );
+
+  // --- Testnet fixture control-plane evidence ----------------------------
+
+  app.post(
+    '/v1/testnet/fixture-evidence',
+    { preHandler: requireScope('admin:fixture') },
+    async (request, reply) => {
+      const parsed = fixtureEvidenceSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return send(
+          reply,
+          problem.badRequest(
+            'Invalid fixture evidence.',
+            parsed.error.issues.map((issue) => ({
+              path: issue.path.join('.'),
+              message: issue.message,
+            })),
+          ),
+        );
+      }
+      const policy = deps.fixtureEvidence;
+      if (policy === undefined) {
+        return send(reply, problem.notFound('Fixture evidence ingestion is not configured.'));
+      }
+
+      const { signature, ...payload } = parsed.data;
+      const identityMatches =
+        payload.assetId === policy.assetId &&
+        payload.chainId === policy.chainId &&
+        payload.tokenAddress.toLowerCase() === policy.tokenAddress.toLowerCase() &&
+        payload.wrapperAddress.toLowerCase() === policy.wrapperAddress.toLowerCase();
+      if (!identityMatches) {
+        return send(
+          reply,
+          problem.forbidden('Fixture evidence does not match configured identity.'),
+        );
+      }
+
+      const sourceTime = new Date(payload.observedAt);
+      const sourceAge = now() - sourceTime.getTime();
+      if (
+        !Number.isFinite(sourceAge) ||
+        sourceAge < -60_000 ||
+        sourceAge > deps.policy.apiMaxAgeMs
+      ) {
+        return send(
+          reply,
+          problem.badRequest('Fixture evidence timestamp is outside the accepted window.'),
+        );
+      }
+
+      let signatureValid: boolean;
+      try {
+        signatureValid = await verifyMessage({
+          address: policy.adminAddress as `0x${string}`,
+          message: fixtureEvidenceMessage(payload),
+          signature: signature as `0x${string}`,
+        });
+      } catch {
+        signatureValid = false;
+      }
+      if (!signatureValid) {
+        return send(reply, problem.forbidden('Fixture evidence signature is invalid.'));
+      }
+
+      const appended = await withTransaction(deps.db, async (client) => {
+        // Serialize fixture-intent updates per asset and prevent a valid but older signed
+        // message from rolling the control plane backwards during its freshness window.
+        await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [
+          `fixture-intent:${payload.assetId}`,
+        ]);
+        const latest = await client.query<{ source_time: Date; signature: string | null }>(
+          `SELECT source_time, payload->>'adminSignature' AS signature
+             FROM evidence_events
+            WHERE aggregate_type = 'asset'
+              AND aggregate_id = $1
+              AND event_type = 'API_SNAPSHOT_OBSERVED'
+              AND source_kind = 'FIXTURE_CONTROL_PLANE'
+              AND source_time IS NOT NULL
+            ORDER BY source_time DESC, ingested_at DESC, id DESC
+            LIMIT 1`,
+          [payload.assetId],
+        );
+        const prior = latest.rows[0];
+        if (
+          prior !== undefined &&
+          (prior.source_time.getTime() > sourceTime.getTime() ||
+            (prior.source_time.getTime() === sourceTime.getTime() && prior.signature !== signature))
+        ) {
+          return { superseded: true as const };
+        }
+        const result = await appendEvidence(client, {
+          aggregateType: 'asset',
+          aggregateId: payload.assetId,
+          eventType: 'API_SNAPSHOT_OBSERVED',
+          observedAt: new Date(now()),
+          sourceTime,
+          sourceKind: 'FIXTURE_CONTROL_PLANE',
+          sourceLocator: '/v1/testnet/fixture-evidence',
+          payload: {
+            symbol: payload.assetId,
+            chainId: payload.chainId,
+            tokenAddress: payload.tokenAddress.toLowerCase(),
+            wrapperAddress: payload.wrapperAddress.toLowerCase(),
+            wrapperVersion: 2,
+            wrapperIsCurrent: true,
+            multiplierValue: payload.multiplierValue,
+            multiplierDecimals: payload.multiplierDecimals,
+            multiplierNonce: payload.multiplierNonce,
+            scheduledActivation: payload.scheduledActivation,
+            adminAddress: policy.adminAddress.toLowerCase(),
+            adminSignature: signature,
+            sourceObservedAt: payload.observedAt,
+            observationBucket: payload.observedAt.slice(0, 16),
+          },
+          correlationId: randomUUID(),
+          producerVersion: `api@${process.env['npm_package_version'] ?? '0.1.0'}`,
+        });
+        await applyEventToProjections(client, result.event);
+        return { superseded: false as const, result };
+      });
+
+      if (appended.superseded) {
+        return send(reply, problem.conflict('A newer fixture intent is already journaled.'));
+      }
+
+      return reply.code(202).send({
+        accepted: true,
+        eventId: appended.result.event.id,
+        deduplicated: appended.result.deduplicated,
+      });
     },
   );
 

@@ -9,7 +9,7 @@ a named artifact.
 | ------------------------------ | -------------------- | ----------------------------------------------- |
 | Public repository              | **VERIFIED**         | github.com/gnanam1990/corporate-action-guard    |
 | Builds from a clean clone      | **VERIFIED**         | CI installs from the lockfile on every PR       |
-| Automated tests                | **VERIFIED**         | 520 unit, 82 integration, 66 Solidity           |
+| Automated tests                | **VERIFIED**         | 529 unit, 92 integration, 66 Solidity           |
 | CI green                       | **VERIFIED**         | 7 required jobs on `main`                       |
 | Uses live X Layer              | **VERIFIED**         | 11 read-only mainnet tests, chain 196           |
 | Uses the live xStocks API      | **VERIFIED**         | 4 live contract tests, `api.xstocks.fi/api/v2`  |

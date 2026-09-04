@@ -25,7 +25,13 @@ export const EVIDENCE_EVENT_TYPES = [
 
 export type EvidenceEventType = (typeof EVIDENCE_EVENT_TYPES)[number];
 
-export const EVIDENCE_SOURCE_KINDS = ['XSTOCKS_API', 'XLAYER_RPC', 'OPERATOR', 'SYSTEM'] as const;
+export const EVIDENCE_SOURCE_KINDS = [
+  'XSTOCKS_API',
+  'FIXTURE_CONTROL_PLANE',
+  'XLAYER_RPC',
+  'OPERATOR',
+  'SYSTEM',
+] as const;
 export type EvidenceSourceKind = (typeof EVIDENCE_SOURCE_KINDS)[number];
 
 export interface ChainProvenance {

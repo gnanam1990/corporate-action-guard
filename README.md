@@ -9,8 +9,10 @@ The checked-in v1 addresses and transaction evidence are historical; the UI and 
 scripts refuse to treat them as current.
 
 The current release-readiness verdict is **BLOCKED pending a v2 testnet deployment and a
-fresh proof run**. It also cannot be called audited or production-ready: production
-scheduling semantics are unpublished and no external party has reviewed it.
+fresh proof run**. Production startup now requires AWS KMS custody and the repository
+exercises a verified backup/restore drill, but it still cannot be called audited or
+production-ready: production scheduling semantics are unpublished, monitoring/retention
+are not deployed, and no external party has reviewed it.
 
 - [`docs/build-readiness.md`](docs/build-readiness.md) — module-by-module inventory
 - [`docs/final-audit.md`](docs/final-audit.md) — claim-to-evidence matrix, PROVEN vs NOT PROVEN
@@ -63,14 +65,19 @@ NORMAL -> PENDING -> GUARD_WINDOW -> APPLIED -> RECONCILED
   signing code path exists, and deployment scripts refuse chain 196.
 - **Evidence is chain-bound.** Live chain-196 observations cannot authorize a chain-1952
   receipt. They produce an explicit `EVIDENCE_CHAIN_MISMATCH` instead of an unusable ALLOW.
-- **The MVP receipt signer is not a production trust architecture.** The adapter verifies
-  chain facts itself, but it cannot verify that the off-chain API agreed. A compromised
-  signer could assert agreement that never happened. Production needs HSM/KMS or threshold
-  signing plus auditable rotation. That gap is documented, not implemented.
+- **Signer custody does not remove signer trust.** Production rejects raw private keys and
+  signs through an AWS KMS `ECC_SECG_P256K1` key; readiness verifies its public key and
+  Ethereum address. The adapter still cannot independently prove off-chain source
+  agreement, so a compromised signer/IAM path remains security-critical. Rotation and
+  revocation are documented and must be operated.
 - **A testnet fixture is used because real corporate actions cannot be scheduled on
   demand.** It is labelled `TESTNET FIXTURE` on chain, in metadata, and in the UI. It
   proves the guard rejects stale, mutated, replayed, expired, and unsafe-window
   operations. It does not prove production xStocks interface compatibility.
+- **Fixture agreement is not fabricated from one read.** A separately scoped API key and
+  EIP-191 fixture-admin signature journal the intended chain-1952 state; the worker then
+  compares it with an independent confirmation-safe RPC observation. Either side missing,
+  partial, stale, or mismatched blocks.
 - **AI is never in the money path.** The optional explainer summarizes evidence for humans
   and is structurally excluded from the preflight decision, receipt issuance, and the
   contracts. An architecture test enforces that.
@@ -145,7 +152,7 @@ Every claim below is backed by a named, runnable check.
 | Direct ERC-20 transfers bypass the guard                     | Asserted as a **passing test**, not just documented                                        |
 
 ```text
-668 passing tests — 520 unit, 82 database-backed integration, 66 Solidity
+687 passing tests — 529 unit, 92 database-backed integration, 66 Solidity
 27/27 mutants killed on the safety predicate
 28 WCAG contrast pairs verified in CI
 ```

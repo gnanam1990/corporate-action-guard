@@ -35,7 +35,7 @@ evidence that anything exists.
 | 08 | Operation digest and EIP-712 receipt | **IMPLEMENTED** | Ten bound fields, mutation-tested; golden vectors shared with Solidity and the SDK |
 | 09 | Solidity TESTNET FIXTURE | **IMPLEMENTED** | Asset, wrapper, legacy wrapper; 21 tests including fuzz on nonce monotonicity. The current v2 implementation is not deployed |
 | 10 | ActionGuardAdapter and ProtectedVault | **IMPLEMENTED** | 35 adversarial tests; digest proven identical to TypeScript. The current v2 adapter and pause-safe vault are not deployed |
-| 11 | Fastify API and OpenAPI contract | **IMPLEMENTED** | Ten routes, strict request/query validation, durable authentication and idempotency, and OpenAPI generated from runtime schemas |
+| 11 | Fastify API and OpenAPI contract | **IMPLEMENTED** | Thirteen routes, strict request/query validation, dedicated fixture-admin authorization, durable idempotency, metrics, and OpenAPI generated from runtime schemas |
 | 12 | Web design system and shell | **IMPLEMENTED** | Semantic tokens, shell, status primitives; 28 WCAG pairs verified in CI |
 | 13 | Coverage dashboard | **IMPLEMENTED** | Renders live evidence; verified against a running API and against a killed one |
 | 14 | Asset detail and timeline | **IMPLEMENTED** | Detail page with canonicality, multiplier epoch, provenance, per-field source comparison, and a replayed evidence timeline |
@@ -43,9 +43,9 @@ evidence that anything exists.
 | 16 | Incident replay and review console | **IMPLEMENTED** | Incident list ordered by deterministic severity, plus deterministic replay from immutable journal rows with a policy-version warning |
 | 17 | AI incident explainer | **IMPLEMENTED** | Isolated explainer: citation validation, runbook allowlist, injection delimiting, and a deliberately-good deterministic fallback. No provider wired. Architecture test proves it cannot reach the money path |
 | 18 | Integrator SDK and CLI | **IMPLEMENTED** | Typed client, local verifier, exact adapter-call encoder and wallet-ready transaction builder, plus a guard CLI with meaningful exit codes |
-| 19 | Observability and fault injection | **PARTIAL** | Redaction, structured logging, metrics, and xStocks fault injection are implemented; several declared RPC/database/signer scenarios are not wired end to end |
+| 19 | Observability and fault injection | **PARTIAL** | Redaction, structured logging, Prometheus endpoint and alert rules, active signer readiness, and xStocks fault injection are implemented; several declared RPC/database scenarios are not wired end to end |
 | 20 | Security hardening and threat model | **IMPLEMENTED** | Threat model with per-row test references and recorded residual risks |
-| 21 | CI, containers, deployment | **IMPLEMENTED** | Seven-job CI, non-root multi-stage images verified by real builds, full compose stack, a mechanical web-secret boundary check, and deployment/rollback docs |
+| 21 | CI, containers, deployment | **IMPLEMENTED** | Seven-job CI, non-root multi-stage images, full compose stack, secret-boundary checks, and a checksummed backup plus disposable restore drill |
 | 22 | End-to-end proof and submission package | **PARTIAL** | Historical v1 release evidence has real transaction hashes for 8/8 scenarios; the changed v2 contracts require a fresh deployment and proof run |
 | 23 | Final independent audit | ABSENT | The repository contains an internal review only. No independent security audit has been performed |
 

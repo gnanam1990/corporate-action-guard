@@ -8,7 +8,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { createPublicClient, formatEther, http } from 'viem';
+import { createPublicClient, formatEther, getAddress, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -73,6 +73,22 @@ checks.push({
 if (deployerAddress !== undefined && signerKey !== undefined && signerKey !== '') {
   try {
     const signerAddress = privateKeyToAccount(signerKey).address;
+    const configuredSigner = env['RECEIPT_SIGNER_ADDRESS'];
+    let signerMatches = false;
+    try {
+      signerMatches =
+        configuredSigner !== undefined &&
+        getAddress(configuredSigner).toLowerCase() === signerAddress.toLowerCase();
+    } catch {
+      signerMatches = false;
+    }
+    checks.push({
+      ok: signerMatches,
+      name: 'signer address matches key',
+      detail: signerMatches
+        ? `configured address ${signerAddress}`
+        : 'RECEIPT_SIGNER_ADDRESS is absent, invalid, or does not match the proof signer key',
+    });
     checks.push({
       // Separate identities, so compromising the deployer does not grant signing.
       ok: signerAddress.toLowerCase() !== deployerAddress.toLowerCase(),

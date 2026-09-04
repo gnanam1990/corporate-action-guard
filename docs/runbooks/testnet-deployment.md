@@ -8,8 +8,10 @@ Three commands, one of which needs a human.
 
 ## 0. What you are creating
 
-Two **throwaway** keypairs for X Layer testnet (chain 1952) only. They are written to
+Two **throwaway** keypairs for X Layer testnet (chain 1952) proof only. They are written to
 `.env`, which is gitignored and mode `600`, and are never printed to a terminal or a log.
+This local proof signer is not the production AWS KMS signer; production startup rejects
+the local-key mode.
 
 The deployer and the receipt signer are **deliberately separate identities**, so
 compromising the one that broadcasts does not grant the one that authorizes. `testnet:status`
@@ -26,6 +28,7 @@ pnpm testnet:status
 ```text
 ok   deployer key                   configured, address 0x7668...591C
 ok   receipt signer key             configured
+ok   signer address matches key     configured address 0x7099...79C8
 ok   signer is a separate identity  deployer and signer are distinct
 ok   testnet RPC                    https://testrpc.xlayer.tech serves chain 1952
 FAIL deployer funded                0 OKB (need about 0.0002)
@@ -96,7 +99,20 @@ it.
 Evidence is written to `docs/evidence/release-candidate.md` with transaction hashes and
 explorer links.
 
-## 5. Update the audit
+## 5. Prove independent same-chain evidence
+
+Start the migrated API and worker with the deployed addresses, provision the dedicated
+`FIXTURE_API_KEY_HASH`, and publish the administrator's intended fixture state with:
+
+```bash
+pnpm fixture:evidence:publish
+```
+
+Wait for the worker to observe a confirmation-safe block and verify the asset projection
+reports `sourceAgreement=MATCH`, `canonicality=PASS`, and fresh API/chain timestamps. The
+publisher values are signed intent; do not auto-copy the worker's RPC result into them.
+
+## 6. Update the audit
 
 Once the proofs pass, edit `docs/modules.json` to move modules 15 and 22 from `PARTIAL` to
 `IMPLEMENTED`, then:
@@ -106,9 +122,9 @@ pnpm docs:readiness
 ```
 
 `docs/final-audit.md` should move only the v2 on-chain rows from NOT PROVEN to PROVEN,
-citing the regenerated evidence file. The verdict can then be reconsidered; the missing
-same-chain API fixture path, event indexer, signer hardening, and independent audit remain
-separate gates.
+citing the regenerated evidence file and signed fixture event ids. The verdict can then be
+reconsidered; production KMS provisioning, hosted operations, and the independent audit
+remain separate gates.
 
 ## If something goes wrong
 

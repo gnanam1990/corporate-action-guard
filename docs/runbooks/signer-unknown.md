@@ -60,8 +60,10 @@ The correlation id is in the response headers of the original request and in the
 injections are not yet wired to the receipt signer. Treat them as pending acceptance
 scenarios; do not claim the environment commands reproduce them today.
 
-## The production gap, stated plainly
+## Production custody
 
-The signing key lives in process memory for the lifetime of a signature. Production
-requires HSM/KMS custody or threshold signing plus an auditable rotation procedure
-(ADR 0002). That is documented, not implemented, and no runbook step changes it.
+Production startup rejects the local private-key signer. `RECEIPT_SIGNER_MODE=aws-kms`
+keeps the private key inside AWS KMS and readiness actively checks key type, usage,
+algorithm, public key, and configured Ethereum address. Follow
+[`kms-signer.md`](kms-signer.md) for least-privilege IAM and rotation. A compromised IAM
+principal that can invoke `kms:Sign` is still equivalent to a compromised signer.

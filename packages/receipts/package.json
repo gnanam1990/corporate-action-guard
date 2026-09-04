@@ -18,10 +18,12 @@
   ],
   "scripts": {
     "build": "tsc --build",
+    "kms:address": "tsc --build && node dist/kms-address-cli.js",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "vectors": "tsc --build && node dist/write-vectors.js"
   },
   "dependencies": {
+    "@aws-sdk/client-kms": "^3.1125.0",
     "@cag/config": "workspace:*",
     "@cag/domain": "workspace:*",
     "viem": "^2.56.3"

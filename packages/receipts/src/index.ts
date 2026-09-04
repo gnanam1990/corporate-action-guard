@@ -14,12 +14,17 @@ export {
 } from './schema.js';
 export {
   buildReceipt,
+  AwsKmsReceiptSigner,
+  ethereumAddressFromKmsPublicKey,
+  parseKmsDerSignature,
   ReceiptError,
   ReceiptSigner,
   receiptDomain,
   recoverReceiptSigner,
   verifyReceipt,
   type IssueParams,
+  type AwsKmsReceiptSignerOptions,
+  type ReceiptSigningProvider,
   type VerifyParams,
   type VerifyResult,
 } from './signer.js';

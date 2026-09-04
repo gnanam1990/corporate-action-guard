@@ -13,6 +13,7 @@ export const SCOPES = [
   'integrator:preflight',
   'operator:review',
   'admin:reconcile',
+  'admin:fixture',
 ] as const;
 export type Scope = (typeof SCOPES)[number];
 

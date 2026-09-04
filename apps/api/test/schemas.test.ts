@@ -153,6 +153,7 @@ describe('OpenAPI contract', () => {
     for (const route of [
       '/v1/health/live',
       '/v1/health/ready',
+      '/metrics',
       '/v1/assets',
       '/v1/assets/{assetId}',
       '/v1/assets/{assetId}/timeline',
@@ -160,6 +161,7 @@ describe('OpenAPI contract', () => {
       '/v1/system/source-health',
       '/v1/incidents',
       '/v1/preflight',
+      '/v1/testnet/fixture-evidence',
       '/v1/incidents/{incidentId}/review-resolution',
     ]) {
       expect(paths, `${route} is undocumented`).toContain(route);

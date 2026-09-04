@@ -6,4 +6,10 @@ export {
   XLAYER_TESTNET_CHAIN_ID,
   type Env,
 } from './schema.js';
-export { ConfigError, getEnv, loadEnv, resetEnvCacheForTests } from './load.js';
+export {
+  assertApiSignerConfig,
+  ConfigError,
+  getEnv,
+  loadEnv,
+  resetEnvCacheForTests,
+} from './load.js';

@@ -1,11 +1,15 @@
+import { parseSignature } from 'viem';
+import { privateKeyToAccount } from 'viem/accounts';
 import { describe, expect, it } from 'vitest';
 import {
   ACTION_TYPE,
+  AwsKmsReceiptSigner,
   BOUND_FIELDS,
   buildReceipt,
   computeOperationDigest,
   ReceiptError,
   ReceiptSigner,
+  parseKmsDerSignature,
   recoverReceiptSigner,
   verifyReceipt,
   type Operation,
@@ -53,6 +57,25 @@ const issue = (over: Partial<Operation> = {}) =>
     decision: 'ALLOW',
     evidenceIds: ['evt-1', 'evt-2'],
   });
+
+function derInteger(value: bigint): Uint8Array {
+  let hex = value.toString(16);
+  if (hex.length % 2 !== 0) hex = `0${hex}`;
+  let bytes = Buffer.from(hex, 'hex');
+  if ((bytes[0] ?? 0) >= 0x80) bytes = Buffer.concat([Buffer.from([0]), bytes]);
+  return Buffer.concat([Buffer.from([0x02, bytes.length]), bytes]);
+}
+
+function derSignature(r: bigint, s: bigint): Uint8Array {
+  const body = Buffer.concat([derInteger(r), derInteger(s)]);
+  return Buffer.concat([Buffer.from([0x30, body.length]), body]);
+}
+
+function spkiPublicKey(privateKey: `0x${string}`): Uint8Array {
+  const raw = Buffer.from(privateKeyToAccount(privateKey).publicKey.slice(2), 'hex');
+  // SubjectPublicKeyInfo for id-ecPublicKey + secp256k1 followed by the uncompressed point.
+  return Buffer.concat([Buffer.from('3056301006072a8648ce3d020106052b8104000a034200', 'hex'), raw]);
+}
 
 describe('operation digest', () => {
   it('is deterministic', () => {
@@ -199,6 +222,139 @@ describe('signing boundary', () => {
       evidenceIds: ['e'],
     });
     expect(resolutions).toBeGreaterThan(0);
+  });
+});
+
+describe('AWS KMS signing boundary', () => {
+  it('turns a DER KMS result into the Ethereum signature for the configured address', async () => {
+    const local = await issue();
+    const raw = parseSignature(local.signature as `0x${string}`);
+    const kms = new AwsKmsReceiptSigner({
+      keyId: 'alias/cag-test',
+      region: 'ap-south-1',
+      signerAddress: SIGNER,
+      chainId: 1952,
+      verifyingContract: ADAPTER,
+      client: {
+        send: async () => ({ Signature: derSignature(BigInt(raw.r), BigInt(raw.s)) }),
+      },
+    });
+
+    const signed = await kms.sign({
+      operation: operation(),
+      receiptId: RECEIPT_ID,
+      validAfter: 1_788_000_000n,
+      validUntil: 1_788_000_300n,
+      decision: 'ALLOW',
+      evidenceIds: ['evt-1', 'evt-2'],
+    });
+
+    expect(signed.signer).toBe(SIGNER);
+    await expect(recoverReceiptSigner(signed)).resolves.toBe(SIGNER);
+  });
+
+  it('fails closed when KMS signs with a different key', async () => {
+    const local = await issue();
+    const raw = parseSignature(local.signature as `0x${string}`);
+    const kms = new AwsKmsReceiptSigner({
+      keyId: 'alias/cag-test',
+      region: 'ap-south-1',
+      signerAddress: OTHER_ADDRESS,
+      chainId: 1952,
+      verifyingContract: ADAPTER,
+      client: {
+        send: async () => ({ Signature: derSignature(BigInt(raw.r), BigInt(raw.s)) }),
+      },
+    });
+    await expect(
+      kms.sign({
+        operation: operation(),
+        receiptId: RECEIPT_ID,
+        validAfter: 1n,
+        validUntil: 2n,
+        decision: 'ALLOW',
+        evidenceIds: ['evt-1'],
+      }),
+    ).rejects.toMatchObject({ kind: 'INVALID_SIGNATURE' });
+  });
+
+  it('rejects malformed DER instead of guessing', () => {
+    expect(() => parseKmsDerSignature(Uint8Array.from([0x30, 0x01, 0x00]))).toThrow();
+    expect(() =>
+      parseKmsDerSignature(Uint8Array.from([0x30, 0x06, 0x02, 0x01, 0x80, 0x02, 0x01, 0x01])),
+    ).toThrow(/negative/);
+    expect(() =>
+      parseKmsDerSignature(Uint8Array.from([0x30, 0x07, 0x02, 0x02, 0x00, 0x01, 0x02, 0x01, 0x01])),
+    ).toThrow(/non-canonical/);
+  });
+
+  it('actively verifies KMS key type, usage, algorithm, and Ethereum address', async () => {
+    let calls = 0;
+    const kms = new AwsKmsReceiptSigner({
+      keyId: 'alias/cag-test',
+      region: 'ap-south-1',
+      signerAddress: SIGNER,
+      chainId: 1952,
+      verifyingContract: ADAPTER,
+      client: {
+        send: async () => {
+          calls++;
+          return {
+            PublicKey: spkiPublicKey(KEY),
+            KeySpec: 'ECC_SECG_P256K1',
+            KeyUsage: 'SIGN_VERIFY',
+            SigningAlgorithms: ['ECDSA_SHA_256'],
+          };
+        },
+      },
+    });
+    await expect(kms.health()).resolves.toMatchObject({ ok: true });
+    await expect(kms.health()).resolves.toMatchObject({ ok: true });
+    expect(calls).toBe(1);
+  });
+
+  it('reports incompatible KMS custody as not ready', async () => {
+    const kms = new AwsKmsReceiptSigner({
+      keyId: 'alias/cag-test',
+      region: 'ap-south-1',
+      signerAddress: SIGNER,
+      chainId: 1952,
+      verifyingContract: ADAPTER,
+      client: {
+        send: async () => ({
+          PublicKey: spkiPublicKey(KEY),
+          KeySpec: 'ECC_NIST_P256',
+          KeyUsage: 'SIGN_VERIFY',
+          SigningAlgorithms: ['ECDSA_SHA_256'],
+        }),
+      },
+    });
+    await expect(kms.health()).resolves.toMatchObject({ ok: false });
+  });
+
+  it('turns a KMS timeout into a typed unavailable result', async () => {
+    const kms = new AwsKmsReceiptSigner({
+      keyId: 'alias/cag-test',
+      region: 'ap-south-1',
+      signerAddress: SIGNER,
+      chainId: 1952,
+      verifyingContract: ADAPTER,
+      client: {
+        send: async () => {
+          throw new DOMException('timed out', 'AbortError');
+        },
+      },
+    });
+    await expect(
+      kms.sign({
+        operation: operation(),
+        receiptId: RECEIPT_ID,
+        validAfter: 1n,
+        validUntil: 2n,
+        decision: 'ALLOW',
+        evidenceIds: ['evt-1'],
+      }),
+    ).rejects.toMatchObject({ kind: 'SIGNER_UNAVAILABLE' });
   });
 });
 

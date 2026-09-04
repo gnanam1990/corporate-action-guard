@@ -1,7 +1,7 @@
-import { loadEnv } from '@cag/config';
+import { assertApiSignerConfig, loadEnv } from '@cag/config';
 import { getStoredApiKey, migrate, provisionApiKeyHash } from '@cag/db';
 import { createLogger } from '@cag/observability';
-import { ReceiptSigner } from '@cag/receipts';
+import { AwsKmsReceiptSigner, ReceiptSigner, type ReceiptSigningProvider } from '@cag/receipts';
 import { Pool } from 'pg';
 import { hashApiKey, type ApiKeyRecord } from './auth.js';
 import { buildServer } from './server.js';
@@ -16,6 +16,7 @@ import { summarizeCanonicality } from '@cag/domain';
  */
 
 const env = loadEnv();
+assertApiSignerConfig(env);
 const logger = createLogger({
   service: 'api',
   level: env.NODE_ENV === 'production' ? 'info' : 'debug',
@@ -203,16 +204,47 @@ async function main(): Promise<void> {
       scopes: ['integrator:preflight'],
     });
   }
+  if (env.FIXTURE_API_KEY_HASH !== undefined) {
+    await provisionApiKeyHash(pool, {
+      keyId: 'fixadm01',
+      principal: 'fixture-admin',
+      hash: env.FIXTURE_API_KEY_HASH.toLowerCase(),
+      scopes: ['admin:fixture'],
+    });
+  }
 
   const keys = loadApiKeys();
-  const app = await buildServer({
-    db: pool,
-    databaseUrl: env.DATABASE_URL,
-    signer: new ReceiptSigner(
+  let signer: ReceiptSigningProvider;
+  if (env.RECEIPT_SIGNER_MODE === 'aws-kms') {
+    // Configuration validation guarantees these values for aws-kms mode. Keep the checks
+    // here as a narrow fail-closed boundary in case construction is ever called directly.
+    if (
+      env.AWS_KMS_KEY_ID === undefined ||
+      env.AWS_REGION === undefined ||
+      env.RECEIPT_SIGNER_ADDRESS === undefined
+    ) {
+      throw new Error('AWS KMS signer configuration is incomplete');
+    }
+    signer = new AwsKmsReceiptSigner({
+      keyId: env.AWS_KMS_KEY_ID,
+      region: env.AWS_REGION,
+      signerAddress: env.RECEIPT_SIGNER_ADDRESS,
+      chainId: env.XLAYER_TESTNET_CHAIN_ID,
+      verifyingContract:
+        env.GUARD_ADAPTER_TESTNET_ADDRESS ?? '0x0000000000000000000000000000000000000000',
+    });
+  } else {
+    signer = new ReceiptSigner(
       () => env.RECEIPT_SIGNER_PRIVATE_KEY,
       env.XLAYER_TESTNET_CHAIN_ID,
       env.GUARD_ADAPTER_TESTNET_ADDRESS ?? '0x0000000000000000000000000000000000000000',
-    ),
+    );
+  }
+
+  const app = await buildServer({
+    db: pool,
+    databaseUrl: env.DATABASE_URL,
+    signer,
     policy: {
       supportedChainIds: [env.XLAYER_TESTNET_CHAIN_ID],
       supportedTargets:
@@ -236,6 +268,19 @@ async function main(): Promise<void> {
     loadEvidence,
     corsOrigins: [env.NEXT_PUBLIC_API_BASE_URL.replace(/:\d+$/, ':3000'), 'http://localhost:3000'],
     logger,
+    ...(env.FIXTURE_ADMIN_ADDRESS === undefined ||
+    env.FIXTURE_ASSET_TESTNET_ADDRESS === undefined ||
+    env.FIXTURE_WRAPPER_TESTNET_ADDRESS === undefined
+      ? {}
+      : {
+          fixtureEvidence: {
+            assetId: env.FIXTURE_ASSET_ID,
+            chainId: env.XLAYER_TESTNET_CHAIN_ID,
+            tokenAddress: env.FIXTURE_ASSET_TESTNET_ADDRESS,
+            wrapperAddress: env.FIXTURE_WRAPPER_TESTNET_ADDRESS,
+            adminAddress: env.FIXTURE_ADMIN_ADDRESS,
+          },
+        }),
   });
 
   const port = Number(new URL(env.API_PUBLIC_BASE_URL).port || 4000);

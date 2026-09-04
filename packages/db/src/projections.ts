@@ -68,7 +68,7 @@ export async function applyEventToProjections(db: Queryable, event: EvidenceEven
           p['multiplierDecimals'] ?? null,
           num(p['multiplierNonce']),
           date(p['scheduledActivation']),
-          event.observedAt,
+          event.sourceTime ?? event.observedAt,
           event.id,
         ],
       );

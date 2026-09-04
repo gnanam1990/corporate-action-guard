@@ -1,9 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { appendEvidence, applyEventToProjections, migrate, withTransaction } from '@cag/db';
-import { summarizeCanonicality, type SourceComparison } from '@cag/domain';
+import { fixtureEvidenceMessage, summarizeCanonicality, type SourceComparison } from '@cag/domain';
 import { ReceiptSigner } from '@cag/receipts';
 import type { FastifyInstance } from 'fastify';
 import { Pool } from 'pg';
+import { privateKeyToAccount } from 'viem/accounts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { hashApiKey, type ApiKeyRecord } from '../src/auth.js';
 import { buildServer } from '../src/server.js';
@@ -13,6 +14,7 @@ const SCHEMA = 'cag_test_api';
 const DATABASE_URL =
   process.env['DATABASE_URL'] ?? 'postgresql://guard:guard@localhost:55432/guard';
 const KEY_SIGNER = '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d';
+const SIGNER = privateKeyToAccount(KEY_SIGNER).address;
 const ADAPTER = '0x1111111111111111111111111111111111111111';
 const NOW = 1_788_000_000_000;
 
@@ -20,6 +22,7 @@ const INTEGRATOR_KEY = 'cag_integ001_0123456789abcdef0123456789abcdef';
 const OPERATOR_KEY = 'cag_operat01_0123456789abcdef0123456789abcdef';
 const PUBLIC_KEY = 'cag_public01_0123456789abcdef0123456789abcdef';
 const REVOKED_KEY = 'cag_revoke01_0123456789abcdef0123456789abcdef';
+const FIXTURE_KEY = 'cag_fixadm01_0123456789abcdef0123456789abcdef';
 
 const KEYS: Record<string, ApiKeyRecord> = {
   integ001: {
@@ -49,6 +52,13 @@ const KEYS: Record<string, ApiKeyRecord> = {
     hash: hashApiKey(REVOKED_KEY),
     scopes: ['integrator:preflight'],
     revoked: true,
+  },
+  fixadm01: {
+    keyId: 'fixadm01',
+    principal: 'fixture-admin',
+    hash: hashApiKey(FIXTURE_KEY),
+    scopes: ['admin:fixture'],
+    revoked: false,
   },
 };
 
@@ -183,6 +193,13 @@ beforeAll(async () => {
     loadEvidence: async () => baseEvidence(),
     corsOrigins: ['http://localhost:3000'],
     now: () => NOW,
+    fixtureEvidence: {
+      assetId: 'CAG-FIXTURE',
+      chainId: 1952,
+      tokenAddress: '0x5555555555555555555555555555555555555555',
+      wrapperAddress: '0x6666666666666666666666666666666666666666',
+      adminAddress: privateKeyToAccount(KEY_SIGNER).address,
+    },
   });
   await app.ready();
 }, 60_000);
@@ -219,6 +236,18 @@ describe('health', () => {
     const body = (await get('/v1/health/ready')).body;
     expect(body).not.toContain(KEY_SIGNER);
     expect(body).toContain('0x70997970');
+  });
+
+  it('exports bounded Prometheus readiness and request metrics', async () => {
+    await get('/v1/health/live');
+    const res = await get('/metrics');
+    expect(res.statusCode).toBe(200);
+    expect(res.headers['content-type']).toContain('text/plain');
+    expect(res.body).toContain('cag_component_ready{component="database"} 1');
+    expect(res.body).toContain(
+      'cag_http_requests_total{method="GET",route="/v1/health/live",status="200"}',
+    );
+    expect(res.body).not.toContain(KEY_SIGNER);
   });
 });
 
@@ -305,6 +334,118 @@ describe('public evidence reads', () => {
     // Log injection: a newline in a reflected header would forge log entries.
     const res = await get('/v1/assets', { 'x-correlation-id': 'bad\nvalue' });
     expect(res.headers['x-correlation-id']).not.toContain('\n');
+  });
+});
+
+describe('signed testnet fixture evidence', () => {
+  const payload = () => ({
+    assetId: 'CAG-FIXTURE',
+    chainId: 1952 as const,
+    tokenAddress: '0x5555555555555555555555555555555555555555',
+    wrapperAddress: '0x6666666666666666666666666666666666666666',
+    multiplierValue: '1000000000000000000',
+    multiplierDecimals: 18,
+    multiplierNonce: '7',
+    scheduledActivation: null,
+    observedAt: new Date(NOW - 1_000).toISOString(),
+  });
+
+  it('accepts only fixture-admin-signed chain-1952 intent and preserves source time', async () => {
+    const evidence = payload();
+    const signature = await privateKeyToAccount(KEY_SIGNER).signMessage({
+      message: fixtureEvidenceMessage(evidence),
+    });
+    const res = await post(
+      '/v1/testnet/fixture-evidence',
+      { ...evidence, signature },
+      { 'x-api-key': FIXTURE_KEY },
+    );
+    expect(res.statusCode).toBe(202);
+
+    const stored = await pool.query<{
+      chain_id: string;
+      api_observed_at: Date;
+      multiplier_nonce: string;
+    }>(
+      `SELECT chain_id::text, api_observed_at, multiplier_nonce::text
+       FROM current_assets WHERE asset_id = 'CAG-FIXTURE'`,
+    );
+    expect(stored.rows[0]?.chain_id).toBe('1952');
+    expect(stored.rows[0]?.api_observed_at.toISOString()).toBe(evidence.observedAt);
+    expect(stored.rows[0]?.multiplier_nonce).toBe('7');
+    const journal = await pool.query(
+      `SELECT payload->>'adminAddress' AS admin_address,
+              payload->>'adminSignature' AS admin_signature
+         FROM evidence_events
+        WHERE aggregate_id = 'CAG-FIXTURE' AND source_kind = 'FIXTURE_CONTROL_PLANE'`,
+    );
+    expect(journal.rows[0]?.admin_address).toBe(SIGNER.toLowerCase());
+    expect(journal.rows[0]?.admin_signature).toBe(signature);
+  });
+
+  it('rejects an evidence body changed after signing', async () => {
+    const evidence = payload();
+    const signature = await privateKeyToAccount(KEY_SIGNER).signMessage({
+      message: fixtureEvidenceMessage(evidence),
+    });
+    const res = await post(
+      '/v1/testnet/fixture-evidence',
+      { ...evidence, multiplierNonce: '8', signature },
+      { 'x-api-key': FIXTURE_KEY },
+    );
+    expect(res.statusCode).toBe(403);
+  });
+
+  it('rejects a signed intent older than the latest journaled intent', async () => {
+    const evidence = { ...payload(), observedAt: new Date(NOW - 2_000).toISOString() };
+    const signature = await privateKeyToAccount(KEY_SIGNER).signMessage({
+      message: fixtureEvidenceMessage(evidence),
+    });
+    const res = await post(
+      '/v1/testnet/fixture-evidence',
+      { ...evidence, signature },
+      { 'x-api-key': FIXTURE_KEY },
+    );
+    expect(res.statusCode).toBe(409);
+  });
+
+  it('rejects cross-chain fixture evidence at schema validation', async () => {
+    const evidence = payload();
+    const signature = await privateKeyToAccount(KEY_SIGNER).signMessage({
+      message: fixtureEvidenceMessage(evidence),
+    });
+    const res = await post(
+      '/v1/testnet/fixture-evidence',
+      { ...evidence, chainId: 196, signature },
+      { 'x-api-key': FIXTURE_KEY },
+    );
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('requires the dedicated fixture-admin scope', async () => {
+    const evidence = payload();
+    const signature = await privateKeyToAccount(KEY_SIGNER).signMessage({
+      message: fixtureEvidenceMessage(evidence),
+    });
+    const res = await post(
+      '/v1/testnet/fixture-evidence',
+      { ...evidence, signature },
+      { 'x-api-key': INTEGRATOR_KEY },
+    );
+    expect(res.statusCode).toBe(403);
+  });
+
+  it('rejects stale signed intent instead of refreshing it at ingestion time', async () => {
+    const evidence = { ...payload(), observedAt: new Date(NOW - 5 * 60_000 - 1).toISOString() };
+    const signature = await privateKeyToAccount(KEY_SIGNER).signMessage({
+      message: fixtureEvidenceMessage(evidence),
+    });
+    const res = await post(
+      '/v1/testnet/fixture-evidence',
+      { ...evidence, signature },
+      { 'x-api-key': FIXTURE_KEY },
+    );
+    expect(res.statusCode).toBe(400);
   });
 });
 

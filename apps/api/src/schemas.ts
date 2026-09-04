@@ -96,6 +96,23 @@ export const preflightRequestSchema = z
 
 export type PreflightRequest = z.infer<typeof preflightRequestSchema>;
 
+export const fixtureEvidenceSchema = z
+  .object({
+    assetId: z.string().regex(/^[A-Za-z0-9._-]{1,64}$/),
+    chainId: z.literal(1952),
+    tokenAddress: addressSchema,
+    wrapperAddress: addressSchema,
+    multiplierValue: nonceSchema.refine((value) => BigInt(value) > 0n, 'must be positive'),
+    multiplierDecimals: z.number().int().min(0).max(36),
+    multiplierNonce: nonceSchema,
+    scheduledActivation: z.string().datetime({ offset: true }).nullable(),
+    observedAt: z.string().datetime({ offset: true }),
+    signature: z.string().regex(/^0x[0-9a-fA-F]{130}$/, 'must be a 65-byte signature'),
+  })
+  .strict();
+
+export type FixtureEvidenceRequest = z.infer<typeof fixtureEvidenceSchema>;
+
 /**
  * The preflight response.
  *

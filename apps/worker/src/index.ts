@@ -6,6 +6,7 @@ import { XStocksClient } from '@cag/xstocks-client';
 import { hostname } from 'node:os';
 import { Pool } from 'pg';
 import { runDiscoveryCycle } from './discovery.js';
+import { runFixtureObservationCycle } from './fixture-observer.js';
 import { runReceiptIndexCycle } from './receipt-indexer.js';
 
 /**
@@ -75,19 +76,40 @@ async function main(): Promise<void> {
       ? {}
       : { maxAssets: Number(process.env['WORKER_MAX_ASSETS']) }),
   };
+  const testnetReader =
+    env.XLAYER_TESTNET_RPC_URL === undefined
+      ? undefined
+      : new XLayerReader({
+          rpcUrl: env.XLAYER_TESTNET_RPC_URL,
+          expectedChainId: env.XLAYER_TESTNET_CHAIN_ID,
+          providerName: new URL(env.XLAYER_TESTNET_RPC_URL).host,
+        });
   const receiptIndexDeps =
-    env.XLAYER_TESTNET_RPC_URL !== undefined &&
+    testnetReader !== undefined &&
     env.GUARD_ADAPTER_TESTNET_ADDRESS !== undefined &&
     env.GUARD_ADAPTER_DEPLOYED_AT_BLOCK !== undefined
       ? {
           pool,
-          reader: new XLayerReader({
-            rpcUrl: env.XLAYER_TESTNET_RPC_URL,
-            expectedChainId: env.XLAYER_TESTNET_CHAIN_ID,
-            providerName: new URL(env.XLAYER_TESTNET_RPC_URL).host,
-          }),
+          reader: testnetReader,
           adapterAddress: env.GUARD_ADAPTER_TESTNET_ADDRESS,
           deploymentBlock: BigInt(env.GUARD_ADAPTER_DEPLOYED_AT_BLOCK),
+          logger,
+          producerVersion: deps.producerVersion,
+          now: deps.now,
+        }
+      : undefined;
+  const fixtureObserverDeps =
+    testnetReader !== undefined &&
+    env.FIXTURE_ASSET_TESTNET_ADDRESS !== undefined &&
+    env.FIXTURE_WRAPPER_TESTNET_ADDRESS !== undefined &&
+    env.FIXTURE_ADMIN_ADDRESS !== undefined
+      ? {
+          pool,
+          reader: testnetReader,
+          assetId: env.FIXTURE_ASSET_ID,
+          tokenAddress: env.FIXTURE_ASSET_TESTNET_ADDRESS,
+          wrapperAddress: env.FIXTURE_WRAPPER_TESTNET_ADDRESS,
+          adminAddress: env.FIXTURE_ADMIN_ADDRESS,
           logger,
           producerVersion: deps.producerVersion,
           now: deps.now,
@@ -132,6 +154,25 @@ async function main(): Promise<void> {
         // Monitoring mainnet evidence remains useful even if the optional testnet
         // deployment is unavailable. Its own cursor does not advance on failure.
         logger.error('receipt index cycle failed', {
+          detail: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    if (fixtureObserverDeps !== undefined) {
+      try {
+        const observed = await withLease(
+          pool,
+          'fixture-observer:xlayer-testnet',
+          OWNER_ID,
+          LEASE_TTL_SECONDS,
+          async (lease) => runFixtureObservationCycle({ ...fixtureObserverDeps, lease }),
+        );
+        if (observed === undefined) {
+          logger.debug('fixture-observer lease held elsewhere; skipping this cycle');
+        }
+      } catch (error) {
+        logger.error('fixture observation cycle failed', {
           detail: error instanceof Error ? error.message : String(error),
         });
       }

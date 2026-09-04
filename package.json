@@ -23,10 +23,12 @@
     "build:contracts": "cd contracts && forge build",
     "dev": "pnpm -r --parallel dev",
     "db:migrate": "pnpm --filter @cag/db migrate",
+    "db:backup": "node scripts/backup-database.mjs",
+    "db:restore-drill": "node scripts/restore-drill.mjs",
     "arch:check": "node scripts/check-layering.mjs",
     "infra:up": "docker compose -f infra/docker-compose.yml up -d",
     "infra:down": "docker compose -f infra/docker-compose.yml down",
-    "verify": "pnpm format:check && pnpm lint && pnpm arch:check && pnpm typecheck && pnpm check:contrast && pnpm check:compose && pnpm check:deps && pnpm scan:secrets && pnpm docs:check && pnpm test && pnpm test:contracts",
+    "verify": "pnpm format:check && pnpm lint && pnpm arch:check && pnpm typecheck && pnpm check:contrast && pnpm check:compose && pnpm check:monitoring && pnpm check:deps && pnpm scan:secrets && pnpm docs:check && pnpm test && pnpm test:contracts",
     "scan:bundle": "node scripts/scan-web-bundle.mjs",
     "test:mutation": "node scripts/mutate-preflight.mjs",
     "format:sol": "cd contracts && forge fmt",
@@ -38,7 +40,11 @@
     "testnet:status": "node scripts/testnet-status.mjs",
     "testnet:deploy": "bash scripts/testnet-deploy.sh",
     "testnet:prove": "node scripts/testnet-prove.mjs",
+    "fixture:evidence:publish": "pnpm --filter @cag/domain build && node scripts/publish-fixture-evidence.mjs",
+    "signer:kms-address": "pnpm --filter @cag/receipts kms:address",
+    "api-key:generate": "node scripts/generate-api-key.mjs",
     "check:compose": "node scripts/check-compose-secrets.mjs",
+    "check:monitoring": "node scripts/check-monitoring-config.mjs",
     "check:deps": "node scripts/check-runtime-deps.mjs"
   },
   "devDependencies": {
@@ -50,6 +56,7 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.69.0",
     "viem": "^2.56.3",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "yaml": "^2.9.0"
   }
 }

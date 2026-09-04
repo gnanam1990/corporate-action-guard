@@ -85,14 +85,14 @@ flowchart LR
 
 ## Residual risks — accepted, not solved
 
-| Risk                                                   | Why it remains                                          | Bounded by                                                                                              |
-| ------------------------------------------------------ | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| **Signer key in process memory**                       | HSM/KMS is out of scope for an event build              | Testnet-only writes, short receipt lifetime, single consumption, allowlist, two-step rotation           |
-| **Single RPC provider may be dishonest**               | Multi-provider quorum out of scope                      | Chain-ID check, bytecode check, provider recorded per read                                              |
-| **Reorg deeper than the confirmation depth**           | X Layer finality is not documented in a verifiable form | Conservative configurable depth (32), labelled as an assumption in every snapshot                       |
-| **`block.timestamp` is proposer-influenced**           | It is the only on-chain clock                           | The guard window is a margin in _minutes_, far wider than any plausible manipulation                    |
-| **Production xStocks scheduling semantics unverified** | Not published in a verifiable form                      | Only confirmed read selectors implemented; event capabilities declared unsupported rather than invented |
-| **The adapter is optional**                            | It is an integration, not a chain-level rule            | Stated in the README, in the contract NatSpec, in the console footer, and asserted as a test            |
+| Risk                                                   | Why it remains                                          | Bounded by                                                                                               |
+| ------------------------------------------------------ | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| **KMS signing identity is compromised**                | Adapter cannot prove off-chain source agreement         | Least-privilege IAM, CloudTrail, active key/address health, short receipts, allowlist, two-step rotation |
+| **Single RPC provider may be dishonest**               | Multi-provider quorum out of scope                      | Chain-ID check, bytecode check, provider recorded per read                                               |
+| **Reorg deeper than the confirmation depth**           | X Layer finality is not documented in a verifiable form | Conservative configurable depth (32), labelled as an assumption in every snapshot                        |
+| **`block.timestamp` is proposer-influenced**           | It is the only on-chain clock                           | The guard window is a margin in _minutes_, far wider than any plausible manipulation                     |
+| **Production xStocks scheduling semantics unverified** | Not published in a verifiable form                      | Only confirmed read selectors implemented; event capabilities declared unsupported rather than invented  |
+| **The adapter is optional**                            | It is an integration, not a chain-level rule            | Stated in the README, in the contract NatSpec, in the console footer, and asserted as a test             |
 
 ## Out of scope
 
@@ -103,5 +103,6 @@ of the production xStocks contracts themselves.
 ## Verdict
 
 No critical or high finding is outstanding **in the code that exists**. That statement is
-narrower than it sounds: several modules are not yet implemented, and the release is not
-claimed to be ready. See `docs/final-audit.md`.
+narrower than it sounds: current-v2 testnet proof, deployed operations, production xStocks
+scheduling evidence, and an independent audit are still missing. The release is not claimed
+to be ready. See `docs/final-audit.md`.

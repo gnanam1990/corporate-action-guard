@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  assertApiSignerConfig,
   ConfigError,
   loadEnv,
   PUBLIC_KEYS,
@@ -55,6 +56,35 @@ describe('loadEnv', () => {
 
   it('pins the X Layer testnet chain id to 1952', () => {
     expect(() => loadEnv({ ...base, XLAYER_TESTNET_CHAIN_ID: '11155111' })).toThrow(ConfigError);
+  });
+});
+
+describe('API signer configuration', () => {
+  it('forbids a process-memory key in production', () => {
+    const env = loadEnv({
+      ...base,
+      NODE_ENV: 'production',
+      RECEIPT_SIGNER_MODE: 'local',
+      RECEIPT_SIGNER_PRIVATE_KEY: `0x${'11'.repeat(32)}`,
+    });
+    expect(() => assertApiSignerConfig(env)).toThrow(ConfigError);
+  });
+
+  it('requires complete KMS identity configuration', () => {
+    const env = loadEnv({ ...base, NODE_ENV: 'production', RECEIPT_SIGNER_MODE: 'aws-kms' });
+    expect(() => assertApiSignerConfig(env)).toThrow(ConfigError);
+  });
+
+  it('accepts KMS mode without a private key', () => {
+    const env = loadEnv({
+      ...base,
+      NODE_ENV: 'production',
+      RECEIPT_SIGNER_MODE: 'aws-kms',
+      AWS_KMS_KEY_ID: 'alias/cag-receipt-signer',
+      AWS_REGION: 'ap-south-1',
+      RECEIPT_SIGNER_ADDRESS: `0x${'22'.repeat(20)}`,
+    });
+    expect(() => assertApiSignerConfig(env)).not.toThrow();
   });
 });
 

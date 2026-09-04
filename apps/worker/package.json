@@ -19,10 +19,10 @@
     "@cag/reconciler": "workspace:*",
     "@cag/xlayer-reader": "workspace:*",
     "@cag/xstocks-client": "workspace:*",
-    "pg": "^8.23.0"
+    "pg": "^8.23.0",
+    "viem": "^2.56.3"
   },
   "devDependencies": {
-    "@types/pg": "^8.23.1",
-    "viem": "^2.47.0"
+    "@types/pg": "^8.23.1"
   }
 }

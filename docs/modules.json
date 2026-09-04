@@ -72,7 +72,7 @@
       "id": "11",
       "name": "Fastify API and OpenAPI contract",
       "status": "IMPLEMENTED",
-      "note": "Ten routes, strict request/query validation, durable authentication and idempotency, and OpenAPI generated from runtime schemas"
+      "note": "Thirteen routes, strict request/query validation, dedicated fixture-admin authorization, durable idempotency, metrics, and OpenAPI generated from runtime schemas"
     },
     {
       "id": "12",
@@ -120,7 +120,7 @@
       "id": "19",
       "name": "Observability and fault injection",
       "status": "PARTIAL",
-      "note": "Redaction, structured logging, metrics, and xStocks fault injection are implemented; several declared RPC/database/signer scenarios are not wired end to end"
+      "note": "Redaction, structured logging, Prometheus endpoint and alert rules, active signer readiness, and xStocks fault injection are implemented; several declared RPC/database scenarios are not wired end to end"
     },
     {
       "id": "20",
@@ -132,7 +132,7 @@
       "id": "21",
       "name": "CI, containers, deployment",
       "status": "IMPLEMENTED",
-      "note": "Seven-job CI, non-root multi-stage images verified by real builds, full compose stack, a mechanical web-secret boundary check, and deployment/rollback docs"
+      "note": "Seven-job CI, non-root multi-stage images, full compose stack, secret-boundary checks, and a checksummed backup plus disposable restore drill"
     },
     {
       "id": "22",
