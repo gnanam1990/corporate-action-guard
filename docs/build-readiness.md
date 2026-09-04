@@ -1,6 +1,6 @@
 # Build readiness
 
-**Recorded at:** Modules 05/07/11/13 completion, 2026-09-04.
+**Recorded at:** Modules 05/07/11/13/14/18 completion, 2026-09-04.
 **Repository state at this point:** monorepo foundation. Toolchain, workspace, database
 migration ledger, health-only service skeletons, and the two secret-boundary checks exist.
 No product behaviour, no deployments.

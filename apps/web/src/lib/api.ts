@@ -143,6 +143,9 @@ const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'obj
 const isAssetPage = (raw: unknown): raw is AssetPage =>
   isRecord(raw) && Array.isArray(raw['items']) && typeof raw['servedAt'] === 'string';
 
+const isAsset = (raw: unknown): raw is Asset =>
+  isRecord(raw) && typeof raw['assetId'] === 'string' && typeof raw['lifecycleState'] === 'string';
+
 const isCoverage = (raw: unknown): raw is Coverage =>
   isRecord(raw) && typeof raw['discovered'] === 'number' && typeof raw['servedAt'] === 'string';
 
@@ -159,6 +162,7 @@ export const api = {
     const qs = params.toString();
     return request<AssetPage>(`/v1/assets${qs === '' ? '' : `?${qs}`}`, isAssetPage);
   },
+  asset: (assetId: string) => request<Asset>(`/v1/assets/${encodeURIComponent(assetId)}`, isAsset),
   coverage: () => request<Coverage>('/v1/system/coverage', isCoverage),
   sourceHealth: () => request<SourceHealthResponse>('/v1/system/source-health', isSourceHealth),
   incidents: (query: Record<string, string | undefined> = {}) => {

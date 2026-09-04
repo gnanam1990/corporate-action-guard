@@ -34,10 +34,14 @@ function loadApiKeys(): Map<string, ApiKeyRecord> {
   const raw = process.env['DEV_API_KEYS'];
   if (raw === undefined || raw === '') return keys;
 
-  // Format: keyId:principal:scope[,scope]:rawKey — development only, and the raw key is
-  // hashed immediately rather than retained.
+  // Format: keyId|principal|scope[,scope]|rawKey, entries separated by ';'.
+  //
+  // Fields are separated by '|' rather than ':' because scope names CONTAIN a colon
+  // ('integrator:preflight'). Splitting on ':' silently truncated the scope list so every
+  // key failed authorization — found by running the CLI against the real API, not by a
+  // unit test, because the bug lived in configuration parsing rather than in logic.
   for (const entry of raw.split(';')) {
-    const [keyId, principal, scopes, rawKey] = entry.split(':');
+    const [keyId, principal, scopes, rawKey] = entry.split('|');
     if (
       keyId === undefined ||
       principal === undefined ||
