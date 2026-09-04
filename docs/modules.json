@@ -1,0 +1,150 @@
+{
+  "$comment": "Single source of truth for module status. docs/build-readiness.md is GENERATED from this file by scripts/generate-readiness.mjs, and CI fails if the two disagree. A hand-maintained status table drifts silently — this one did, for eleven commits, because a formatter realigned its columns and every subsequent string edit no-opped without complaint.",
+  "recordedAt": "2026-09-04",
+  "modules": [
+    {
+      "id": "00",
+      "name": "Architecture freeze",
+      "status": "IMPLEMENTED",
+      "note": "System context, component map, data flow, ADRs 0001-0004, ownership"
+    },
+    {
+      "id": "01",
+      "name": "Monorepo foundation",
+      "status": "IMPLEMENTED",
+      "note": "pnpm workspace, TS strict, Foundry, compose, config package, layering and bundle-scan gates"
+    },
+    {
+      "id": "02",
+      "name": "Domain, predicate, state machine",
+      "status": "IMPLEMENTED",
+      "note": "Safety predicate, state machine, 18 reason codes; 23/23 mutants killed"
+    },
+    {
+      "id": "03",
+      "name": "Evidence journal and projections",
+      "status": "IMPLEMENTED",
+      "note": "Append-only journal with trigger enforcement, canonical hashing, rebuildable projections"
+    },
+    {
+      "id": "04",
+      "name": "xStocks API client",
+      "status": "IMPLEMENTED",
+      "note": "Built against the verified live OpenAPI v2 contract; 4 live contract tests"
+    },
+    {
+      "id": "05",
+      "name": "X Layer reader and indexer",
+      "status": "IMPLEMENTED",
+      "note": "Reads verified live on chain 196; worker observation cycle journals block-stamped evidence"
+    },
+    {
+      "id": "06",
+      "name": "Canonical asset/wrapper registry",
+      "status": "IMPLEMENTED",
+      "note": "Six-check matrix with PASS/FAIL/UNKNOWN per row, registry diffing"
+    },
+    {
+      "id": "07",
+      "name": "Reconciler and recovery",
+      "status": "PARTIAL",
+      "note": "Deterministic reconciler, leases, dedup, leased polling worker. The worker does not yet record a source comparison, so agreement reports INCOMPLETE — which blocks"
+    },
+    {
+      "id": "08",
+      "name": "Operation digest and EIP-712 receipt",
+      "status": "IMPLEMENTED",
+      "note": "Ten bound fields, mutation-tested; golden vectors shared with Solidity and the SDK"
+    },
+    {
+      "id": "09",
+      "name": "Solidity TESTNET FIXTURE",
+      "status": "IMPLEMENTED",
+      "note": "Asset, wrapper, legacy wrapper; 21 tests including fuzz on nonce monotonicity. Not deployed"
+    },
+    {
+      "id": "10",
+      "name": "ActionGuardAdapter and ProtectedVault",
+      "status": "IMPLEMENTED",
+      "note": "34 adversarial tests; digest proven identical to TypeScript. Not deployed"
+    },
+    {
+      "id": "11",
+      "name": "Fastify API and OpenAPI contract",
+      "status": "IMPLEMENTED",
+      "note": "Nine routes, OpenAPI generated from the runtime schemas, 36 HTTP integration tests"
+    },
+    {
+      "id": "12",
+      "name": "Web design system and shell",
+      "status": "IMPLEMENTED",
+      "note": "Semantic tokens, shell, status primitives; 28 WCAG pairs verified in CI"
+    },
+    {
+      "id": "13",
+      "name": "Coverage dashboard",
+      "status": "IMPLEMENTED",
+      "note": "Renders live evidence; verified against a running API and against a killed one"
+    },
+    {
+      "id": "14",
+      "name": "Asset detail and timeline",
+      "status": "PARTIAL",
+      "note": "Detail page with canonicality, multiplier epoch, provenance, readiness summary. The event timeline needs a journal endpoint"
+    },
+    {
+      "id": "15",
+      "name": "Preflight Lab and testnet execution",
+      "status": "ABSENT",
+      "note": "Blocked on a testnet deployment"
+    },
+    {
+      "id": "16",
+      "name": "Incident replay and review console",
+      "status": "ABSENT",
+      "note": "API route exists; the console view does not"
+    },
+    {
+      "id": "17",
+      "name": "AI incident explainer",
+      "status": "ABSENT",
+      "note": "Optional. Correctly deferred until the deterministic product is complete"
+    },
+    {
+      "id": "18",
+      "name": "Integrator SDK and CLI",
+      "status": "IMPLEMENTED",
+      "note": "Typed client, local verifier pinned to the shared golden vectors, guard CLI with meaningful exit codes"
+    },
+    {
+      "id": "19",
+      "name": "Observability and fault injection",
+      "status": "PARTIAL",
+      "note": "Redaction, structured logging, bounded-cardinality metrics. Fault-injection harness absent"
+    },
+    {
+      "id": "20",
+      "name": "Security hardening and threat model",
+      "status": "IMPLEMENTED",
+      "note": "Threat model with per-row test references and recorded residual risks"
+    },
+    {
+      "id": "21",
+      "name": "CI, containers, deployment",
+      "status": "PARTIAL",
+      "note": "Six-job CI enforcing every gate. Containers and deployment manifests absent"
+    },
+    {
+      "id": "22",
+      "name": "End-to-end proof and submission package",
+      "status": "ABSENT",
+      "note": "Blocked on a testnet deployment"
+    },
+    {
+      "id": "23",
+      "name": "Final independent audit",
+      "status": "IMPLEMENTED",
+      "note": "docs/final-audit.md. Verdict BLOCKED"
+    }
+  ]
+}

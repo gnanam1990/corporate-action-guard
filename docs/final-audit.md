@@ -42,31 +42,36 @@ caps any verdict at CONDITIONAL.
 
 ## What exists
 
-| #   | Module                           | Status                                                                                                |
-| --- | -------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| 00  | Architecture freeze              | Complete                                                                                              |
-| 01  | Monorepo foundation              | Complete                                                                                              |
-| 02  | Domain, predicate, state machine | Complete                                                                                              |
-| 03  | Evidence journal and projections | Complete                                                                                              |
-| 04  | xStocks API client               | Complete, verified live                                                                               |
-| 05  | X Layer reader                   | Reads complete and verified live; worker indexing loop absent                                         |
-| 06  | Canonicality registry            | Complete                                                                                              |
-| 07  | Reconciler, leases, dedup        | Deterministic core complete; polling loop absent                                                      |
-| 08  | EIP-712 receipts                 | Complete                                                                                              |
-| 09  | TESTNET FIXTURE                  | Complete, undeployed                                                                                  |
-| 10  | Adapter and vault                | Complete, undeployed                                                                                  |
-| 11  | API                              | Auth, schemas, problem details, preflight service complete; HTTP routes and OpenAPI generation absent |
-| 12  | Design system and shell          | Complete                                                                                              |
-| 19  | Observability                    | Redaction, logging, metrics complete; fault harness absent                                            |
-| 20  | Threat model                     | Complete                                                                                              |
-| 21  | CI                               | Complete; containers and deployment manifests absent                                                  |
+Derived from `docs/modules.json`, which also generates `docs/build-readiness.md`. This
+section previously drifted out of date the same way the readiness table did, and for the
+same reason: hand edits against a formatter-realigned table.
 
-| #     | Module                                                   | Status                                    |
-| ----- | -------------------------------------------------------- | ----------------------------------------- |
-| 13–16 | Dashboard, asset detail, preflight lab, incident console | **ABSENT**                                |
-| 17    | AI explainer                                             | **ABSENT** (optional, correctly deferred) |
-| 18    | SDK and CLI                                              | **ABSENT**                                |
-| 22    | End-to-end proof package                                 | **ABSENT** — depends on a deployment      |
+| #   | Module                                  | Status                                                                                                                                                                       |
+| --- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 00  | Architecture freeze                     | Complete — System context, component map, data flow, ADRs 0001-0004, ownership                                                                                               |
+| 01  | Monorepo foundation                     | Complete — pnpm workspace, TS strict, Foundry, compose, config package, layering and bundle-scan gates                                                                       |
+| 02  | Domain, predicate, state machine        | Complete — Safety predicate, state machine, 18 reason codes; 23/23 mutants killed                                                                                            |
+| 03  | Evidence journal and projections        | Complete — Append-only journal with trigger enforcement, canonical hashing, rebuildable projections                                                                          |
+| 04  | xStocks API client                      | Complete — Built against the verified live OpenAPI v2 contract; 4 live contract tests                                                                                        |
+| 05  | X Layer reader and indexer              | Complete — Reads verified live on chain 196; worker observation cycle journals block-stamped evidence                                                                        |
+| 06  | Canonical asset/wrapper registry        | Complete — Six-check matrix with PASS/FAIL/UNKNOWN per row, registry diffing                                                                                                 |
+| 07  | Reconciler and recovery                 | Partial — Deterministic reconciler, leases, dedup, leased polling worker. The worker does not yet record a source comparison, so agreement reports INCOMPLETE — which blocks |
+| 08  | Operation digest and EIP-712 receipt    | Complete — Ten bound fields, mutation-tested; golden vectors shared with Solidity and the SDK                                                                                |
+| 09  | Solidity TESTNET FIXTURE                | Complete — Asset, wrapper, legacy wrapper; 21 tests including fuzz on nonce monotonicity. Not deployed                                                                       |
+| 10  | ActionGuardAdapter and ProtectedVault   | Complete — 34 adversarial tests; digest proven identical to TypeScript. Not deployed                                                                                         |
+| 11  | Fastify API and OpenAPI contract        | Complete — Nine routes, OpenAPI generated from the runtime schemas, 36 HTTP integration tests                                                                                |
+| 12  | Web design system and shell             | Complete — Semantic tokens, shell, status primitives; 28 WCAG pairs verified in CI                                                                                           |
+| 13  | Coverage dashboard                      | Complete — Renders live evidence; verified against a running API and against a killed one                                                                                    |
+| 14  | Asset detail and timeline               | Partial — Detail page with canonicality, multiplier epoch, provenance, readiness summary. The event timeline needs a journal endpoint                                        |
+| 15  | Preflight Lab and testnet execution     | Absent — Blocked on a testnet deployment                                                                                                                                     |
+| 16  | Incident replay and review console      | Absent — API route exists; the console view does not                                                                                                                         |
+| 17  | AI incident explainer                   | Absent — Optional. Correctly deferred until the deterministic product is complete                                                                                            |
+| 18  | Integrator SDK and CLI                  | Complete — Typed client, local verifier pinned to the shared golden vectors, guard CLI with meaningful exit codes                                                            |
+| 19  | Observability and fault injection       | Partial — Redaction, structured logging, bounded-cardinality metrics. Fault-injection harness absent                                                                         |
+| 20  | Security hardening and threat model     | Complete — Threat model with per-row test references and recorded residual risks                                                                                             |
+| 21  | CI, containers, deployment              | Partial — Six-job CI enforcing every gate. Containers and deployment manifests absent                                                                                        |
+| 22  | End-to-end proof and submission package | Absent — Blocked on a testnet deployment                                                                                                                                     |
+| 23  | Final independent audit                 | Complete — docs/final-audit.md. Verdict BLOCKED                                                                                                                              |
 
 ## Answers to the ten audit questions
 

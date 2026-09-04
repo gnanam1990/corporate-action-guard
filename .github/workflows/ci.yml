@@ -55,6 +55,12 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Build readiness reflects docs/modules.json
+        # The readiness table was hand-maintained until a formatter realigned its columns
+        # and every string edit silently stopped matching. It is generated now, and this
+        # fails if it is stale.
+        run: pnpm docs:check
+
       - name: WCAG contrast of the design tokens
         # Asserted, not eyeballed: a palette change that drops a status below readable
         # fails the build rather than shipping.
