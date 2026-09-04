@@ -55,6 +55,8 @@ const KEYS: Record<string, ApiKeyRecord> = {
 let pool: Pool;
 let app: FastifyInstance;
 let evidenceOverride: Partial<EvidenceBundle> = {};
+let seedEvidenceId = '';
+const INCIDENT_ID = '00000000-0000-4000-8000-000000000901';
 
 const matching: SourceComparison = {
   agreement: 'MATCH',
@@ -71,6 +73,7 @@ const matching: SourceComparison = {
 
 const baseEvidence = (): EvidenceBundle => ({
   assetKnown: true,
+  chainId: 1952,
   registryTokenAddress: '0x9d275685dc284c8eb1c79f6aba7a63dc75ec890a',
   registryWrapperAddress: '0x943bf64d566c32a2bcd41ac92fb63c111cc9de8f',
   registryWrapperIsCurrent: true,
@@ -139,7 +142,26 @@ beforeAll(async () => {
       correlationId: randomUUID(),
       producerVersion: 'test@0.1.0',
     });
+    seedEvidenceId = event.id;
     await applyEventToProjections(client, event);
+
+    const incident = await appendEvidence(client, {
+      aggregateType: 'asset',
+      aggregateId: 'AAPLx',
+      eventType: 'MANUAL_REVIEW_OPENED',
+      observedAt: new Date(NOW - 2_000),
+      sourceKind: 'SYSTEM',
+      sourceLocator: 'test/reconciler',
+      payload: {
+        incidentId: INCIDENT_ID,
+        severity: 'SAFETY_CRITICAL',
+        reasonCodes: ['SOURCE_MISMATCH'],
+        reasonSignature: 'SOURCE_MISMATCH',
+      },
+      correlationId: randomUUID(),
+      producerVersion: 'test@0.1.0',
+    });
+    await applyEventToProjections(client, incident.event);
   });
 
   app = await buildServer({
@@ -148,6 +170,8 @@ beforeAll(async () => {
     signer: new ReceiptSigner(() => KEY_SIGNER, 1952, ADAPTER),
     policy: {
       supportedChainIds: [1952],
+      supportedTargets: ['0x3333333333333333333333333333333333333333'],
+      supportedActionTypes: ['DEPOSIT', 'WITHDRAW'],
       guardBeforeMs: 900_000,
       guardAfterMs: 900_000,
       apiMaxAgeMs: 300_000,
@@ -262,6 +286,12 @@ describe('public evidence reads', () => {
     expect(Array.isArray(res.json().items)).toBe(true);
   });
 
+  it('serves an asset timeline and rejects unsafe or unknown query parameters', async () => {
+    expect((await get('/v1/assets/AAPLx/timeline?limit=20')).statusCode).toBe(200);
+    expect((await get('/v1/assets/AAPLx/timeline?limit=-1')).statusCode).toBe(400);
+    expect((await get('/v1/assets/AAPLx/timeline?ignored=true')).statusCode).toBe(400);
+  });
+
   it('sets a correlation id on every response', async () => {
     expect((await get('/v1/assets')).headers['x-correlation-id']).toBeDefined();
   });
@@ -330,7 +360,7 @@ describe('authentication and scopes', () => {
   it('an integrator key cannot resolve a review', async () => {
     const res = await post(
       '/v1/incidents/abc/review-resolution',
-      { reason: 'x'.repeat(40), evidenceIds: ['e'], actor: 'a' },
+      { reason: 'x'.repeat(40), evidenceIds: ['00000000-0000-4000-8000-000000000001'] },
       { 'x-api-key': INTEGRATOR_KEY },
     );
     expect(res.statusCode).toBe(403);
@@ -358,6 +388,34 @@ describe('preflight over HTTP', () => {
     const body = res.json();
     expect(body.decision).toBe('ALLOW');
     expect(body.receipt.signature).toMatch(/^0x[0-9a-f]{130}$/);
+  });
+
+  it('returns the identical receipt for a retry with the same idempotency key', async () => {
+    const key = 'idem-retry-0001';
+    const first = await post('/v1/preflight', preflightBody(), headers(key));
+    const second = await post('/v1/preflight', preflightBody(), headers(key));
+
+    expect(first.statusCode).toBe(200);
+    expect(second.statusCode).toBe(200);
+    expect(second.json()).toEqual(first.json());
+
+    const count = await pool.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM evidence_events
+       WHERE event_type = 'RECEIPT_ISSUED' AND payload ->> 'receiptId' = $1`,
+      [first.json().receipt.receiptId],
+    );
+    expect(count.rows[0]?.n).toBe(1);
+  });
+
+  it('rejects reusing an idempotency key for a different request', async () => {
+    const key = 'idem-conflict-0001';
+    expect((await post('/v1/preflight', preflightBody(), headers(key))).statusCode).toBe(200);
+    const changed = await post(
+      '/v1/preflight',
+      { ...preflightBody(), amount: '2000000000000000000' },
+      headers(key),
+    );
+    expect(changed.statusCode).toBe(409);
   });
 
   it('BLOCKs with no receipt when evidence disagrees', async () => {
@@ -406,7 +464,7 @@ describe('operator review', () => {
   it('rejects a one-click mark-safe', async () => {
     const res = await post(
       '/v1/incidents/inc-1/review-resolution',
-      { reason: 'ok', evidenceIds: ['e'], actor: 'operator-a' },
+      { reason: 'ok', evidenceIds: [seedEvidenceId] },
       { 'x-api-key': OPERATOR_KEY },
     );
     expect(res.statusCode).toBe(400);
@@ -414,17 +472,23 @@ describe('operator review', () => {
 
   it('records a resolution but does not resume protected actions', async () => {
     const res = await post(
-      '/v1/incidents/inc-1/review-resolution',
+      `/v1/incidents/${INCIDENT_ID}/review-resolution`,
       {
         reason: 'Provider outage resolved; API and chain agree again at block 69686711.',
-        evidenceIds: ['evt-1'],
-        actor: 'operator-a',
+        evidenceIds: [seedEvidenceId],
       },
       { 'x-api-key': OPERATOR_KEY },
     );
     expect(res.statusCode).toBe(202);
     // An operator records a decision. They do not assert that the sources now agree.
     expect(res.json().protectedActionsResumed).toBe(false);
+    const event = await pool.query<{ actor: string; reason: string }>(
+      `SELECT payload ->> 'actorId' AS actor, payload ->> 'reason' AS reason
+       FROM evidence_events WHERE event_type = 'MANUAL_REVIEW_RESOLVED'
+       ORDER BY ingested_at DESC LIMIT 1`,
+    );
+    expect(event.rows[0]?.actor).toBe('operator-a');
+    expect(event.rows[0]?.reason).toMatch(/Provider outage resolved/);
   });
 });
 

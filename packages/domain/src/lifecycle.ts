@@ -186,6 +186,10 @@ export function deriveLifecycleState(input: LifecycleInput, now: Instant): Lifec
     return 'MISMATCH';
   }
 
+  // A schedule disappearing from a fresh chain observation is how callers report that
+  // its multiplier became effective. Preserve that fact for one reconciliation cycle;
+  // otherwise the state jumps directly from PENDING/GUARD_WINDOW back to NORMAL.
+  if (input.appliedOnChain) return 'APPLIED';
   if (input.reconciled) return 'RECONCILED';
   return 'NORMAL';
 }

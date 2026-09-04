@@ -349,6 +349,24 @@ contract ActionGuardAdapterTest is Test {
         assertTrue(adapter.consumed(r.receiptId));
     }
 
+    function test_PastWindowStillBlocksUntilScheduleIsApplied() public {
+        uint256 activation = block.timestamp + 5_000;
+        asset.scheduleMultiplier(2e18, activation);
+        vm.warp(activation + GUARD_AFTER + 1);
+
+        ActionGuardAdapter.Receipt memory r = _receipt(bytes32(uint256(181)));
+        _expectRevertWith(
+            r,
+            signerKey,
+            abi.encodeWithSelector(ActionGuardAdapter.CorporateActionStillPending.selector, block.timestamp, activation)
+        );
+
+        asset.applyScheduledMultiplier();
+        r = _receipt(bytes32(uint256(182)));
+        _execute(r);
+        assertTrue(adapter.consumed(r.receiptId));
+    }
+
     function test_NoScheduleMeansNoWindow() public {
         // activation == 0 is the "no schedule" sentinel. Reading it as an instant would
         // place every action inside a window at the epoch and block everything.
@@ -416,15 +434,18 @@ contract ActionGuardAdapterTest is Test {
 
     function test_PauseDoesNotTrapExistingVaultBalances() public {
         // An emergency stop that confiscates converts an availability incident into a
-        // solvency one. Deposits already credited stay readable and the vault's accounting
-        // is untouched by the adapter's pause.
+        // solvency one. The balance owner retains a direct, narrowly scoped escape path.
         ActionGuardAdapter.Receipt memory r = _receipt(bytes32(uint256(25)));
         _execute(r);
         uint256 credited = vault.balanceOf(recipient);
 
         adapter.setPaused(true);
-        assertEq(vault.balanceOf(recipient), credited, "pause altered a credited balance");
-        assertEq(asset.balanceOf(address(vault)), credited, "pause moved vault assets");
+        vm.prank(recipient);
+        vault.withdraw(credited, recipient);
+
+        assertEq(vault.balanceOf(recipient), 0, "withdrawal did not debit the owner");
+        assertEq(asset.balanceOf(recipient), credited, "paused escape withdrawal did not transfer assets");
+        assertEq(asset.balanceOf(address(vault)), 0, "vault retained withdrawn assets");
     }
 
     function test_OwnershipTransferIsTwoStep() public {

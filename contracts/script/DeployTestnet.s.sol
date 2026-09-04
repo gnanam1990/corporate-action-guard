@@ -98,6 +98,7 @@ contract DeployTestnet is Script {
         string memory artifact = string.concat(
             '{\n  "chainId": ',
             vm.toString(block.chainid),
+            ',\n  "implementationVersion": 2',
             ',\n  "deployedAtBlock": ',
             vm.toString(block.number),
             ',\n  "deployer": "',

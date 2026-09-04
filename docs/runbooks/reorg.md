@@ -1,12 +1,16 @@
 # Runbook — chain reorganisation
 
+> **Implementation status:** the chain-1952 adapter-event indexer runs when the testnet RPC,
+> adapter address, and deployment block are configured. It indexes confirmation-safe logs
+> and performs append-only compensation plus rewind on a changed cursor hash.
+
 ## Detection
 
 A reorg is detected by comparing the block hash now reported at a height against the hash
 recorded when that height was first observed. A differing hash at the same height **is** a
 reorg; there is no ambiguity to interpret.
 
-## What the system does
+## Automatic recovery sequence
 
 1. **Retains the original observation.** It was true of the chain we saw. History is never
    erased to make the console look consistent.
@@ -42,8 +46,10 @@ FROM indexed_chain_cursor;
 
 ## Recover
 
-The rewind is automatic. Confirm re-indexing has caught up, then rebuild projections
-(`docs/runbooks/projection-rebuild.md`).
+The rewind and canonical re-read are automatic. Confirm `CHAIN_EVENTS_REVERTED` and
+`REORG_DETECTED` exist, verify the cursor caught up, and rebuild projections if validating
+replay equality (`docs/runbooks/projection-rebuild.md`). Do not manually edit or delete
+journal rows.
 
 ## Reproduce it deliberately
 
@@ -51,8 +57,9 @@ The rewind is automatic. Confirm re-indexing has caught up, then rebuild project
 FAULTS=RPC_REORG node apps/worker/dist/index.js --once
 ```
 
-The expectation is declared in `FAULT_EXPECTATIONS.RPC_REORG` and asserted by test:
-`REORG_DETECTED` plus compensating evidence, and the original observation **NOT deleted**.
+`FAULT_EXPECTATIONS.RPC_REORG` declares the intended outcome, but this injection is not yet
+wired to the X Layer reader. Treat the command as a pending acceptance test, not a passing
+reproduction recipe.
 
 ## The receipt question
 

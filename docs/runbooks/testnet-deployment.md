@@ -1,7 +1,8 @@
 # Runbook — testnet deployment and failure proofs
 
-This is the one remaining step that changes the audit verdict. Everything else is built and
-tested; the guard has simply never executed against a deployed contract on a real chain.
+This is the main external step required to change the audit verdict. Implementation v1 ran
+on a real chain, but the current safety-fixed contracts are implementation v2 and have not
+been deployed or proven there.
 
 Three commands, one of which needs a human.
 
@@ -28,7 +29,7 @@ ok   receipt signer key             configured
 ok   signer is a separate identity  deployer and signer are distinct
 ok   testnet RPC                    https://testrpc.xlayer.tech serves chain 1952
 FAIL deployer funded                0 OKB (need about 0.0002)
-FAIL deployment artifact            not deployed yet
+FAIL deployment artifact            existing artifact is obsolete; redeploy v2
 ```
 
 It tells you exactly which of the four preconditions is missing, because "it didn't work" is
@@ -97,15 +98,17 @@ explorer links.
 
 ## 5. Update the audit
 
-Once the proofs pass, edit `docs/modules.json` to move modules 15 and 22 off `ABSENT`, then:
+Once the proofs pass, edit `docs/modules.json` to move modules 15 and 22 from `PARTIAL` to
+`IMPLEMENTED`, then:
 
 ```bash
 pnpm docs:readiness
 ```
 
-`docs/final-audit.md` should have its NOT PROVEN rows moved to PROVEN, citing the evidence
-file. The verdict can then be reconsidered — but note that it cannot exceed **CONDITIONAL**
-while the event's final rules remain unpublished.
+`docs/final-audit.md` should move only the v2 on-chain rows from NOT PROVEN to PROVEN,
+citing the regenerated evidence file. The verdict can then be reconsidered; the missing
+same-chain API fixture path, event indexer, signer hardening, and independent audit remain
+separate gates.
 
 ## If something goes wrong
 

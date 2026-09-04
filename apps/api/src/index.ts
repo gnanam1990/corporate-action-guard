@@ -1,5 +1,5 @@
 import { loadEnv } from '@cag/config';
-import { migrate } from '@cag/db';
+import { getStoredApiKey, migrate, provisionApiKeyHash } from '@cag/db';
 import { createLogger } from '@cag/observability';
 import { ReceiptSigner } from '@cag/receipts';
 import { Pool } from 'pg';
@@ -26,13 +26,16 @@ const pool = new Pool({ connectionString: env.DATABASE_URL, max: 10 });
 /**
  * API keys.
  *
- * Loaded from configuration as hashes. In production this becomes a database table with
- * revocation; the shape is identical either way, and the raw key never exists server-side.
+ * Development-only convenience keys. Production authentication comes exclusively from
+ * the persistent `api_keys` table, where only hashes are stored and revocation is durable.
  */
 function loadApiKeys(): Map<string, ApiKeyRecord> {
   const keys = new Map<string, ApiKeyRecord>();
   const raw = process.env['DEV_API_KEYS'];
   if (raw === undefined || raw === '') return keys;
+  if (env.NODE_ENV === 'production') {
+    throw new Error('DEV_API_KEYS is forbidden in production; provision hashed keys in PostgreSQL');
+  }
 
   // Format: keyId|principal|scope[,scope]|rawKey, entries separated by ';'.
   //
@@ -69,7 +72,7 @@ function loadApiKeys(): Map<string, ApiKeyRecord> {
  */
 async function loadEvidence(assetId: string): Promise<EvidenceBundle> {
   const { rows } = await pool.query(
-    `SELECT token_address, wrapper_address, wrapper_is_current, canonicality,
+    `SELECT chain_id, token_address, wrapper_address, wrapper_is_current, canonicality,
             multiplier_nonce, scheduled_activation, api_observed_at, chain_observed_at,
             chain_block_number, chain_block_hash, last_event_id,
             source_agreement, comparison_fields
@@ -96,6 +99,7 @@ async function loadEvidence(assetId: string): Promise<EvidenceBundle> {
 
   return {
     assetKnown: true,
+    chainId: Number(row['chain_id']),
     ...(typeof row['token_address'] === 'string'
       ? { registryTokenAddress: row['token_address'] }
       : {}),
@@ -183,6 +187,23 @@ async function main(): Promise<void> {
     });
   }
 
+  if (env.OPERATOR_API_KEY_HASH !== undefined) {
+    await provisionApiKeyHash(pool, {
+      keyId: 'operator',
+      principal: 'operator',
+      hash: env.OPERATOR_API_KEY_HASH.toLowerCase(),
+      scopes: ['operator:review', 'admin:reconcile'],
+    });
+  }
+  if (env.INTEGRATOR_API_KEY_HASH !== undefined) {
+    await provisionApiKeyHash(pool, {
+      keyId: 'integ001',
+      principal: 'integrator',
+      hash: env.INTEGRATOR_API_KEY_HASH.toLowerCase(),
+      scopes: ['integrator:preflight'],
+    });
+  }
+
   const keys = loadApiKeys();
   const app = await buildServer({
     db: pool,
@@ -194,6 +215,11 @@ async function main(): Promise<void> {
     ),
     policy: {
       supportedChainIds: [env.XLAYER_TESTNET_CHAIN_ID],
+      supportedTargets:
+        env.PROTECTED_VAULT_TESTNET_ADDRESS === undefined
+          ? []
+          : [env.PROTECTED_VAULT_TESTNET_ADDRESS],
+      supportedActionTypes: ['DEPOSIT', 'WITHDRAW'],
       guardBeforeMs: 15 * 60_000,
       guardAfterMs: 15 * 60_000,
       apiMaxAgeMs: 5 * 60_000,
@@ -202,7 +228,11 @@ async function main(): Promise<void> {
       verifyingContract:
         env.GUARD_ADAPTER_TESTNET_ADDRESS ?? '0x0000000000000000000000000000000000000000',
     },
-    lookupApiKey: (keyId) => keys.get(keyId),
+    lookupApiKey: async (keyId) => {
+      const stored = await getStoredApiKey(pool, keyId);
+      if (stored !== undefined) return stored as ApiKeyRecord;
+      return keys.get(keyId);
+    },
     loadEvidence,
     corsOrigins: [env.NEXT_PUBLIC_API_BASE_URL.replace(/:\d+$/, ':3000'), 'http://localhost:3000'],
     logger,

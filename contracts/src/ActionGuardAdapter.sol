@@ -37,6 +37,9 @@ contract ActionGuardAdapter is EIP712, Ownable2Step, ReentrancyGuard {
     bytes32 public constant OPERATION_DIGEST_TAG = keccak256("CorporateActionGuard.OperationDigest.v1");
 
     uint16 public constant SCHEMA_VERSION = 1;
+    /// @notice Deployment compatibility version. Incremented for enforcement changes that
+    /// do not alter the signed receipt schema but require a fresh deployment.
+    uint16 public constant IMPLEMENTATION_VERSION = 2;
 
     /// @notice X Layer mainnet. This contract refuses to exist there.
     /// @dev `execute` deliberately carries no chain-id check. It needs none, and adding one
@@ -78,8 +81,8 @@ contract ActionGuardAdapter is EIP712, Ownable2Step, ReentrancyGuard {
     uint64 public guardWindowBefore;
     uint64 public guardWindowAfter;
 
-    /// @notice Blocks new actions. Never confiscates: withdrawals through the vault remain
-    /// possible by direct call, and the vault's own withdraw path is not gated by this.
+    /// @notice Blocks new guarded actions. Existing vault balances remain withdrawable
+    /// through the vault's owner-authorized escape path.
     bool public paused;
 
     event SignerAuthorized(address indexed signer, bool authorized);
@@ -100,6 +103,7 @@ contract ActionGuardAdapter is EIP712, Ownable2Step, ReentrancyGuard {
     error WrapperAssetMismatch(address reported, address expected);
     error MultiplierNonceMismatch(uint256 expected, uint256 actual);
     error InsideGuardWindow(uint256 nowTime, uint256 activationTime, uint64 before_, uint64 after_);
+    error CorporateActionStillPending(uint256 nowTime, uint256 activationTime);
     error ReceiptNotYetValid(uint64 validAfter, uint256 nowTime);
     error ReceiptExpired(uint64 validUntil, uint256 nowTime);
     error ReceiptAlreadyConsumed(bytes32 receiptId);
@@ -296,6 +300,11 @@ contract ActionGuardAdapter is EIP712, Ownable2Step, ReentrancyGuard {
             uint256 windowEnd = activation + guardWindowAfter;
             if (block.timestamp >= windowStart && block.timestamp <= windowEnd) {
                 revert InsideGuardWindow(block.timestamp, activation, guardWindowBefore, guardWindowAfter);
+            }
+            // A non-zero activation after its window means the scheduled change has not
+            // been observed as applied or cleared. Time passing is not reconciliation.
+            if (block.timestamp > windowEnd) {
+                revert CorporateActionStillPending(block.timestamp, activation);
             }
         }
 

@@ -7,7 +7,7 @@ name: corporate-action-guard-full
 
 services:
   postgres:
-    image: postgres:17-alpine
+    image: postgres:17-alpine@sha256:18cfe3ef5e6815560c98237d6216d1e5119702fb0f3894c8785dd58b8bbe5d73
     environment:
       POSTGRES_USER: guard
       POSTGRES_PASSWORD: guard
@@ -21,6 +21,24 @@ services:
       interval: 5s
       timeout: 5s
       retries: 12
+
+  # Apply the append-only schema before either process is allowed to start. This makes a
+  # clean deployment deterministic instead of relying on an operator to remember a
+  # separate migration command (or on an old named volume already containing tables).
+  migrate:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    command: [packages/db/dist/cli.js]
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://guard:guard@postgres:5432/guard # secret-scan:allow — local compose credential, matches .env.example
+    depends_on:
+      postgres: { condition: service_healthy }
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    restart: 'no'
 
   api:
     build:
@@ -38,10 +56,14 @@ services:
       RECEIPT_SIGNER_PRIVATE_KEY: ${RECEIPT_SIGNER_PRIVATE_KEY:-}
       RECEIPT_SIGNER_ADDRESS: ${RECEIPT_SIGNER_ADDRESS:-}
       GUARD_ADAPTER_TESTNET_ADDRESS: ${GUARD_ADAPTER_TESTNET_ADDRESS:-}
-      DEV_API_KEYS: ${DEV_API_KEYS:-}
+      PROTECTED_VAULT_TESTNET_ADDRESS: ${PROTECTED_VAULT_TESTNET_ADDRESS:-}
+      FIXTURE_ASSET_TESTNET_ADDRESS: ${FIXTURE_ASSET_TESTNET_ADDRESS:-}
+      FIXTURE_WRAPPER_TESTNET_ADDRESS: ${FIXTURE_WRAPPER_TESTNET_ADDRESS:-}
+      OPERATOR_API_KEY_HASH: ${OPERATOR_API_KEY_HASH:-}
+      INTEGRATOR_API_KEY_HASH: ${INTEGRATOR_API_KEY_HASH:-}
     ports: ['4000:4000']
     depends_on:
-      postgres: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
     # The application never writes to its own filesystem.
     read_only: true
     tmpfs: [/tmp]
@@ -71,10 +93,13 @@ services:
       # Mainnet RPC reaches the READER only. The worker never signs; there is no signing
       # code path for chain 196 anywhere in the product.
       XLAYER_MAINNET_RPC_URL: ${XLAYER_MAINNET_RPC_URL:-https://rpc.xlayer.tech}
+      XLAYER_TESTNET_RPC_URL: ${XLAYER_TESTNET_RPC_URL:-https://testrpc.xlayer.tech}
+      GUARD_ADAPTER_TESTNET_ADDRESS: ${GUARD_ADAPTER_TESTNET_ADDRESS:-}
+      GUARD_ADAPTER_DEPLOYED_AT_BLOCK: ${GUARD_ADAPTER_DEPLOYED_AT_BLOCK:-}
       WORKER_POLL_INTERVAL_MS: ${WORKER_POLL_INTERVAL_MS:-60000}
       WORKER_MAX_ASSETS: ${WORKER_MAX_ASSETS:-}
     depends_on:
-      postgres: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
     read_only: true
     tmpfs: [/tmp]
     security_opt: [no-new-privileges:true]

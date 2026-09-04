@@ -48,8 +48,9 @@ is one whose correctness cannot be demonstrated. Speed lost, verifiability gaine
 docker compose -f infra/docker-compose.full.yml up --build
 ```
 
-Brings up PostgreSQL, the API (4000), the worker, and the console (3000). The API waits for
-a healthy database; the console waits for a healthy API.
+Brings up PostgreSQL, a one-shot migration job, the API (4000), the worker, and the console
+(3000). The API and worker start only after migrations succeed; the console waits for a
+healthy API.
 
 ## Migrations are a release step, not a startup step
 
@@ -65,12 +66,16 @@ deploy. Once, deliberately, before the new replicas roll.
 
 ## Chain configuration
 
-| Variable                       | Given to            | Note                                           |
-| ------------------------------ | ------------------- | ---------------------------------------------- |
-| `XLAYER_MAINNET_RPC_URL`       | worker only         | **Read only.** Chain 196 is never written.     |
-| `XLAYER_TESTNET_RPC_URL`       | deploy tooling      | The only chain this build writes to            |
-| `RECEIPT_SIGNER_PRIVATE_KEY`   | api only            | Separate identity from the testnet broadcaster |
-| `TESTNET_DEPLOYER_PRIVATE_KEY` | deploy tooling only | Never in a long-running service                |
+| Variable                          | Given to            | Note                                           |
+| --------------------------------- | ------------------- | ---------------------------------------------- |
+| `XLAYER_MAINNET_RPC_URL`          | worker only         | **Read only.** Chain 196 is never written.     |
+| `XLAYER_TESTNET_RPC_URL`          | deploy tooling      | The only chain this build writes to            |
+| `RECEIPT_SIGNER_PRIVATE_KEY`      | api only            | Separate identity from the testnet broadcaster |
+| `TESTNET_DEPLOYER_PRIVATE_KEY`    | deploy tooling only | Never in a long-running service                |
+| `INTEGRATOR_API_KEY_HASH`         | api only            | Bootstrap hash for key id `integ001`           |
+| `OPERATOR_API_KEY_HASH`           | api only            | Bootstrap hash for key id `operator`           |
+| `GUARD_ADAPTER_TESTNET_ADDRESS`   | api only            | Must name the current compatible adapter       |
+| `PROTECTED_VAULT_TESTNET_ADDRESS` | api only            | The only target authorized by the API policy   |
 
 The receipt signer and the testnet broadcaster are **separate identities**, so compromising
 the one that deploys does not grant the one that authorizes. `pnpm testnet:status` fails if
@@ -115,9 +120,9 @@ operator discovers is untrue at the worst moment.
 
 ## Release provenance
 
-`/v1/health/live` and `/v1/health/ready` report process state. Build metadata (git SHA,
-build time) is **not yet** exposed by a version endpoint — recorded as a gap rather than
-described as done.
+`/v1/health/live` and `/v1/health/ready` report process state. `/v1/system/version` exposes
+the image's `GIT_SHA` and `BUILD_TIME`; absent build arguments are reported as `unknown`
+rather than replaced with plausible-looking values.
 
 ## Never claim deployed until
 
@@ -127,3 +132,7 @@ described as done.
 4. Testnet explorer links resolve.
 
 A successful local build is not a production deployment.
+
+The checked-in X Layer testnet artifact is implementation v1. The current contracts are
+implementation v2, and every consumer rejects the obsolete artifact. Redeploy and rerun
+the proof package before considering the testnet service ready.

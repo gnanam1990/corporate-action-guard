@@ -32,7 +32,17 @@ export interface EvidenceSummary {
 }
 
 export interface Receipt {
+  readonly schemaVersion: number;
   readonly receiptId: string;
+  readonly caller: string;
+  readonly target: string;
+  readonly asset: string;
+  readonly wrapper: string;
+  readonly actionType: number;
+  readonly recipient: string;
+  readonly amount: string;
+  readonly expectedMultiplierNonce: string;
+  readonly operationDigest: string;
   readonly signature: string;
   readonly signer: string;
   readonly validAfter: string;

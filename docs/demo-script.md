@@ -61,10 +61,11 @@ Four, in sequence, each with its reason code visible:
 
 ## 2:35 — 3:20 · On-chain rejection
 
-> **NOT YET RECORDABLE.** This segment requires a testnet deployment. See
-> `docs/evidence/release-candidate.md`, which does not exist until `pnpm testnet:prove` runs.
+> **NOT CURRENTLY RECORDABLE.** `docs/evidence/release-candidate.md` contains real v1
+> transactions, but the safety-fixed contracts are implementation v2. Redeploy and rerun
+> `pnpm testnet:prove` before recording this segment.
 
-When it exists: a valid receipt succeeds once, the replay reverts with
+With a current v2 deployment: a valid receipt succeeds once, the replay reverts with
 `ReceiptAlreadyConsumed`, and a scheduled corporate action kills an outstanding receipt with
 `MultiplierNonceMismatch` — each with an explorer link.
 

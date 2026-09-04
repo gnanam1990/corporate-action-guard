@@ -4,6 +4,7 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { describe, expect, it } from 'vitest';
 import {
   computeOperationDigest,
+  buildGuardTransaction,
   EXIT_CODE,
   GuardClient,
   GuardError,
@@ -94,7 +95,17 @@ async function issue(op: PreflightOperation): Promise<{ receipt: Receipt; digest
 
   return {
     receipt: {
+      schemaVersion: 1,
       receiptId: RECEIPT_ID,
+      caller: op.caller,
+      target: op.target,
+      asset: op.asset,
+      wrapper: op.wrapper,
+      actionType: ACTION_VALUE[op.actionType],
+      recipient: op.recipient,
+      amount: op.amount.toString(),
+      expectedMultiplierNonce: op.expectedMultiplierNonce.toString(),
+      operationDigest: digest,
       signature,
       signer: account.address,
       validAfter: new Date(Number(VALID_AFTER) * 1_000).toISOString(),
@@ -171,6 +182,16 @@ describe('the SDK digest is pinned to the shared golden vectors', () => {
 });
 
 describe('local verification catches a mutated payload before gas is spent', () => {
+  it('builds a wallet-ready transaction for the exact signed receipt', async () => {
+    const { receipt } = await issue(operation());
+    const transaction = buildGuardTransaction(receipt);
+    expect(transaction.chainId).toBe(1952);
+    expect(transaction.from).toBe(receipt.caller);
+    expect(transaction.to).toBe(ADAPTER);
+    expect(transaction.value).toBe(0n);
+    expect(transaction.data).toMatch(/^0x[0-9a-f]+$/);
+  });
+
   it('accepts the operation the receipt was issued for', async () => {
     const op = operation();
     const { receipt, digest } = await issue(op);

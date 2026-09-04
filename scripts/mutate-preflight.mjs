@@ -24,6 +24,21 @@ const MUTANTS = [
     from: 'if (!input.supportedChainIds.includes(action.chainId)) {',
     to: 'if (false) {',
   },
+  {
+    id: 'evidence-chain-binding',
+    from: 'if (input.evidenceChainId === undefined || input.evidenceChainId !== action.chainId) {',
+    to: 'if (false) {',
+  },
+  {
+    id: 'allowed-target',
+    from: 'if (!input.supportedTargets.some((target) => addressEquals(target, action.target))) {',
+    to: 'if (false) {',
+  },
+  {
+    id: 'allowed-action',
+    from: 'if (!input.supportedActionTypes.includes(action.actionType)) {',
+    to: 'if (false) {',
+  },
   { id: 'unknown-asset', from: 'if (!input.assetKnown) {', to: 'if (false) {' },
   { id: 'zero-amount', from: 'action.amount <= 0n', to: 'action.amount < 0n' },
   {
@@ -77,6 +92,11 @@ const MUTANTS = [
     to: 'false',
   },
   { id: 'guard-window', from: 'if (isInGuardWindow(window, now)) {', to: 'if (false) {' },
+  {
+    id: 'unapplied-action',
+    from: '} else if (now > window.end) {',
+    to: '} else if (false) {',
+  },
   {
     id: 'guard-window-exclusive-start',
     from: 'return now >= window.start && now <= window.end;',

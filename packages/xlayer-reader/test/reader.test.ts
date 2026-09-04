@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { encodeAbiParameters, encodeEventTopics } from 'viem';
 import {
+  ACTION_GUARD_ADAPTER_EVENTS,
   CORPORATE_ACTION_TOKEN_ABI,
   UNVERIFIED_MAINNET_CAPABILITIES,
   UnsupportedCapabilityError,
@@ -7,6 +9,7 @@ import {
   XLAYER_LIMITS,
   XLayerError,
   XLayerReader,
+  decodeAdapterEvent,
 } from '../src/index.js';
 
 /**
@@ -77,6 +80,29 @@ const addressWord = (a: string) => `0x${a.replace(/^0x/, '').toLowerCase().padSt
 const TOKEN = '0x9d275685dc284c8eb1c79f6aba7a63dc75ec890a';
 const WRAPPER = '0x943bf64d566c32a2bcd41ac92fb63c111cc9de8f';
 const BLOCK_HASH = `0x${'ab'.repeat(32)}`;
+
+describe('adapter event decoding', () => {
+  it('decodes ReceiptConsumed without losing uint256 precision', () => {
+    const receiptId = `0x${'12'.repeat(32)}` as const;
+    const caller = `0x${'34'.repeat(20)}` as const;
+    const target = `0x${'56'.repeat(20)}` as const;
+    const amount = 2n ** 200n;
+    const topics = encodeEventTopics({
+      abi: ACTION_GUARD_ADAPTER_EVENTS,
+      eventName: 'ReceiptConsumed',
+      args: { receiptId, caller, target },
+    });
+    const event = decodeAdapterEvent({
+      topics,
+      data: encodeAbiParameters([{ type: 'uint256' }], [amount]),
+    });
+    expect(event).toEqual({ name: 'ReceiptConsumed', receiptId, caller, target, amount });
+  });
+
+  it('ignores an event outside the known adapter ABI', () => {
+    expect(decodeAdapterEvent({ topics: [`0x${'ff'.repeat(32)}`], data: '0x' })).toBeUndefined();
+  });
+});
 
 /** Selectors, so a stub can answer the right call without decoding calldata properly. */
 const SELECTOR = {

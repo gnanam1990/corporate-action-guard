@@ -56,11 +56,10 @@ while keeping `null` distinct. Non-finite numbers are rejected outright.
 
 ## Reorg behaviour
 
-1. Retain the original observation. It was true of the chain we saw.
-2. Append `REORG_DETECTED` with the block that diverged and the safe block to rewind to.
-3. Rewind `indexed_chain_cursor` so the indexer re-reads.
-4. Append compensating evidence from the re-read.
-5. Rebuild affected projections deterministically.
+The adapter-event indexer retains the original observation, appends
+`CHAIN_EVENTS_REVERTED` and `REORG_DETECTED`, rewinds `indexed_chain_cursor`, and appends
+canonical events from the re-read. The compensation resets only receipt projections whose
+consumption event was superseded; rebuilding from the journal reproduces the same result.
 
 History is never erased to make the UI look consistent. A user looking at an incident must
 be able to see that we once believed something the chain later disagreed with.

@@ -34,14 +34,14 @@ sequenceDiagram
   W->>R: multicall: wrapper.asset(), multiplier, nonce, activation
   R-->>W: results + block number and hash
   W->>DB: append CHAIN_SNAPSHOT_OBSERVED (block-stamped)
-  W->>R: eth_getLogs(from cursor, adaptive range)
-  W->>DB: append log events (unique on chain_id+tx_hash+log_index)
-  W->>DB: advance indexed_chain_cursor
+  W->>R: chain-1952 adapter logs through confirmation-safe head
+  W->>DB: append receipt/action events + advance cursor atomically
 ```
 
-`latest` is never used without recording the block that was returned. If a stored block
-hash no longer matches, `REORG_DETECTED` is appended, the cursor rewinds to a safe block,
-and affected projections are rebuilt. History is never erased.
+`latest` is never used without recording the block that was returned. The testnet adapter
+indexer stops at the confirmation-safe head, detects a changed cursor block hash, appends
+compensating evidence without deleting the superseded facts, rewinds, and re-reads. Cursor
+advancement and event projections share one fenced transaction.
 
 ## 3. Reconciliation and projection rebuild
 
@@ -92,6 +92,9 @@ sequenceDiagram
 ```
 
 A receipt is never returned for `UNKNOWN` or degraded mandatory evidence.
+The evidence chain must equal the requested execution chain. In particular, chain-196 live
+monitoring evidence cannot authorize a chain-1952 testnet receipt; it fails with
+`EVIDENCE_CHAIN_MISMATCH`.
 
 ## 5. Testnet receipt consumption
 

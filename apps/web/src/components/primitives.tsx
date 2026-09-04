@@ -81,7 +81,7 @@ export function Skeleton({ rows = 3, label }: SkeletonProps) {
 }
 
 export interface InlineAlertProps {
-  readonly tone: 'info' | 'warning' | 'danger';
+  readonly tone: 'info' | 'success' | 'warning' | 'danger';
   readonly title: string;
   readonly children?: ReactNode;
 }

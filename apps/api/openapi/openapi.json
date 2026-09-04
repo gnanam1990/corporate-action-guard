@@ -142,13 +142,40 @@
             "enum": ["PASS", "FAIL", "UNKNOWN"]
           },
           "staleEvidence": {
-            "type": "boolean"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string",
+                "enum": ["true", "false"]
+              }
+            ]
           },
           "search": {
             "type": "string",
             "maxLength": 64
           }
-        }
+        },
+        "additionalProperties": false
+      },
+      "TimelineQuery": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "upToEventId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "limit": {
+            "default": 200,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500
+          }
+        },
+        "additionalProperties": false
       },
       "PreflightRequest": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -208,7 +235,8 @@
           "recipient",
           "amount",
           "expectedMultiplierNonce"
-        ]
+        ],
+        "additionalProperties": false
       },
       "PreflightResponse": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -268,7 +296,48 @@
               "receipt": {
                 "type": "object",
                 "properties": {
+                  "schemaVersion": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
                   "receiptId": {
+                    "type": "string"
+                  },
+                  "caller": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "target": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "asset": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "wrapper": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "actionType": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 255
+                  },
+                  "recipient": {
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "amount": {
+                    "type": "string",
+                    "pattern": "^[0-9]{1,78}$"
+                  },
+                  "expectedMultiplierNonce": {
+                    "type": "string",
+                    "pattern": "^[0-9]{1,78}$"
+                  },
+                  "operationDigest": {
                     "type": "string"
                   },
                   "signature": {
@@ -295,7 +364,17 @@
                   }
                 },
                 "required": [
+                  "schemaVersion",
                   "receiptId",
+                  "caller",
+                  "target",
+                  "asset",
+                  "wrapper",
+                  "actionType",
+                  "recipient",
+                  "amount",
+                  "expectedMultiplierNonce",
+                  "operationDigest",
                   "signature",
                   "signer",
                   "validAfter",
@@ -407,18 +486,17 @@
           },
           "evidenceIds": {
             "minItems": 1,
+            "maxItems": 100,
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             }
-          },
-          "actor": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 128
           }
         },
-        "required": ["reason", "evidenceIds", "actor"]
+        "required": ["reason", "evidenceIds"],
+        "additionalProperties": false
       }
     }
   },
@@ -509,6 +587,14 @@
             }
           },
           {
+            "name": "staleEvidence",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "True selects stale or missing evidence; false selects fresh evidence."
+          },
+          {
             "name": "search",
             "in": "query",
             "schema": {
@@ -554,6 +640,65 @@
           },
           "404": {
             "description": "No such asset. An empty shell is never returned in its place.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/assets/{assetId}/timeline": {
+      "get": {
+        "tags": ["evidence"],
+        "summary": "Replay one asset from immutable journal events.",
+        "parameters": [
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "upToEventId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "default": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Journal events and deterministic replay metadata."
+          },
+          "400": {
+            "description": "Invalid or unrecognised timeline query parameters.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such asset.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -711,6 +856,16 @@
               }
             }
           },
+          "409": {
+            "description": "The idempotency key is in progress or was reused for a different request.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "429": {
             "description": "Rate limited.",
             "content": {
@@ -768,8 +923,38 @@
               }
             }
           },
+          "401": {
+            "description": "Authentication failed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "403": {
             "description": "The key lacks the operator:review scope.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such incident.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The incident was already resolved.",
             "content": {
               "application/problem+json": {
                 "schema": {

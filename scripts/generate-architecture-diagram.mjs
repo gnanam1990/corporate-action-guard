@@ -30,8 +30,10 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560" width
     Two untrusted external sources feed a worker: the live xStocks production API and X Layer
     mainnet, chain 196, which is read only. The worker writes to an append-only evidence
     journal in PostgreSQL. The Fastify API reads that journal, evaluates the pure domain
-    safety predicate, and issues a short-lived EIP-712 receipt only for an ALLOW decision. An
-    integrator submits that receipt to ActionGuardAdapter on X Layer testnet, chain 1952,
+    safety predicate. Evidence is bound to its chain: the live chain-196 lane is monitoring
+    only and cannot authorize a chain-1952 receipt. With independently observed testnet
+    fixture evidence, the API may issue a short-lived EIP-712 receipt for an ALLOW decision.
+    An integrator submits that receipt to ActionGuardAdapter on X Layer testnet, chain 1952,
     which independently re-verifies the multiplier nonce, the wrapper-to-asset relation, the
     guard window, the operation binding, and single consumption before permitting a protected
     action on the vault. The console reads the API over HTTP only and holds no server secret.
@@ -57,8 +59,8 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560" width
 
   <text x="300" y="30" class="h">SERVICE</text>
   ${box(300, 44, 170, 56, 'Worker', 'observe · compare · journal', '#0e1223', '#526480')}
-  ${box(300, 130, 170, 56, 'Fastify API', 'evaluatePreflight', '#0e1223', '#526480')}
-  ${box(300, 216, 170, 56, 'Receipt signer', 'EIP-712 · ALLOW only', '#0e1223', '#c2670a')}
+  ${box(300, 130, 170, 56, 'Fastify API', 'same-chain preflight', '#0e1223', '#526480')}
+  ${box(300, 216, 170, 56, 'Receipt signer', 'testnet evidence · ALLOW', '#0e1223', '#c2670a')}
 
   <text x="300" y="330" class="h">DURABLE EVIDENCE</text>
   ${box(300, 344, 170, 56, 'Evidence journal', 'append-only · trigger', '#0e1223', '#16a34a')}
@@ -75,7 +77,7 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560" width
   ${arrow(204, 72, 300, 72, 'validated')}
   ${arrow(204, 144, 300, 90, '')}
   ${arrow(385, 100, 385, 344, 'journal')}
-  ${arrow(385, 344, 385, 186, 'read')}
+  ${arrow(385, 344, 385, 186, 'chain-bound read')}
   ${arrow(470, 158, 300, 230, '')}
   ${arrow(470, 244, 560, 100, 'receipt')}
   ${arrow(660, 114, 660, 130, '')}
@@ -88,8 +90,8 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560" width
     <text x="24" y="508" class="s" style="fill:#f87171">bypasses the adapter entirely</text>
   </g>
 
-  <text x="300" y="492" class="s">Mainnet is never written. The adapter cannot verify that the</text>
-  <text x="300" y="506" class="s">off-chain API agreed — see ADR 0002 residual risks.</text>
+  <text x="300" y="492" class="s">Mainnet is never written or cross-authorized to testnet.</text>
+  <text x="300" y="506" class="s">Current implementation v2 still requires redeployment.</text>
 </svg>
 `;
 

@@ -1,14 +1,16 @@
 # Corporate Action Guard
 
-**Status: deployed to X Layer testnet. All eight on-chain failure scenarios pass. Not audited.**
+**Status: current implementation v2 is tested locally but not deployed. Not audited.**
 
-The stack runs end to end against live sources, and the guard is deployed and proven on
-chain: **8/8 failure scenarios pass reproducibly on X Layer testnet**, including a
-scheduled corporate action killing an outstanding receipt.
+The live monitoring path runs against the production xStocks API and read-only X Layer
+mainnet. A prior implementation-v1 adapter also passed **8/8 testnet scenarios**, but the
+safety fixes in this working tree incremented the deployment compatibility version to v2.
+The checked-in v1 addresses and transaction evidence are historical; the UI and proof
+scripts refuse to treat them as current.
 
-The self-audit verdict is **CONDITIONAL** — it cannot go higher while the event's rules are
-unpublished, enforcement is proven against a labelled `TESTNET FIXTURE` rather than
-production scheduling semantics, and no external party has audited this.
+The current release-readiness verdict is **BLOCKED pending a v2 testnet deployment and a
+fresh proof run**. It also cannot be called audited or production-ready: production
+scheduling semantics are unpublished and no external party has reviewed it.
 
 - [`docs/build-readiness.md`](docs/build-readiness.md) — module-by-module inventory
 - [`docs/final-audit.md`](docs/final-audit.md) — claim-to-evidence matrix, PROVEN vs NOT PROVEN
@@ -59,6 +61,8 @@ NORMAL -> PENDING -> GUARD_WINDOW -> APPLIED -> RECONCILED
   transfer an xStock ERC-20 directly and bypass an optional adapter entirely.
 - **X Layer mainnet is read-only.** Chain `196` is observed, never written. No mainnet
   signing code path exists, and deployment scripts refuse chain 196.
+- **Evidence is chain-bound.** Live chain-196 observations cannot authorize a chain-1952
+  receipt. They produce an explicit `EVIDENCE_CHAIN_MISMATCH` instead of an unusable ALLOW.
 - **The MVP receipt signer is not a production trust architecture.** The adapter verifies
   chain facts itself, but it cannot verify that the off-chain API agreed. A compromised
   signer could assert agreement that never happened. Production needs HSM/KMS or threshold
@@ -78,13 +82,13 @@ Full reasoning: [ADR 0002 — trust and enforcement boundary](docs/architecture/
 ```text
 apps/web      Next.js App Router operational console
 apps/api      Fastify HTTP API
-apps/worker   polling, indexing, reconciliation, projections
+apps/worker   polling, reconciliation, projections
 
 packages/config          typed environment and shared config
 packages/domain          pure types, invariants, safety predicate, state machine
 packages/db              SQL migrations, append-only journal, projections
 packages/xstocks-client  xStocks production API boundary
-packages/xlayer-reader   viem RPC reads and reorg-aware event indexing
+packages/xlayer-reader   viem RPC reads, adapter log decoding, reorg detection
 packages/reconciler      canonicality, source comparison, transitions
 packages/receipts        EIP-712 operation digest, signer, verifier
 packages/sdk             integrator SDK and CLI
@@ -134,15 +138,15 @@ Every claim below is backed by a named, runnable check.
 | The two sources agree, exactly                               | Chain `1003269012539818700` @18dp = API `1.0032690125398187`                               |
 | Mainnet is never written                                     | No signing method exists on the reader; adapter and deploy script both revert on chain 196 |
 | Missing evidence never becomes an implicit match             | 400-run property test; three bugs of this exact shape found and fixed during the build     |
-| Every guard in the safety predicate is tested                | **23/23 mutation kills**                                                                   |
+| Every guard in the safety predicate is tested                | **27/27 mutation kills**                                                                   |
 | TypeScript and Solidity agree on the operation digest        | Shared golden vectors read by both suites; CI fails on drift                               |
-| A receipt is never issued for a BLOCK                        | Discriminated union makes it unrepresentable; 16 per-reason tests                          |
+| A receipt is never issued for a BLOCK                        | Discriminated union makes it unrepresentable; reason-path and HTTP tests                   |
 | The journal cannot be rewritten                              | Database trigger; integration-tested                                                       |
 | Direct ERC-20 transfers bypass the guard                     | Asserted as a **passing test**, not just documented                                        |
 
 ```text
-581 tests total — 447 unit, 69 integration, 65 Solidity
-23/23 mutants killed on the safety predicate
+668 passing tests — 520 unit, 82 database-backed integration, 66 Solidity
+27/27 mutants killed on the safety predicate
 28 WCAG contrast pairs verified in CI
 ```
 
@@ -162,7 +166,7 @@ pnpm --filter @cag/web dev             # http://localhost:3000
 GUARD_API_URL=http://localhost:4000 node packages/sdk/dist/cli.js assets list
 ```
 
-### Proven on chain — X Layer testnet, chain 1952
+### Historical v1 proof — X Layer testnet, chain 1952
 
 | Scenario                                                    | Result                                    |
 | ----------------------------------------------------------- | ----------------------------------------- |
@@ -175,11 +179,12 @@ GUARD_API_URL=http://localhost:4000 node packages/sdk/dist/cli.js assets list
 | Unauthorized signer                                         | `UnauthorizedSigner`                      |
 | Direct ERC-20 transfer                                      | **succeeds** — the documented bypass      |
 
-Adapter `0x5419941472c4a42FF0D68694c2A88F1b4716C337`. Transaction hashes and explorer links
-in [`docs/evidence/release-candidate.md`](docs/evidence/release-candidate.md).
+Historical v1 adapter `0x5419941472c4a42FF0D68694c2A88F1b4716C337`. Transaction hashes and explorer links
+remain in [`docs/evidence/release-candidate.md`](docs/evidence/release-candidate.md), clearly
+labelled as superseded. A v2 deployment and fresh proof are still required.
 
-**Still not verified:** production xStocks scheduling compatibility, and any external
-audit.
+**Still not verified:** current-v2 on-chain execution, production xStocks scheduling
+compatibility, a deployed public console, and any external audit.
 
 ## Licence
 

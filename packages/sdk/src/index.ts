@@ -16,3 +16,9 @@ export {
   type Receipt,
   type SdkErrorKind,
 } from './types.js';
+export {
+  ACTION_GUARD_EXECUTE_ABI,
+  buildGuardTransaction,
+  encodeGuardExecution,
+  type GuardTransactionRequest,
+} from './transaction.js';

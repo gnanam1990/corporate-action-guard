@@ -18,7 +18,7 @@
       "id": "02",
       "name": "Domain, predicate, state machine",
       "status": "IMPLEMENTED",
-      "note": "Safety predicate, state machine, 18 reason codes; 23/23 mutants killed"
+      "note": "Safety predicate, state machine, 22 reason codes; 27/27 mutants killed"
     },
     {
       "id": "03",
@@ -36,7 +36,7 @@
       "id": "05",
       "name": "X Layer reader and indexer",
       "status": "IMPLEMENTED",
-      "note": "Reads verified live on chain 196; worker observation cycle journals block-stamped evidence"
+      "note": "Block-stamped reads plus a finalized adapter-event indexer with durable cursors, fenced writes, reorg detection, append-only compensation, and replay tests"
     },
     {
       "id": "06",
@@ -48,7 +48,7 @@
       "id": "07",
       "name": "Reconciler and recovery",
       "status": "IMPLEMENTED",
-      "note": "Deterministic reconciler, durable leases, incident dedup, and a leased polling worker that records the API/chain comparison per asset"
+      "note": "Deterministic reconciler, fenced auto-renewing leases, incident dedup, lifecycle recovery, and a polling worker that records API/chain comparison per asset"
     },
     {
       "id": "08",
@@ -60,19 +60,19 @@
       "id": "09",
       "name": "Solidity TESTNET FIXTURE",
       "status": "IMPLEMENTED",
-      "note": "Asset, wrapper, legacy wrapper; 21 tests including fuzz on nonce monotonicity. Not deployed"
+      "note": "Asset, wrapper, legacy wrapper; 21 tests including fuzz on nonce monotonicity. The current v2 implementation is not deployed"
     },
     {
       "id": "10",
       "name": "ActionGuardAdapter and ProtectedVault",
       "status": "IMPLEMENTED",
-      "note": "34 adversarial tests; digest proven identical to TypeScript. Not deployed"
+      "note": "35 adversarial tests; digest proven identical to TypeScript. The current v2 adapter and pause-safe vault are not deployed"
     },
     {
       "id": "11",
       "name": "Fastify API and OpenAPI contract",
       "status": "IMPLEMENTED",
-      "note": "Nine routes, OpenAPI generated from the runtime schemas, 36 HTTP integration tests"
+      "note": "Ten routes, strict request/query validation, durable authentication and idempotency, and OpenAPI generated from runtime schemas"
     },
     {
       "id": "12",
@@ -95,8 +95,8 @@
     {
       "id": "15",
       "name": "Preflight Lab and testnet execution",
-      "status": "IMPLEMENTED",
-      "note": "Preflight Lab with decision panel and failure-proof table; contracts deployed to X Layer testnet and all eight on-chain scenarios pass"
+      "status": "PARTIAL",
+      "note": "Preflight Lab now builds and submits the exact adapter transaction with wallet status feedback; it is intentionally disabled until a compatible v2 deployment exists"
     },
     {
       "id": "16",
@@ -114,13 +114,13 @@
       "id": "18",
       "name": "Integrator SDK and CLI",
       "status": "IMPLEMENTED",
-      "note": "Typed client, local verifier pinned to the shared golden vectors, guard CLI with meaningful exit codes"
+      "note": "Typed client, local verifier, exact adapter-call encoder and wallet-ready transaction builder, plus a guard CLI with meaningful exit codes"
     },
     {
       "id": "19",
       "name": "Observability and fault injection",
-      "status": "IMPLEMENTED",
-      "note": "Redaction, structured logging, bounded-cardinality metrics, and a deterministic fault harness that cannot construct in production; each fault declares its required outcome"
+      "status": "PARTIAL",
+      "note": "Redaction, structured logging, metrics, and xStocks fault injection are implemented; several declared RPC/database/signer scenarios are not wired end to end"
     },
     {
       "id": "20",
@@ -137,14 +137,14 @@
     {
       "id": "22",
       "name": "End-to-end proof and submission package",
-      "status": "IMPLEMENTED",
-      "note": "Demo script, submission checklist, accessible architecture diagram, and release-candidate evidence with real transaction hashes from 8/8 passing on-chain scenarios"
+      "status": "PARTIAL",
+      "note": "Historical v1 release evidence has real transaction hashes for 8/8 scenarios; the changed v2 contracts require a fresh deployment and proof run"
     },
     {
       "id": "23",
       "name": "Final independent audit",
-      "status": "IMPLEMENTED",
-      "note": "docs/final-audit.md. Verdict BLOCKED"
+      "status": "ABSENT",
+      "note": "The repository contains an internal review only. No independent security audit has been performed"
     }
   ]
 }

@@ -14,6 +14,7 @@ import path from 'node:path';
  */
 export interface Deployment {
   readonly chainId: number;
+  readonly implementationVersion: number;
   readonly deployedAtBlock: number;
   readonly actionGuardAdapter: string;
   readonly protectedVault: string;
@@ -29,7 +30,7 @@ export function readDeployment(): Deployment | undefined {
     if (!fs.existsSync(ARTIFACT)) return undefined;
     const parsed = JSON.parse(fs.readFileSync(ARTIFACT, 'utf8')) as Deployment;
     // Refuse anything that is not chain 1952, however it got there.
-    if (parsed.chainId !== 1952) return undefined;
+    if (parsed.chainId !== 1952 || parsed.implementationVersion !== 2) return undefined;
     return parsed;
   } catch {
     return undefined;

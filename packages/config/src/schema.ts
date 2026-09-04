@@ -38,7 +38,7 @@ export const envSchema = z.object({
 
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
 
-  XSTOCKS_API_BASE_URL: httpUrl.default('https://api.xstocks.fi'),
+  XSTOCKS_API_BASE_URL: httpUrl.default('https://api.xstocks.fi/api/v2'),
 
   XLAYER_MAINNET_RPC_URL: optional(httpUrl),
   XLAYER_TESTNET_RPC_URL: optional(httpUrl),
@@ -60,14 +60,21 @@ export const envSchema = z.object({
   API_PUBLIC_BASE_URL: httpUrl.default('http://localhost:4000'),
   NEXT_PUBLIC_API_BASE_URL: httpUrl.default('http://localhost:4000'),
 
-  OPERATOR_API_KEY_HASH: optional(z.string().min(16)),
+  OPERATOR_API_KEY_HASH: optional(
+    z.string().regex(/^[0-9a-fA-F]{64}$/, 'must be a 64-character SHA-256 hex digest'),
+  ),
+  INTEGRATOR_API_KEY_HASH: optional(
+    z.string().regex(/^[0-9a-fA-F]{64}$/, 'must be a 64-character SHA-256 hex digest'),
+  ),
 
   RECEIPT_SIGNER_PRIVATE_KEY: optional(hexPrivateKey),
   RECEIPT_SIGNER_ADDRESS: optional(hexAddress),
 
   GUARD_ADAPTER_TESTNET_ADDRESS: optional(hexAddress),
+  GUARD_ADAPTER_DEPLOYED_AT_BLOCK: optional(z.coerce.number().int().nonnegative()),
   PROTECTED_VAULT_TESTNET_ADDRESS: optional(hexAddress),
   FIXTURE_ASSET_TESTNET_ADDRESS: optional(hexAddress),
+  FIXTURE_WRAPPER_TESTNET_ADDRESS: optional(hexAddress),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -79,6 +86,7 @@ export type Env = z.infer<typeof envSchema>;
 export const SERVER_SECRET_KEYS = [
   'DATABASE_URL',
   'OPERATOR_API_KEY_HASH',
+  'INTEGRATOR_API_KEY_HASH',
   'RECEIPT_SIGNER_PRIVATE_KEY',
   'XLAYER_MAINNET_RPC_URL',
   'XLAYER_TESTNET_RPC_URL',

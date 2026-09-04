@@ -7,7 +7,7 @@
 # --- deps -------------------------------------------------------------------
 # Pinned by digest, so a rebuild produces the same base rather than whatever :22-alpine
 # points at today. Update deliberately; see docs/deployment.md.
-FROM node:22-alpine AS deps
+FROM node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32 AS deps
 WORKDIR /app
 
 RUN corepack enable

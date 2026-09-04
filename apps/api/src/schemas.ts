@@ -34,42 +34,65 @@ export const idempotencyKeySchema = z
   .max(128)
   .regex(/^[A-Za-z0-9._:-]+$/, 'may contain only letters, digits, and . _ : -');
 
-export const paginationSchema = z.object({
-  // Bounded so a client cannot request the whole catalog in one response.
-  limit: z.coerce.number().int().min(1).max(100).default(25),
-  cursor: z.string().max(512).optional(),
-});
+export const paginationSchema = z
+  .object({
+    // Bounded so a client cannot request the whole catalog in one response.
+    limit: z.coerce.number().int().min(1).max(100).default(25),
+    cursor: z.string().max(512).optional(),
+  })
+  .strict();
 
-export const assetFilterSchema = paginationSchema.extend({
-  lifecycleState: z
-    .enum([
-      'NORMAL',
-      'PENDING',
-      'GUARD_WINDOW',
-      'APPLIED',
-      'RECONCILED',
-      'MISMATCH',
-      'MANUAL_REVIEW',
-      'RECOVERED',
-    ])
-    .optional(),
-  canonicality: z.enum(['PASS', 'FAIL', 'UNKNOWN']).optional(),
-  staleEvidence: z.coerce.boolean().optional(),
-  search: z.string().max(64).optional(),
-});
+export const assetFilterSchema = paginationSchema
+  .extend({
+    lifecycleState: z
+      .enum([
+        'NORMAL',
+        'PENDING',
+        'GUARD_WINDOW',
+        'APPLIED',
+        'RECONCILED',
+        'MISMATCH',
+        'MANUAL_REVIEW',
+        'RECOVERED',
+      ])
+      .optional(),
+    canonicality: z.enum(['PASS', 'FAIL', 'UNKNOWN']).optional(),
+    staleEvidence: z
+      .union([z.boolean(), z.enum(['true', 'false']).transform((value) => value === 'true')])
+      .optional(),
+    search: z.string().max(64).optional(),
+  })
+  .strict();
 
-export const preflightRequestSchema = z.object({
-  chainId: z.number().int().positive(),
-  assetId: z.string().min(1).max(128),
-  target: addressSchema,
-  asset: addressSchema,
-  wrapper: addressSchema,
-  actionType: z.enum(['DEPOSIT', 'WITHDRAW', 'TRANSFER', 'REDEEM']),
-  caller: addressSchema,
-  recipient: addressSchema,
-  amount: amountSchema,
-  expectedMultiplierNonce: nonceSchema,
-});
+export const incidentFilterSchema = z
+  .object({
+    status: z.enum(['OPEN', 'IN_REVIEW', 'RESOLVED', 'RECOVERED']).optional(),
+    assetId: z.string().min(1).max(128).optional(),
+    limit: z.coerce.number().int().min(1).max(100).default(25),
+  })
+  .strict();
+
+export const timelineQuerySchema = z
+  .object({
+    upToEventId: z.string().uuid().optional(),
+    limit: z.coerce.number().int().min(1).max(500).default(200),
+  })
+  .strict();
+
+export const preflightRequestSchema = z
+  .object({
+    chainId: z.number().int().positive(),
+    assetId: z.string().min(1).max(128),
+    target: addressSchema,
+    asset: addressSchema,
+    wrapper: addressSchema,
+    actionType: z.enum(['DEPOSIT', 'WITHDRAW', 'TRANSFER', 'REDEEM']),
+    caller: addressSchema,
+    recipient: addressSchema,
+    amount: amountSchema,
+    expectedMultiplierNonce: nonceSchema,
+  })
+  .strict();
 
 export type PreflightRequest = z.infer<typeof preflightRequestSchema>;
 
@@ -94,7 +117,17 @@ export const preflightAllowSchema = z.object({
   }),
   operationDigest: z.string(),
   receipt: z.object({
+    schemaVersion: z.number().int(),
     receiptId: z.string(),
+    caller: addressSchema,
+    target: addressSchema,
+    asset: addressSchema,
+    wrapper: addressSchema,
+    actionType: z.number().int().min(1).max(255),
+    recipient: addressSchema,
+    amount: nonceSchema,
+    expectedMultiplierNonce: nonceSchema,
+    operationDigest: z.string(),
     signature: z.string(),
     signer: addressSchema,
     validAfter: z.string(),
@@ -128,12 +161,13 @@ export const preflightResponseSchema = z.discriminatedUnion('decision', [
 
 export type PreflightResponse = z.infer<typeof preflightResponseSchema>;
 
-export const reviewResolutionSchema = z.object({
-  // No one-click "mark safe": a specific written reason is mandatory.
-  reason: z.string().min(20).max(2_000),
-  evidenceIds: z.array(z.string()).min(1),
-  actor: z.string().min(1).max(128),
-});
+export const reviewResolutionSchema = z
+  .object({
+    // No one-click "mark safe": a specific written reason is mandatory.
+    reason: z.string().min(20).max(2_000),
+    evidenceIds: z.array(z.string().uuid()).min(1).max(100),
+  })
+  .strict();
 
 export const healthResponseSchema = z.object({
   status: z.enum(['ready', 'not-ready', 'live']),

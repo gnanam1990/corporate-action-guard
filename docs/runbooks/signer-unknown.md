@@ -14,11 +14,10 @@ without care mints a second receipt for one intent.
 - **No placeholder signature is ever returned.** The request fails with a typed
   `SIGNER_UNAVAILABLE`. A placeholder would be indistinguishable from a real receipt to a
   caller that did not verify.
-- **A receipt is journalled before the response is returned.** If `RECEIPT_ISSUED` is
-  absent from the journal, no receipt was issued, regardless of what the signer did
-  internally.
-- **`Idempotency-Key` is mandatory on preflight.** A retry with the same key resolves to
-  the same receipt or to none — never to a second one.
+- **The response and receipt event commit atomically.** The idempotency row, exact response,
+  `RECEIPT_ISSUED`, and receipt projection share one transaction.
+- **`Idempotency-Key` binds the request body.** A retry with the same actor, key, and body
+  returns the stored response; a different body is rejected — never a second receipt.
 
 ## Diagnose
 
@@ -31,14 +30,21 @@ psql "$DATABASE_URL" -c "
 
 # Is the signer configured at all?
 curl -s "$GUARD_API_URL/v1/health/ready" | jq '.components[] | select(.name=="receipt-signer")'
+
+# Inspect the durable command outcome without storing a signature in the journal.
+psql "$DATABASE_URL" -c "
+  SELECT actor_id, operation, idempotency_key, status, completed_at
+  FROM idempotency_keys
+  WHERE actor_id = '<principal>' AND operation = 'preflight'
+    AND idempotency_key = '<original-key>';"
 ```
 
 The correlation id is in the response headers of the original request and in the logs.
 
-| Journal shows          | Conclusion                                                             |
-| ---------------------- | ---------------------------------------------------------------------- |
-| A `RECEIPT_ISSUED` row | The receipt exists. Retrying with the same idempotency key returns it. |
-| No row                 | No receipt was issued. Safe to retry.                                  |
+| Database shows                                 | Conclusion                                                        |
+| ---------------------------------------------- | ----------------------------------------------------------------- |
+| Completed idempotency row and `RECEIPT_ISSUED` | The receipt exists; a same-body retry returns the exact response. |
+| No idempotency row                             | The transaction did not commit; retry with the same key.          |
 
 ## Recover
 
@@ -50,10 +56,9 @@ The correlation id is in the response headers of the original request and in the
 
 ## Reproduce it deliberately
 
-```bash
-FAULTS=SIGNER_TIMEOUT           pnpm test:integration
-FAULTS=SIGNER_UNKNOWN_OUTCOME   pnpm test:integration
-```
+`FAULT_EXPECTATIONS` declares `SIGNER_TIMEOUT` and `SIGNER_UNKNOWN_OUTCOME`, but those
+injections are not yet wired to the receipt signer. Treat them as pending acceptance
+scenarios; do not claim the environment commands reproduce them today.
 
 ## The production gap, stated plainly
 

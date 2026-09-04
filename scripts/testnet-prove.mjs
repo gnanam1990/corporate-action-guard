@@ -48,6 +48,12 @@ if (!fs.existsSync(ARTIFACT)) {
   process.exit(1);
 }
 const deployment = JSON.parse(fs.readFileSync(ARTIFACT, 'utf8'));
+if (deployment.chainId !== 1952 || deployment.implementationVersion !== 2) {
+  console.error(
+    'Deployment artifact is obsolete. Redeploy the fixed contracts before proving them.',
+  );
+  process.exit(1);
+}
 
 const chain = {
   id: 1952,

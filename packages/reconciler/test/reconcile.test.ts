@@ -279,6 +279,17 @@ describe('recovery cannot be asserted by an operator', () => {
     expect(d.blockReasons).toContain('MANUAL_REVIEW_REQUIRED');
     expect(canRecover(d)).toBe(false);
   });
+
+  it('records RECOVERED only after a resolved review is followed by a complete match', () => {
+    const d = reconcileAsset(healthy({ previousState: 'MANUAL_REVIEW' }), policy, NOW);
+    expect(d.outcome).toBe('MATCHED');
+    expect(d.state).toBe('RECOVERED');
+  });
+
+  it('moves RECOVERED to RECONCILED on the next complete match', () => {
+    const d = reconcileAsset(healthy({ previousState: 'RECOVERED' }), policy, NOW);
+    expect(d.state).toBe('RECONCILED');
+  });
 });
 
 describe('guard window', () => {
@@ -305,6 +316,20 @@ describe('guard window', () => {
       NOW,
     );
     expect(d.state).toBe('PENDING');
+  });
+
+  it('records APPLIED when a previously scheduled activation disappears on chain', () => {
+    const d = reconcileAsset(
+      healthy({ previousState: 'GUARD_WINDOW', appliedOnChain: true }),
+      policy,
+      NOW,
+    );
+    expect(d.state).toBe('APPLIED');
+  });
+
+  it('moves APPLIED to RECONCILED on the next complete match', () => {
+    const d = reconcileAsset(healthy({ previousState: 'APPLIED' }), policy, NOW);
+    expect(d.state).toBe('RECONCILED');
   });
 });
 

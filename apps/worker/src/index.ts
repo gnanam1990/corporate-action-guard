@@ -6,6 +6,7 @@ import { XStocksClient } from '@cag/xstocks-client';
 import { hostname } from 'node:os';
 import { Pool } from 'pg';
 import { runDiscoveryCycle } from './discovery.js';
+import { runReceiptIndexCycle } from './receipt-indexer.js';
 
 /**
  * Worker entry point.
@@ -74,6 +75,24 @@ async function main(): Promise<void> {
       ? {}
       : { maxAssets: Number(process.env['WORKER_MAX_ASSETS']) }),
   };
+  const receiptIndexDeps =
+    env.XLAYER_TESTNET_RPC_URL !== undefined &&
+    env.GUARD_ADAPTER_TESTNET_ADDRESS !== undefined &&
+    env.GUARD_ADAPTER_DEPLOYED_AT_BLOCK !== undefined
+      ? {
+          pool,
+          reader: new XLayerReader({
+            rpcUrl: env.XLAYER_TESTNET_RPC_URL,
+            expectedChainId: env.XLAYER_TESTNET_CHAIN_ID,
+            providerName: new URL(env.XLAYER_TESTNET_RPC_URL).host,
+          }),
+          adapterAddress: env.GUARD_ADAPTER_TESTNET_ADDRESS,
+          deploymentBlock: BigInt(env.GUARD_ADAPTER_DEPLOYED_AT_BLOCK),
+          logger,
+          producerVersion: deps.producerVersion,
+          now: deps.now,
+        }
+      : undefined;
 
   let running = true;
   const stop = (signal: string): void => {
@@ -89,12 +108,33 @@ async function main(): Promise<void> {
       'discovery:xlayer',
       OWNER_ID,
       LEASE_TTL_SECONDS,
-      async () => runDiscoveryCycle(deps),
+      async (lease) => runDiscoveryCycle({ ...deps, lease }),
     );
 
     if (result === undefined) {
       // Another worker holds the lease. Not an error: this is the mechanism working.
       logger.debug('discovery lease held elsewhere; skipping this cycle');
+    }
+
+    if (receiptIndexDeps !== undefined) {
+      try {
+        const indexed = await withLease(
+          pool,
+          'receipt-indexer:xlayer-testnet',
+          OWNER_ID,
+          LEASE_TTL_SECONDS,
+          async (lease) => runReceiptIndexCycle({ ...receiptIndexDeps, lease }),
+        );
+        if (indexed === undefined) {
+          logger.debug('receipt-indexer lease held elsewhere; skipping this cycle');
+        }
+      } catch (error) {
+        // Monitoring mainnet evidence remains useful even if the optional testnet
+        // deployment is unavailable. Its own cursor does not advance on failure.
+        logger.error('receipt index cycle failed', {
+          detail: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
 
     if (ONCE || !running) break;

@@ -25,7 +25,23 @@ export {
   type EvidenceEventType,
   type EvidenceSourceKind,
 } from './types.js';
-export { acquireLease, releaseLease, renewLease, withLease, type Lease } from './leases.js';
+export {
+  acquireLease,
+  assertLeaseHeld,
+  releaseLease,
+  renewLease,
+  withLease,
+  LeaseLostError,
+  type Lease,
+} from './leases.js';
+export {
+  claimIdempotentCommand,
+  completeIdempotentCommand,
+  getStoredApiKey,
+  provisionApiKeyHash,
+  type IdempotencyClaim,
+  type StoredApiKey,
+} from './commands.js';
 export {
   coverageSummary,
   getAsset,

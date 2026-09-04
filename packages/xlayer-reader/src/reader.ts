@@ -1,5 +1,13 @@
-import { createPublicClient, getAddress, http, type Chain, type PublicClient } from 'viem';
-import { CORPORATE_ACTION_TOKEN_ABI, WRAPPER_ABI } from './abi.js';
+import {
+  createPublicClient,
+  decodeEventLog,
+  getAddress,
+  http,
+  type Chain,
+  type Hex,
+  type PublicClient,
+} from 'viem';
+import { ACTION_GUARD_ADAPTER_EVENTS, CORPORATE_ACTION_TOKEN_ABI, WRAPPER_ABI } from './abi.js';
 import { XLAYER_LIMITS, XLAYER_MAINNET_CHAIN_ID, xLayerMainnet, xLayerTestnet } from './chains.js';
 import { XLayerError } from './errors.js';
 
@@ -23,6 +31,59 @@ export interface BlockStamp {
   readonly blockNumber: bigint;
   readonly blockHash: string;
   readonly blockTimestampMs: number;
+}
+
+export type AdapterEvent =
+  | {
+      readonly name: 'ReceiptConsumed';
+      readonly receiptId: string;
+      readonly caller: string;
+      readonly target: string;
+      readonly amount: bigint;
+    }
+  | {
+      readonly name: 'ActionExecuted';
+      readonly receiptId: string;
+      readonly actionType: number;
+      readonly recipient: string;
+      readonly amount: bigint;
+    };
+
+export function decodeAdapterEvent(log: {
+  readonly topics: readonly string[];
+  readonly data: string;
+}): AdapterEvent | undefined {
+  try {
+    const decoded = decodeEventLog({
+      abi: ACTION_GUARD_ADAPTER_EVENTS,
+      topics: log.topics as [Hex, ...Hex[]],
+      data: log.data as Hex,
+      strict: true,
+    });
+    if (decoded.eventName === 'ReceiptConsumed') {
+      return {
+        name: decoded.eventName,
+        receiptId: decoded.args.receiptId,
+        caller: decoded.args.caller.toLowerCase(),
+        target: decoded.args.target.toLowerCase(),
+        amount: decoded.args.amount,
+      };
+    }
+    if (decoded.eventName === 'ActionExecuted') {
+      return {
+        name: decoded.eventName,
+        receiptId: decoded.args.receiptId,
+        actionType: decoded.args.actionType,
+        recipient: decoded.args.recipient.toLowerCase(),
+        amount: decoded.args.amount,
+      };
+    }
+    return undefined;
+  } catch {
+    // The adapter address should contain only its own events, but an unknown future event
+    // is evidence we do not understand, not permission to fabricate a decoded shape.
+    return undefined;
+  }
 }
 
 /** Raw observation of one asset's on-chain state, stamped with the block it was read at. */
@@ -116,6 +177,20 @@ export class XLayerReader {
       blockHash: block.hash,
       blockTimestampMs: Number(block.timestamp) * 1_000,
     };
+  }
+
+  async getBlockStamp(blockNumber: bigint): Promise<BlockStamp> {
+    await this.assertChainId();
+    const block = await this.client.getBlock({ blockNumber });
+    return {
+      blockNumber: block.number,
+      blockHash: block.hash.toLowerCase(),
+      blockTimestampMs: Number(block.timestamp) * 1_000,
+    };
+  }
+
+  getConfirmationDepth(): number {
+    return this.confirmationDepth;
   }
 
   /**

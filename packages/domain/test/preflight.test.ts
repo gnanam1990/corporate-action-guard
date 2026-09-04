@@ -41,6 +41,18 @@ const cases: ReadonlyArray<{
     reason: 'UNSUPPORTED_CHAIN',
     mutate: (i) => ({ ...i, supportedChainIds: [unsafe.chainId(196)] }),
   },
+  {
+    reason: 'EVIDENCE_CHAIN_MISMATCH',
+    mutate: (i) => ({ ...i, evidenceChainId: unsafe.chainId(196) }),
+  },
+  {
+    reason: 'UNSUPPORTED_TARGET',
+    mutate: (i) => ({ ...i, supportedTargets: [unsafe.address('0x' + '6'.repeat(40))] }),
+  },
+  {
+    reason: 'UNSUPPORTED_ACTION',
+    mutate: (i) => ({ ...i, supportedActionTypes: ['WITHDRAW'] }),
+  },
   { reason: 'UNKNOWN_ASSET', mutate: (i) => ({ ...i, assetKnown: false }) },
   {
     reason: 'NON_CANONICAL_TOKEN',
@@ -91,6 +103,10 @@ const cases: ReadonlyArray<{
   {
     reason: 'ACTIVATION_WINDOW',
     mutate: (i) => ({ ...i, scheduledActivation: instant(NOW + 60_000) }),
+  },
+  {
+    reason: 'UNAPPLIED_CORPORATE_ACTION',
+    mutate: (i) => ({ ...i, scheduledActivation: instant(NOW - 61 * 60_000) }),
   },
   { reason: 'MANUAL_REVIEW_REQUIRED', mutate: (i) => ({ ...i, manualReviewOpen: true }) },
   {
@@ -196,6 +212,7 @@ describe('evaluatePreflight — missing evidence is never an implicit match', ()
     'onChainMultiplierNonce',
     'apiObservedAt',
     'chainObservedAt',
+    'evidenceChainId',
   ];
 
   for (const key of optionalEvidence) {

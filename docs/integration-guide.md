@@ -127,9 +127,9 @@ that treats it as success will proceed with an operation the guard refused.
 ## Retry semantics
 
 - **Reads** (`listAssets`, `getAsset`, `health`) retry automatically with bounded backoff.
-- **Preflight never retries automatically.** It can mint a receipt, and retrying without
-  your own stable idempotency key risks minting a second one. Retries are your decision,
-  made with a stable key.
+- **Preflight never retries automatically.** Supply a stable idempotency key. The server
+  atomically stores the exact response with the receipt event, so a same-body retry returns
+  that response and cannot mint a second receipt. Reusing the key for another body is `409`.
 
 ## API keys
 
@@ -140,6 +140,11 @@ environment and never prints it — `guard doctor` reports only that it is set.
 Server-side, keys are stored as SHA-256 hashes, looked up by a short public prefix, and
 compared in constant time. Every authentication failure returns an identical body, so
 probing cannot reveal whether a key id exists.
+
+Production rejects `DEV_API_KEYS`. Bootstrap hashes can be supplied with
+`INTEGRATOR_API_KEY_HASH` (key id `integ001`) and `OPERATOR_API_KEY_HASH` (key id
+`operator`); additional keys can be provisioned in the `api_keys` table. Only hashes are
+persisted.
 
 ## Threat assumptions you are inheriting
 
@@ -160,10 +165,14 @@ Be explicit with yourself about these before depending on the guard:
 
 ## Testnet limitations
 
-The deployed contracts are a `TESTNET FIXTURE`. They reproduce the verified _read_ surface
+The testnet contracts are a `TESTNET FIXTURE`. They reproduce the verified _read_ surface
 of the production xStocks token, so the same reader and adapter work against both. They do
 **not** prove that production scheduling behaves identically, because that behaviour is not
 published in a form this build could verify.
+
+The checked-in deployment is implementation v1 and is intentionally refused by current
+v2 clients. Do not submit transactions until `pnpm testnet:deploy` and
+`pnpm testnet:prove` have produced a verified v2 artifact and fresh evidence.
 
 ## Removal and rollback
 

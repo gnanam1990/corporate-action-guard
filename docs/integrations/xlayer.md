@@ -137,13 +137,13 @@ contract is not a contract.
 
 ## Recovery procedure
 
-| Symptom            | Action                                                                                                                                       |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `WRONG_CHAIN`      | The RPC URL points elsewhere. Fix configuration; do not override the check.                                                                  |
-| `RPC_UNAVAILABLE`  | Source health degrades, preflight fails closed with `RPC_UNAVAILABLE`. Failover is read-only and records which provider answered.            |
-| `-32602` on logs   | The range cap changed. Lower `maxLogRangeBlocks`; re-measure and update this document.                                                       |
-| Reorg detected     | Cursor rewinds automatically. Verify projections rebuilt; see `docs/runbooks/reorg.md`.                                                      |
-| Indexer far behind | At 100 blocks/call and 1 s blocks the indexer needs ≥1 call/100 s just to keep up. Check provider rate limits before increasing concurrency. |
+| Symptom           | Action                                                                                                                              |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `WRONG_CHAIN`     | The RPC URL points elsewhere. Fix configuration; do not override the check.                                                         |
+| `RPC_UNAVAILABLE` | Source health degrades, preflight fails closed with `RPC_UNAVAILABLE`. Failover is read-only and records which provider answered.   |
+| `-32602` on logs  | The range cap changed. Lower `maxLogRangeBlocks`; re-measure and update this document.                                              |
+| Reorg detected    | Cursor rewinds with append-only compensation. Verify the canonical re-read; see `docs/runbooks/reorg.md`.                           |
+| Indexer lag       | At 100 blocks/call and 1 s blocks the indexer needs ≥1 call/100 s just to keep up. Check provider limits before adding concurrency. |
 
 ## Running the live smoke test
 

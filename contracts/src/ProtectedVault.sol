@@ -8,7 +8,8 @@ import {IProtectedTarget} from "./ActionGuardAdapter.sol";
 
 /// @title ProtectedVault
 /// @notice One economically meaningful but deliberately small operation, routed through
-/// the guard: deposit and withdraw of a fixture asset.
+/// the guard: deposit and withdraw of a fixture asset. An account can always withdraw its
+/// own credited balance directly, so an adapter pause or signer outage cannot trap funds.
 ///
 /// @dev The financial surface is kept minimal on purpose. The product being demonstrated
 /// is the *guard*, and every extra vault feature is extra attack surface that proves
@@ -36,6 +37,7 @@ contract ProtectedVault is IProtectedTarget, ReentrancyGuard {
     error UnsupportedAction(uint8 actionType);
     error InsufficientBalance(uint256 requested, uint256 available);
     error ZeroAmount();
+    error ZeroAddress();
     error FeeOnTransferNotSupported(uint256 expected, uint256 received);
 
     modifier onlyAdapter() {
@@ -64,6 +66,15 @@ contract ProtectedVault is IProtectedTarget, ReentrancyGuard {
         } else {
             revert UnsupportedAction(actionType);
         }
+    }
+
+    /// @notice Withdraw the caller's own credited balance without adapter authorization.
+    /// @dev This is an intentionally narrow escape hatch: the caller cannot debit another
+    /// account, redirect another account's assets, or deposit through it.
+    function withdraw(uint256 amount, address recipient) external nonReentrant {
+        if (recipient == address(0)) revert ZeroAddress();
+        if (amount == 0) revert ZeroAmount();
+        _withdraw(msg.sender, recipient, amount);
     }
 
     function _deposit(address caller, address recipient, uint256 amount) private {

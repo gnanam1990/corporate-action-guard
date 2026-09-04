@@ -14,7 +14,7 @@ describe('loadEnv', () => {
   it('applies documented defaults', () => {
     const env = loadEnv({ ...base });
     expect(env.NODE_ENV).toBe('development');
-    expect(env.XSTOCKS_API_BASE_URL).toBe('https://api.xstocks.fi');
+    expect(env.XSTOCKS_API_BASE_URL).toBe('https://api.xstocks.fi/api/v2');
     expect(env.XLAYER_MAINNET_CHAIN_ID).toBe(XLAYER_MAINNET_CHAIN_ID);
     expect(env.XLAYER_TESTNET_CHAIN_ID).toBe(XLAYER_TESTNET_CHAIN_ID);
   });

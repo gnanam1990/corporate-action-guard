@@ -23,6 +23,7 @@ import type { PreflightRequest, PreflightResponse } from './schemas.js';
 
 export interface EvidenceBundle {
   readonly assetKnown: boolean;
+  readonly chainId?: number;
   readonly registryTokenAddress?: string;
   readonly registryWrapperAddress?: string;
   readonly registryWrapperIsCurrent?: boolean;
@@ -41,6 +42,8 @@ export interface EvidenceBundle {
 
 export interface PreflightPolicy {
   readonly supportedChainIds: readonly number[];
+  readonly supportedTargets: readonly string[];
+  readonly supportedActionTypes: readonly PreflightRequest['actionType'][];
   readonly guardBeforeMs: number;
   readonly guardAfterMs: number;
   readonly apiMaxAgeMs: number;
@@ -79,6 +82,9 @@ export async function runPreflight(
       expectedMultiplierNonce: BigInt(request.expectedMultiplierNonce),
     },
     supportedChainIds: deps.policy.supportedChainIds as readonly ChainId[],
+    supportedTargets: deps.policy.supportedTargets.map((target) => target.toLowerCase()) as never,
+    supportedActionTypes: deps.policy.supportedActionTypes,
+    ...(evidence.chainId === undefined ? {} : { evidenceChainId: evidence.chainId as ChainId }),
     assetKnown: evidence.assetKnown,
     ...(evidence.registryTokenAddress === undefined
       ? {}
@@ -175,7 +181,17 @@ export async function runPreflight(
     evidence: evidenceBlock,
     operationDigest,
     receipt: {
+      schemaVersion: signed.receipt.schemaVersion,
       receiptId: signed.receipt.receiptId,
+      caller: signed.receipt.caller,
+      target: signed.receipt.target,
+      asset: signed.receipt.asset,
+      wrapper: signed.receipt.wrapper,
+      actionType: signed.receipt.actionType,
+      recipient: signed.receipt.recipient,
+      amount: signed.receipt.amount.toString(),
+      expectedMultiplierNonce: signed.receipt.expectedMultiplierNonce.toString(),
+      operationDigest: signed.receipt.operationDigest,
       signature: signed.signature,
       signer: signed.signer,
       validAfter: iso(Number(signed.receipt.validAfter) * 1_000),

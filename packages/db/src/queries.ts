@@ -46,6 +46,9 @@ export interface AssetFilter {
   readonly lifecycleState?: string | undefined;
   readonly canonicality?: string | undefined;
   readonly search?: string | undefined;
+  readonly staleEvidence?: boolean | undefined;
+  readonly apiStaleBefore?: Date | undefined;
+  readonly chainStaleBefore?: Date | undefined;
 }
 
 export interface Page<T> {
@@ -81,6 +84,19 @@ export async function listAssets(db: Queryable, filter: AssetFilter): Promise<Pa
     // Parameterised and escaped: a search term can never become SQL or a wildcard injection.
     params.push(`%${filter.search.replace(/[%_\\]/g, '\\$&')}%`);
     conditions.push(`(symbol ILIKE $${params.length} OR asset_id ILIKE $${params.length})`);
+  }
+  if (filter.staleEvidence !== undefined) {
+    if (filter.apiStaleBefore === undefined || filter.chainStaleBefore === undefined) {
+      throw new Error('staleEvidence requires both freshness cutoffs');
+    }
+    params.push(filter.apiStaleBefore, filter.chainStaleBefore);
+    const apiCutoff = `$${params.length - 1}`;
+    const chainCutoff = `$${params.length}`;
+    conditions.push(
+      filter.staleEvidence
+        ? `(api_observed_at IS NULL OR api_observed_at < ${apiCutoff} OR chain_observed_at IS NULL OR chain_observed_at < ${chainCutoff})`
+        : `(api_observed_at >= ${apiCutoff} AND chain_observed_at >= ${chainCutoff})`,
+    );
   }
 
   // Fetch one extra row to learn whether another page exists, without a second count query.

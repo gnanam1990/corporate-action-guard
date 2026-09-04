@@ -69,10 +69,10 @@ rather than quietly skipped.
 
 | Item | Blocker | Effect |
 | --- | --- | --- |
-| X Layer testnet deployment | Requires a funded chain-1952 broadcaster key | Contracts are built and tested locally; no deployment artifact is written and no address is claimed anywhere |
-| Real testnet failure-proof transactions | Depends on the deployment above | Recorded as **NOT PROVEN** in \`docs/final-audit.md\` |
-| Preflight Lab (15) | Depends on the deployment above | The on-chain rejection path has no operator-facing demonstration |
-| End-to-end proof package (22) | Depends on the deployment above | Scenarios B–H cannot be executed |
+| Current X Layer testnet deployment | Requires authorization plus a funded chain-1952 broadcaster key | The checked-in artifact is implementation v1; the safety-fixed adapter is v2 and deliberately rejects that obsolete artifact |
+| Current testnet failure-proof transactions | Depends on a verified v2 deployment | Existing scenario B-H transaction evidence remains historical v1 evidence and is not proof of the changed contracts |
+| Preflight Lab execution (15) | Depends on a verified v2 deployment and same-chain fixture evidence | The UI refuses to call an obsolete or missing adapter |
+| End-to-end proof package (22) | Depends on the v2 deployment above | The historical v1 package must be regenerated against v2 |
 | Deployed environment URLs | No hosting target configured | No live URL may be claimed |
 | Verified production xStocks scheduling ABI | The explorer serves no verified ABI without an API key, and no corporate action occurred in the observable log window | Read selectors are confirmed and implemented. The three multiplier **event** signatures are declared \`UNSUPPORTED_CAPABILITY\` rather than invented. Costs the safety path nothing: the verified reads give schedule state directly |
 | ESLint on TypeScript 7 | \`typescript-eslint@8\` refuses to load against the TypeScript 7 API | TypeScript pinned to 6.0.3 so lint can run |
@@ -83,7 +83,8 @@ rather than quietly skipped.
 | --- | --- |
 | Live xStocks API verification | 2026-09-03 — contract downloaded and verified against production; 4 live contract tests pass |
 | Live X Layer mainnet smoke read | 2026-09-03 — 11 live read-only tests pass against chain 196 |
-| Live end-to-end pipeline | 2026-09-04 — worker discovered 726 assets over 8 pages, observed mainnet at block 69713901, and the console and CLI rendered that evidence |
+| Live monitoring pipeline | 2026-09-04 — worker discovered 726 assets over 8 pages, observed mainnet at block 69713901, and the console and CLI rendered that evidence. Chain binding intentionally prevents this mainnet evidence from authorizing a testnet receipt |
+| Historical v1 testnet proof | 2026-09-04 — 8/8 scenarios recorded with real chain-1952 transaction hashes. Superseded by implementation v2 and retained only as historical evidence |
 
 ## Hackathon eligibility uncertainty
 

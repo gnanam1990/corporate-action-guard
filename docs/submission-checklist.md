@@ -5,22 +5,22 @@ a named artifact.
 
 ## Technical
 
-| Requirement                       | Status               | Evidence                                       |
-| --------------------------------- | -------------------- | ---------------------------------------------- |
-| Public repository                 | **VERIFIED**         | github.com/gnanam1990/corporate-action-guard   |
-| Builds from a clean clone         | **VERIFIED**         | CI installs from the lockfile on every PR      |
-| Automated tests                   | **VERIFIED**         | 502 unit, 69 integration, 65 Solidity          |
-| CI green                          | **VERIFIED**         | 7 required jobs on `main`                      |
-| Uses live X Layer                 | **VERIFIED**         | 11 read-only mainnet tests, chain 196          |
-| Uses the live xStocks API         | **VERIFIED**         | 4 live contract tests, `api.xstocks.fi/api/v2` |
-| Smart contracts                   | **VERIFIED (built)** | 65 Foundry tests incl. fuzz and invariants     |
-| **Contracts deployed**            | **NOT PROVEN**       | No artifact in `contracts/deployments/`        |
-| **On-chain transaction evidence** | **NOT PROVEN**       | Requires a funded chain-1952 broadcaster       |
-| Deployed public URL               | **NOT PROVEN**       | No hosting target configured                   |
-| Demo video                        | **NOT PROVEN**       | Script exists; segment 2:35 needs a deployment |
-| Architecture documentation        | **VERIFIED**         | `docs/architecture/`, ADRs 0001–0004           |
-| Threat model                      | **VERIFIED**         | `docs/threat-model.md`                         |
-| Integration guide                 | **VERIFIED**         | `docs/integration-guide.md`                    |
+| Requirement                    | Status               | Evidence                                        |
+| ------------------------------ | -------------------- | ----------------------------------------------- |
+| Public repository              | **VERIFIED**         | github.com/gnanam1990/corporate-action-guard    |
+| Builds from a clean clone      | **VERIFIED**         | CI installs from the lockfile on every PR       |
+| Automated tests                | **VERIFIED**         | 520 unit, 82 integration, 66 Solidity           |
+| CI green                       | **VERIFIED**         | 7 required jobs on `main`                       |
+| Uses live X Layer              | **VERIFIED**         | 11 read-only mainnet tests, chain 196           |
+| Uses the live xStocks API      | **VERIFIED**         | 4 live contract tests, `api.xstocks.fi/api/v2`  |
+| Smart contracts                | **VERIFIED (built)** | 66 Foundry tests incl. fuzz and invariants      |
+| **Current contracts deployed** | **NOT PROVEN**       | Artifact is v1; current implementation is v2    |
+| **Current on-chain evidence**  | **NOT PROVEN**       | Historical v1 proof exists; v2 proof is pending |
+| Deployed public URL            | **NOT PROVEN**       | No hosting target configured                    |
+| Demo video                     | **NOT PROVEN**       | Script exists; segment 2:35 needs a deployment  |
+| Architecture documentation     | **VERIFIED**         | `docs/architecture/`, ADRs 0001–0004            |
+| Threat model                   | **VERIFIED**         | `docs/threat-model.md`                          |
+| Integration guide              | **VERIFIED**         | `docs/integration-guide.md`                     |
 
 ## Eligibility — genuinely unknown
 
@@ -39,14 +39,14 @@ so. Every commit carries its authored date, so the record is auditable either wa
 | Claim                              | Why it is false                                                     |
 | ---------------------------------- | ------------------------------------------------------------------- |
 | "Audited"                          | No external party has reviewed this                                 |
-| "Production ready"                 | Self-audit verdict is BLOCKED                                       |
+| "Production ready"                 | Internal release audit is BLOCKED                                   |
 | "Protects X Layer"                 | Protects integrations that route through the adapter                |
 | "Prevents corporate action losses" | Prevents _authorizing_ an action on stale state, for opted-in paths |
 | Any traction or partnership        | There is none                                                       |
 
 ## Before submitting
 
-1. Deploy to testnet and run `pnpm testnet:prove`.
+1. Deploy implementation v2 to testnet and run `pnpm testnet:prove`.
 2. Regenerate `docs/evidence/release-candidate.md` and confirm every scenario passed.
 3. Re-run the live probes and update the verification date in the integration docs.
 4. Re-read `docs/final-audit.md`. If the verdict is still BLOCKED, say so in the submission.

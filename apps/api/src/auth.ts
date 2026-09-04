@@ -55,17 +55,17 @@ export type AuthResult =
     }
   | { readonly ok: false; readonly reason: 'MALFORMED' | 'UNKNOWN_KEY' | 'REVOKED' | 'MISSING' };
 
-export function authenticate(
+export async function authenticate(
   rawKey: string | undefined,
-  lookup: (keyId: string) => ApiKeyRecord | undefined,
-): AuthResult {
+  lookup: (keyId: string) => ApiKeyRecord | undefined | Promise<ApiKeyRecord | undefined>,
+): Promise<AuthResult> {
   if (rawKey === undefined || rawKey === '') return { ok: false, reason: 'MISSING' };
 
   const match = KEY_FORMAT.exec(rawKey);
   if (match === null) return { ok: false, reason: 'MALFORMED' };
 
   const keyId = match[1]!;
-  const record = lookup(keyId);
+  const record = await lookup(keyId);
 
   if (record === undefined) {
     // Still do the hash work, so a missing key and a wrong key take comparable time.

@@ -126,6 +126,30 @@ export const WRAPPER_ABI = [
   },
 ] as const;
 
+/** Events emitted by the repository's ActionGuardAdapter implementation. */
+export const ACTION_GUARD_ADAPTER_EVENTS = [
+  {
+    type: 'event',
+    name: 'ReceiptConsumed',
+    inputs: [
+      { name: 'receiptId', type: 'bytes32', indexed: true },
+      { name: 'caller', type: 'address', indexed: true },
+      { name: 'target', type: 'address', indexed: true },
+      { name: 'amount', type: 'uint256', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'ActionExecuted',
+    inputs: [
+      { name: 'receiptId', type: 'bytes32', indexed: true },
+      { name: 'actionType', type: 'uint8', indexed: false },
+      { name: 'recipient', type: 'address', indexed: false },
+      { name: 'amount', type: 'uint256', indexed: false },
+    ],
+  },
+] as const;
+
 /**
  * Events confirmed to be emitted by the token on mainnet.
  *

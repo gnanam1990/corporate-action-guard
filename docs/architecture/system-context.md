@@ -41,7 +41,7 @@ flowchart TB
 
   subgraph SVC["Zone B — service, authenticated"]
     API["Fastify API"]
-    WORKER["Worker: indexer + reconciler"]
+    WORKER["Worker: observer + reconciler"]
     WEB["Next.js console"]
   end
 

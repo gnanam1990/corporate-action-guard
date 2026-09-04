@@ -50,6 +50,7 @@ const matching: SourceComparison = {
 
 const evidence = (over: Partial<EvidenceBundle> = {}): EvidenceBundle => ({
   assetKnown: true,
+  chainId: 1952,
   registryTokenAddress: '0x9d275685dc284c8eb1c79f6aba7a63dc75ec890a',
   registryWrapperAddress: '0x943bf64d566c32a2bcd41ac92fb63c111cc9de8f',
   registryWrapperIsCurrent: true,
@@ -68,6 +69,8 @@ const evidence = (over: Partial<EvidenceBundle> = {}): EvidenceBundle => ({
 
 const policy: PreflightPolicy = {
   supportedChainIds: [1952],
+  supportedTargets: ['0x3333333333333333333333333333333333333333'],
+  supportedActionTypes: ['DEPOSIT', 'WITHDRAW'],
   guardBeforeMs: 900_000,
   guardAfterMs: 900_000,
   apiMaxAgeMs: 300_000,

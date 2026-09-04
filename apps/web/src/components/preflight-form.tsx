@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { encodeFunctionData } from 'viem';
 import type { Deployment } from '@/lib/deployment';
 import { InlineAlert } from './primitives';
 import { ReasonCode, StatusBadge } from './status';
@@ -31,7 +32,17 @@ type Decision =
       operationDigest: string;
       evidence: Record<string, unknown>;
       receipt: {
+        schemaVersion: number;
         receiptId: string;
+        caller: string;
+        target: string;
+        asset: string;
+        wrapper: string;
+        actionType: number;
+        recipient: string;
+        amount: string;
+        expectedMultiplierNonce: string;
+        operationDigest: string;
         signature: string;
         signer: string;
         validAfter: string;
@@ -52,6 +63,37 @@ type Decision =
 
 const ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
 
+const ADAPTER_ABI = [
+  {
+    type: 'function',
+    name: 'execute',
+    stateMutability: 'nonpayable',
+    inputs: [
+      {
+        name: 'receipt',
+        type: 'tuple',
+        components: [
+          { name: 'schemaVersion', type: 'uint16' },
+          { name: 'receiptId', type: 'bytes32' },
+          { name: 'caller', type: 'address' },
+          { name: 'target', type: 'address' },
+          { name: 'asset', type: 'address' },
+          { name: 'wrapper', type: 'address' },
+          { name: 'actionType', type: 'uint8' },
+          { name: 'recipient', type: 'address' },
+          { name: 'amount', type: 'uint256' },
+          { name: 'expectedMultiplierNonce', type: 'uint256' },
+          { name: 'validAfter', type: 'uint64' },
+          { name: 'validUntil', type: 'uint64' },
+          { name: 'operationDigest', type: 'bytes32' },
+        ],
+      },
+      { name: 'signature', type: 'bytes' },
+    ],
+    outputs: [],
+  },
+] as const;
+
 export function PreflightForm({ apiBaseUrl, deployment }: PreflightFormProps) {
   const [assetId, setAssetId] = useState('');
   const [caller, setCaller] = useState('');
@@ -62,6 +104,7 @@ export function PreflightForm({ apiBaseUrl, deployment }: PreflightFormProps) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Decision | undefined>();
   const [error, setError] = useState<string | undefined>();
+  const intent = useRef<{ body: string; key: string } | undefined>(undefined);
 
   /** Usability only. The server is the authority, and a pass here means nothing. */
   const localIssues = useMemo(() => {
@@ -91,26 +134,30 @@ export function PreflightForm({ apiBaseUrl, deployment }: PreflightFormProps) {
       setResult(undefined);
 
       try {
+        const requestBody = JSON.stringify({
+          chainId: deployment?.chainId ?? 1952,
+          assetId,
+          target: deployment?.protectedVault ?? '0x0000000000000000000000000000000000000000',
+          asset: deployment?.fixtureAsset ?? '0x0000000000000000000000000000000000000000',
+          wrapper: deployment?.fixtureWrapper ?? '0x0000000000000000000000000000000000000000',
+          actionType: 'DEPOSIT',
+          caller,
+          recipient,
+          amount,
+          expectedMultiplierNonce: nonce,
+        });
+        if (intent.current?.body !== requestBody) {
+          intent.current = { body: requestBody, key: `lab-${crypto.randomUUID()}` };
+        }
         const response = await fetch(`${apiBaseUrl}/v1/preflight`, {
           method: 'POST',
           headers: {
             'content-type': 'application/json',
             'x-api-key': apiKey,
-            // A fresh key per submission: this is a new intent, not a resubmission.
-            'idempotency-key': `lab-${crypto.randomUUID()}`,
+            // Reuse the key while the operation is unchanged, including after response loss.
+            'idempotency-key': intent.current.key,
           },
-          body: JSON.stringify({
-            chainId: deployment?.chainId ?? 1952,
-            assetId,
-            target: deployment?.protectedVault ?? '0x0000000000000000000000000000000000000000',
-            asset: deployment?.fixtureAsset ?? '0x0000000000000000000000000000000000000000',
-            wrapper: deployment?.fixtureWrapper ?? '0x0000000000000000000000000000000000000000',
-            actionType: 'DEPOSIT',
-            caller,
-            recipient,
-            amount,
-            expectedMultiplierNonce: nonce,
-          }),
+          body: requestBody,
         });
 
         const body = (await response.json()) as Decision & { detail?: string; title?: string };
@@ -307,20 +354,141 @@ function DecisionPanel({
       <h3 className="section-title" style={{ marginTop: 'var(--space-5)' }}>
         3 · Execute on X Layer testnet
       </h3>
-      {deployment === undefined ? (
+      {result.decision === 'BLOCK' ? (
+        <InlineAlert tone="info" title="Execution is unavailable for a blocked operation.">
+          Resolve the evidence failures and run a new preflight. A blocked response contains no
+          receipt and cannot be submitted.
+        </InlineAlert>
+      ) : deployment === undefined ? (
         <InlineAlert tone="info" title="Execution is unavailable: nothing is deployed.">
-          No verified deployment artifact exists, so there is no adapter to call. This panel
-          deliberately offers no form rather than one that cannot work. Deploy with{' '}
-          <code>pnpm testnet:deploy</code>, which writes the artifact only after post-broadcast
-          bytecode verification.
+          No current implementation-v2 deployment artifact exists, so there is no compatible adapter
+          to call. Deploy with <code>pnpm testnet:deploy</code>, which writes the artifact only
+          after post-broadcast bytecode verification.
         </InlineAlert>
       ) : (
-        <InlineAlert tone="info" title="Submit from the caller address named in the receipt.">
-          Any other sender is rejected with <code>CallerMismatch</code>. The adapter is{' '}
-          <span className="mono">{deployment.actionGuardAdapter}</span> on chain{' '}
-          {deployment.chainId}.
-        </InlineAlert>
+        <ExecutionPanel result={result} deployment={deployment} />
       )}
     </section>
+  );
+}
+
+type EthereumProvider = {
+  request(args: {
+    readonly method: string;
+    readonly params?: readonly unknown[];
+  }): Promise<unknown>;
+};
+
+function ExecutionPanel({
+  result,
+  deployment,
+}: {
+  result: Extract<Decision, { decision: 'ALLOW' }>;
+  deployment: Deployment;
+}) {
+  const [status, setStatus] = useState<
+    'idle' | 'connecting' | 'submitting' | 'submitted' | 'error'
+  >('idle');
+  const [detail, setDetail] = useState<string | undefined>();
+
+  const execute = useCallback(async () => {
+    setStatus('connecting');
+    setDetail(undefined);
+    try {
+      const provider = (window as typeof window & { ethereum?: EthereumProvider }).ethereum;
+      if (provider === undefined) throw new Error('No injected wallet was found in this browser.');
+      if (
+        result.receipt.verifyingContract.toLowerCase() !==
+        deployment.actionGuardAdapter.toLowerCase()
+      ) {
+        throw new Error('The receipt adapter does not match the current deployment artifact.');
+      }
+
+      const accounts = (await provider.request({ method: 'eth_requestAccounts' })) as string[];
+      const account = accounts[0];
+      if (account === undefined || account.toLowerCase() !== result.receipt.caller.toLowerCase()) {
+        throw new Error(`Connect the receipt caller account ${result.receipt.caller}.`);
+      }
+      const chainId = (await provider.request({ method: 'eth_chainId' })) as string;
+      const requiredChain = `0x${deployment.chainId.toString(16)}`;
+      if (chainId.toLowerCase() !== requiredChain.toLowerCase()) {
+        await provider.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: requiredChain }],
+        });
+      }
+
+      setStatus('submitting');
+      const validAfter = BigInt(Math.floor(Date.parse(result.receipt.validAfter) / 1_000));
+      const validUntil = BigInt(Math.floor(Date.parse(result.receipt.validUntil) / 1_000));
+      const data = encodeFunctionData({
+        abi: ADAPTER_ABI,
+        functionName: 'execute',
+        args: [
+          {
+            schemaVersion: result.receipt.schemaVersion,
+            receiptId: result.receipt.receiptId as `0x${string}`,
+            caller: result.receipt.caller as `0x${string}`,
+            target: result.receipt.target as `0x${string}`,
+            asset: result.receipt.asset as `0x${string}`,
+            wrapper: result.receipt.wrapper as `0x${string}`,
+            actionType: result.receipt.actionType,
+            recipient: result.receipt.recipient as `0x${string}`,
+            amount: BigInt(result.receipt.amount),
+            expectedMultiplierNonce: BigInt(result.receipt.expectedMultiplierNonce),
+            validAfter,
+            validUntil,
+            operationDigest: result.receipt.operationDigest as `0x${string}`,
+          },
+          result.receipt.signature as `0x${string}`,
+        ],
+      });
+      const hash = (await provider.request({
+        method: 'eth_sendTransaction',
+        params: [{ from: account, to: deployment.actionGuardAdapter, data }],
+      })) as string;
+      setStatus('submitted');
+      setDetail(hash);
+    } catch (error) {
+      setStatus('error');
+      setDetail(error instanceof Error ? error.message : 'The wallet rejected the transaction.');
+    }
+  }, [deployment, result]);
+
+  const busy = status === 'connecting' || status === 'submitting';
+  return (
+    <div>
+      <InlineAlert tone="info" title="Submit from the caller address named in the receipt.">
+        The wallet will request chain {deployment.chainId} and show the final transaction for human
+        confirmation. Any other sender is rejected with <code>CallerMismatch</code>.
+      </InlineAlert>
+      <button
+        className="filters__submit"
+        type="button"
+        disabled={busy || status === 'submitted'}
+        onClick={() => void execute()}
+        style={{ marginTop: 'var(--space-3)' }}
+      >
+        {status === 'connecting'
+          ? 'Connecting wallet…'
+          : status === 'submitting'
+            ? 'Awaiting confirmation…'
+            : status === 'submitted'
+              ? 'Transaction submitted'
+              : 'Submit guarded transaction'}
+      </button>
+      <div aria-live="polite" style={{ marginTop: 'var(--space-3)' }}>
+        {status === 'submitted' && detail !== undefined && (
+          <InlineAlert tone="success" title="Transaction submitted.">
+            Transaction hash: <span className="mono">{detail}</span>
+          </InlineAlert>
+        )}
+        {status === 'error' && detail !== undefined && (
+          <InlineAlert tone="danger" title="Transaction was not submitted.">
+            {detail}
+          </InlineAlert>
+        )}
+      </div>
+    </div>
   );
 }

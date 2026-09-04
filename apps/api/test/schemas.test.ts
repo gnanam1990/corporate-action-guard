@@ -6,6 +6,7 @@ import {
   idempotencyKeySchema,
   preflightRequestSchema,
   reviewResolutionSchema,
+  timelineQuerySchema,
 } from '../src/schemas.js';
 
 describe('input validation rejects rather than coerces', () => {
@@ -52,8 +53,20 @@ describe('input validation rejects rather than coerces', () => {
     expect(assetFilterSchema.safeParse({ search: 'x'.repeat(1_000) }).success).toBe(false);
   });
 
+  it('parses staleEvidence=false as false rather than JavaScript truthiness', () => {
+    expect(assetFilterSchema.parse({ staleEvidence: 'false' }).staleEvidence).toBe(false);
+    expect(assetFilterSchema.parse({ staleEvidence: 'true' }).staleEvidence).toBe(true);
+    expect(assetFilterSchema.safeParse({ staleEvidence: '1' }).success).toBe(false);
+  });
+
   it('rejects an unknown lifecycle state', () => {
     expect(assetFilterSchema.safeParse({ lifecycleState: 'DEFINITELY_FINE' }).success).toBe(false);
+  });
+
+  it('bounds timeline queries and rejects unknown parameters', () => {
+    expect(timelineQuerySchema.safeParse({ limit: -1 }).success).toBe(false);
+    expect(timelineQuerySchema.safeParse({ limit: 501 }).success).toBe(false);
+    expect(timelineQuerySchema.safeParse({ unexpected: 'ignored?' }).success).toBe(false);
   });
 
   it('validates a complete preflight request', () => {
@@ -103,17 +116,15 @@ describe('manual review requires a real reason', () => {
       reviewResolutionSchema.safeParse({
         reason: 'x'.repeat(40),
         evidenceIds: [],
-        actor: 'operator-1',
       }).success,
     ).toBe(false);
   });
 
-  it('accepts a specific reason with evidence and an actor', () => {
+  it('accepts a specific reason with UUID evidence', () => {
     expect(
       reviewResolutionSchema.safeParse({
         reason: 'API and chain reconciled after the provider outage; verified at block 69686711.',
-        evidenceIds: ['evt-1'],
-        actor: 'operator-1',
+        evidenceIds: ['00000000-0000-4000-8000-000000000001'],
       }).success,
     ).toBe(true);
   });
@@ -144,6 +155,7 @@ describe('OpenAPI contract', () => {
       '/v1/health/ready',
       '/v1/assets',
       '/v1/assets/{assetId}',
+      '/v1/assets/{assetId}/timeline',
       '/v1/system/coverage',
       '/v1/system/source-health',
       '/v1/incidents',

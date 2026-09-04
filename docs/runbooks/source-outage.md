@@ -49,13 +49,12 @@ node apps/worker/dist/index.js --once
 
 ```bash
 FAULTS=XSTOCKS_TIMEOUT node apps/worker/dist/index.js --once
-FAULTS=RPC_TIMEOUT     node apps/worker/dist/index.js --once
 FAULTS=XSTOCKS_RATE_LIMITED,XSTOCKS_INVALID_PAYLOAD node apps/worker/dist/index.js --once
 ```
 
-Faults are injected **at the I/O boundary**, so they travel the same path a real failure
-would — through the retry budget, the error taxonomy, and the source-health signal. A
-harness that short-circuited somewhere special would prove nothing about production.
+The xStocks faults are injected **at the I/O boundary**, so they travel the same path a
+real failure would. `RPC_TIMEOUT` is declared in the fault catalog but is not yet wired to
+the X Layer reader; do not claim that scenario has been reproduced end to end.
 
 `FaultInjector` refuses to construct when `NODE_ENV=production`, and the check is on the
 constructor, so a production process carrying a stray `FAULTS=` variable fails at startup

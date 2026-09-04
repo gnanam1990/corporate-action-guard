@@ -114,6 +114,8 @@ are expected and are not suppressed.
 Both chain gates are covered by tests (`DeployGuardsTest`), because they are the part of
 deployment that must never regress.
 
-**Nothing has been deployed.** No artifact exists in `contracts/deployments/`, and no
-address is claimed anywhere in this repository. Deployment requires a funded chain-1952
-broadcaster, which this build does not have.
+An implementation-v1 fixture was deployed and its historical proof is retained in
+`docs/evidence/release-candidate.md`. The current contracts declare implementation v2, so
+that artifact is obsolete and is rejected by the web loader, status check, and proof
+runner. A funded chain-1952 broadcaster and explicit deployment authorization are required
+to create current v2 evidence.

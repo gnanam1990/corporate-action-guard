@@ -77,7 +77,7 @@ flowchart LR
 | Wrong-chain RPC                                    | `WRONG_CHAIN`, fails closed                            |
 | False API canonical address                        | `NON_CANONICAL_TOKEN`, fails closed                    |
 | Remove any subset of evidence                      | Never improves a decision (400-run property test)      |
-| **Weaken any predicate in the safety check**       | Suite fails, 23/23 mutants killed                      |
+| **Weaken any predicate in the safety check**       | Suite fails, 27/27 mutants killed                      |
 | Direct ERC-20 transfer                             | **Succeeds** — documented boundary, asserted as a test |
 | Journal `UPDATE` / `DELETE` via the app role       | Rejected by trigger                                    |
 | Plant a secret in a tracked file                   | Detected by the scanner                                |

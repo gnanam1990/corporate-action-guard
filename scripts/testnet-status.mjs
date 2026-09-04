@@ -118,13 +118,18 @@ try {
   });
 }
 
-const deployed = fs.existsSync(ARTIFACT);
+const artifact = fs.existsSync(ARTIFACT)
+  ? JSON.parse(fs.readFileSync(ARTIFACT, 'utf8'))
+  : undefined;
+const deployed = artifact?.chainId === 1952 && artifact?.implementationVersion === 2;
 checks.push({
   ok: deployed,
   name: 'deployment artifact',
   detail: deployed
     ? path.relative(ROOT, ARTIFACT)
-    : 'not deployed yet (this is expected before the first deploy)',
+    : artifact === undefined
+      ? 'not deployed yet (this is expected before the first deploy)'
+      : 'existing artifact is obsolete; the fixed contracts must be redeployed',
 });
 
 for (const check of checks) {
@@ -151,6 +156,7 @@ if (deployerAddress !== undefined && balance < REQUIRED_WEI && chainOk) {
   console.log('');
   console.log('One faucet drip is far more than enough; the deploy costs about 0.00012 OKB.');
 } else {
-  console.log(`${blocking.length} blocking problem(s) above.`);
+  console.log(`${blocking.length} deployment precondition problem(s) above.`);
+  if (!deployed) console.log('The deployment-artifact FAIL is expected and will be replaced.');
 }
 process.exit(1);

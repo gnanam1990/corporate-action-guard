@@ -1,4 +1,5 @@
 import type { Pool } from 'pg';
+import type { Queryable } from './journal.js';
 
 /**
  * Durable work leases.
@@ -19,6 +20,10 @@ export interface Lease {
    * on top of the worker that legitimately took over.
    */
   readonly fencingToken: bigint;
+}
+
+export class LeaseLostError extends Error {
+  override readonly name = 'LeaseLostError';
 }
 
 /**
@@ -74,6 +79,22 @@ export async function renewLease(pool: Pool, lease: Lease, ttlSeconds: number): 
   return (result.rowCount ?? 0) === 1;
 }
 
+/**
+ * Prove the fencing token is still current. When called inside a write transaction with
+ * `lock=true`, takeover cannot race between this check and commit.
+ */
+export async function assertLeaseHeld(db: Queryable, lease: Lease, lock = false): Promise<void> {
+  const { rows } = await db.query(
+    `SELECT 1 FROM work_leases
+     WHERE lease_key = $1 AND owner_id = $2 AND fencing_token = $3 AND expires_at > now()
+     ${lock ? 'FOR UPDATE' : ''}`,
+    [lease.key, lease.ownerId, lease.fencingToken.toString()],
+  );
+  if (rows[0] === undefined) {
+    throw new LeaseLostError(`lease ${lease.key} was lost before the write could commit`);
+  }
+}
+
 /** Release a lease we hold. Releasing one we no longer own is a no-op, never an error. */
 export async function releaseLease(pool: Pool, lease: Lease): Promise<void> {
   await pool.query(
@@ -92,9 +113,25 @@ export async function withLease<T>(
 ): Promise<T | undefined> {
   const lease = await acquireLease(pool, key, ownerId, ttlSeconds);
   if (lease === undefined) return undefined;
+  let renewalError: Error | undefined;
+  const intervalMs = Math.max(250, Math.floor((ttlSeconds * 1_000) / 3));
+  const heartbeat = setInterval(() => {
+    void renewLease(pool, lease, ttlSeconds)
+      .then((held) => {
+        if (!held) renewalError = new LeaseLostError(`lease ${lease.key} renewal was refused`);
+      })
+      .catch((error: unknown) => {
+        renewalError = error instanceof Error ? error : new Error(String(error));
+      });
+  }, intervalMs);
+  heartbeat.unref();
   try {
-    return await work(lease);
+    const result = await work(lease);
+    if (renewalError !== undefined) throw renewalError;
+    await assertLeaseHeld(pool, lease);
+    return result;
   } finally {
+    clearInterval(heartbeat);
     await releaseLease(pool, lease).catch(() => undefined);
   }
 }

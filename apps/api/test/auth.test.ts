@@ -24,8 +24,8 @@ const record = (over: Partial<ApiKeyRecord> = {}): ApiKeyRecord => ({
 const lookup = (r: ApiKeyRecord | undefined) => (id: string) => (id === KEY_ID ? r : undefined);
 
 describe('api key authentication', () => {
-  it('accepts a valid key and returns its principal and scopes', () => {
-    const result = authenticate(RAW, lookup(record()));
+  it('accepts a valid key and returns its principal and scopes', async () => {
+    const result = await authenticate(RAW, lookup(record()));
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.principal).toBe('integrator-a');
@@ -33,60 +33,62 @@ describe('api key authentication', () => {
     }
   });
 
-  it('rejects a missing key', () => {
-    expect(authenticate(undefined, lookup(record()))).toMatchObject({
+  it('rejects a missing key', async () => {
+    await expect(authenticate(undefined, lookup(record()))).resolves.toMatchObject({
       ok: false,
       reason: 'MISSING',
     });
   });
 
-  it('rejects a malformed key', () => {
-    expect(authenticate('not-a-key', lookup(record()))).toMatchObject({
+  it('rejects a malformed key', async () => {
+    await expect(authenticate('not-a-key', lookup(record()))).resolves.toMatchObject({
       ok: false,
       reason: 'MALFORMED',
     });
   });
 
-  it('rejects an unknown key id', () => {
-    expect(authenticate(RAW, lookup(undefined))).toMatchObject({
+  it('rejects an unknown key id', async () => {
+    await expect(authenticate(RAW, lookup(undefined))).resolves.toMatchObject({
       ok: false,
       reason: 'UNKNOWN_KEY',
     });
   });
 
-  it('rejects a correct key id with a wrong secret', () => {
+  it('rejects a correct key id with a wrong secret', async () => {
     const wrong = 'cag_abcd1234_ffffffffffffffffffffffffffffffff';
-    expect(authenticate(wrong, lookup(record()))).toMatchObject({
+    await expect(authenticate(wrong, lookup(record()))).resolves.toMatchObject({
       ok: false,
       reason: 'UNKNOWN_KEY',
     });
   });
 
-  it('rejects a revoked key', () => {
-    expect(authenticate(RAW, lookup(record({ revoked: true })))).toMatchObject({
+  it('rejects a revoked key', async () => {
+    await expect(authenticate(RAW, lookup(record({ revoked: true })))).resolves.toMatchObject({
       ok: false,
       reason: 'REVOKED',
     });
   });
 
-  it('checks revocation only after the hash comparison', () => {
+  it('checks revocation only after the hash comparison', async () => {
     // So a revoked key and an unknown key are indistinguishable to someone probing for
     // valid key ids with a guessed secret.
     const wrongSecret = 'cag_abcd1234_ffffffffffffffffffffffffffffffff';
-    expect(authenticate(wrongSecret, lookup(record({ revoked: true })))).toMatchObject({
+    await expect(
+      authenticate(wrongSecret, lookup(record({ revoked: true }))),
+    ).resolves.toMatchObject({
       reason: 'UNKNOWN_KEY',
     });
   });
 
-  it('never stores or returns the raw key', () => {
+  it('never stores or returns the raw key', async () => {
     const stored = record();
     expect(stored.hash).not.toContain(RAW);
     expect(stored.hash).toMatch(/^[0-9a-f]{64}$/);
-    expect(JSON.stringify(authenticate(RAW, lookup(stored)))).not.toContain(RAW);
+    expect(JSON.stringify(await authenticate(RAW, lookup(stored)))).not.toContain(RAW);
   });
 
-  it('the key id is public and safe to log', () => {
-    const result = authenticate(RAW, lookup(record()));
+  it('the key id is public and safe to log', async () => {
+    const result = await authenticate(RAW, lookup(record()));
     if (result.ok) expect(result.keyId).toBe(KEY_ID);
   });
 

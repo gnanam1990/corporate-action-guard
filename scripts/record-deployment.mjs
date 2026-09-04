@@ -23,9 +23,14 @@ if (artifact.chainId !== 1952) {
   console.error(`Artifact claims chain ${artifact.chainId}, refusing to record anything but 1952.`);
   process.exit(1);
 }
+if (artifact.implementationVersion !== 2) {
+  console.error('Artifact is for an obsolete guard implementation; redeploy before recording it.');
+  process.exit(1);
+}
 
 const mapping = {
   GUARD_ADAPTER_TESTNET_ADDRESS: artifact.actionGuardAdapter,
+  GUARD_ADAPTER_DEPLOYED_AT_BLOCK: String(artifact.deployedAtBlock),
   PROTECTED_VAULT_TESTNET_ADDRESS: artifact.protectedVault,
   FIXTURE_ASSET_TESTNET_ADDRESS: artifact.fixtureAsset,
   FIXTURE_WRAPPER_TESTNET_ADDRESS: artifact.fixtureWrapper,

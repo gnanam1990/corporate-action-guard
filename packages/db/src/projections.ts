@@ -88,6 +88,7 @@ export async function applyEventToProjections(db: Queryable, event: EvidenceEven
            chain_block_hash = $4,
            canonicality = COALESCE($5::check_outcome, canonicality),
            multiplier_nonce = COALESCE($6, multiplier_nonce),
+           scheduled_activation = $10,
            source_agreement = COALESCE($8::source_agreement, source_agreement),
            comparison_fields = COALESCE($9::jsonb, comparison_fields),
            compared_at = CASE WHEN $8 IS NULL THEN compared_at ELSE $2 END,
@@ -104,6 +105,7 @@ export async function applyEventToProjections(db: Queryable, event: EvidenceEven
           event.id,
           str(p['sourceAgreement']),
           hasComparison ? JSON.stringify(p['comparisonFields'] ?? []) : null,
+          date(p['scheduledActivation']),
         ],
       );
       return;
@@ -157,6 +159,11 @@ export async function applyEventToProjections(db: Queryable, event: EvidenceEven
           event.id,
         ],
       );
+      await db.query(
+        `UPDATE current_assets SET lifecycle_state = 'MANUAL_REVIEW', last_event_id = $2, updated_at = now()
+         WHERE asset_id = $1`,
+        [event.aggregateId, event.id],
+      );
       return;
     }
 
@@ -205,6 +212,15 @@ export async function applyEventToProjections(db: Queryable, event: EvidenceEven
 
     case 'SOURCE_DEGRADED':
     case 'SOURCE_RECOVERED': {
+      if (event.aggregateType === 'asset') {
+        await db.query(
+          `UPDATE current_assets SET
+             lifecycle_state = 'RECOVERED', last_event_id = $2, updated_at = now()
+           WHERE asset_id = $1`,
+          [event.aggregateId, event.id],
+        );
+        return;
+      }
       const healthy = event.eventType === 'SOURCE_RECOVERED';
       await db.query(
         `INSERT INTO current_source_health (
@@ -241,6 +257,43 @@ export async function applyEventToProjections(db: Queryable, event: EvidenceEven
           num(p['rewindToBlock']) ?? '0',
           String(p['rewindToHash'] ?? '').toLowerCase(),
         ],
+      );
+      return;
+    }
+
+    case 'CHAIN_CURSOR_ADVANCED': {
+      await db.query(
+        `INSERT INTO indexed_chain_cursor (
+           chain_id, last_indexed_block, last_indexed_hash, safe_block,
+           confirmation_depth, updated_at
+         ) VALUES ($1,$2,$3,$4,$5, now())
+         ON CONFLICT (chain_id) DO UPDATE SET
+           last_indexed_block = EXCLUDED.last_indexed_block,
+           last_indexed_hash = EXCLUDED.last_indexed_hash,
+           safe_block = EXCLUDED.safe_block,
+           confirmation_depth = EXCLUDED.confirmation_depth,
+           updated_at = now()`,
+        [
+          Number(p['chainId'] ?? event.chainId ?? 0),
+          num(p['lastIndexedBlock']) ?? event.blockNumber?.toString() ?? '0',
+          String(p['lastIndexedHash'] ?? event.blockHash ?? '').toLowerCase(),
+          num(p['safeBlock']) ?? event.blockNumber?.toString() ?? '0',
+          Number(p['confirmationDepth'] ?? 0),
+        ],
+      );
+      return;
+    }
+
+    case 'CHAIN_EVENTS_REVERTED': {
+      const eventIds = Array.isArray(p['eventIds'])
+        ? p['eventIds'].filter((id): id is string => typeof id === 'string')
+        : [];
+      if (eventIds.length === 0) return;
+      await db.query(
+        `UPDATE receipt_status SET
+           status = 'ISSUED', consumed_event_id = NULL, consumed_tx_hash = NULL, updated_at = now()
+         WHERE consumed_event_id = ANY($1::uuid[])`,
+        [eventIds],
       );
       return;
     }

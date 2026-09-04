@@ -1,13 +1,18 @@
 import { randomUUID } from 'node:crypto';
 import {
+  appendEvidence,
+  applyEventToProjections,
   checkDatabase,
+  claimIdempotentCommand,
+  completeIdempotentCommand,
   coverageSummary,
   getAsset,
   listAssets,
   listIncidents,
   replayAsset,
   sourceHealth,
-  type Queryable,
+  payloadHash,
+  withTransaction,
 } from '@cag/db';
 import { createLogger, type Logger } from '@cag/observability';
 import type { ReceiptSigner } from '@cag/receipts';
@@ -22,16 +27,21 @@ import { runPreflight, type EvidenceBundle, type PreflightPolicy } from './prefl
 import {
   assetFilterSchema,
   idempotencyKeySchema,
+  incidentFilterSchema,
   preflightRequestSchema,
   reviewResolutionSchema,
+  timelineQuerySchema,
 } from './schemas.js';
+import type { Pool } from 'pg';
 
 export interface ServerDeps {
-  readonly db: Queryable;
+  readonly db: Pool;
   readonly databaseUrl: string;
   readonly signer: ReceiptSigner;
   readonly policy: PreflightPolicy;
-  readonly lookupApiKey: (keyId: string) => ApiKeyRecord | undefined;
+  readonly lookupApiKey: (
+    keyId: string,
+  ) => ApiKeyRecord | undefined | Promise<ApiKeyRecord | undefined>;
   /** Assembles the evidence a preflight decision rests on. */
   readonly loadEvidence: (assetId: string) => Promise<EvidenceBundle>;
   readonly corsOrigins: readonly string[];
@@ -122,7 +132,7 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
   /** Require a scope, or reject. */
   const requireScope = (scope: Scope) => async (request: FastifyRequest, reply: FastifyReply) => {
     const raw = request.headers['x-api-key'];
-    const result = authenticate(typeof raw === 'string' ? raw : undefined, deps.lookupApiKey);
+    const result = await authenticate(typeof raw === 'string' ? raw : undefined, deps.lookupApiKey);
 
     if (!result.ok) {
       logger.warn('authentication rejected', {
@@ -177,6 +187,22 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
         detail:
           signerAddress === undefined ? 'no signing key configured' : `signer ${signerAddress}`,
       },
+      {
+        name: 'guard-adapter',
+        ok: deps.policy.verifyingContract !== '0x0000000000000000000000000000000000000000',
+        detail:
+          deps.policy.verifyingContract === '0x0000000000000000000000000000000000000000'
+            ? 'no compatible adapter configured'
+            : `adapter ${deps.policy.verifyingContract}`,
+      },
+      {
+        name: 'protected-target',
+        ok: deps.policy.supportedTargets.length > 0,
+        detail:
+          deps.policy.supportedTargets.length === 0
+            ? 'no protected target configured'
+            : `${deps.policy.supportedTargets.length} target(s) configured`,
+      },
     ];
     const ready = components.every((c) => c.ok);
     return reply
@@ -204,6 +230,9 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       lifecycleState: parsed.data.lifecycleState,
       canonicality: parsed.data.canonicality,
       search: parsed.data.search,
+      staleEvidence: parsed.data.staleEvidence,
+      apiStaleBefore: new Date(now() - deps.policy.apiMaxAgeMs),
+      chainStaleBefore: new Date(now() - deps.policy.chainMaxAgeMs),
     });
 
     return {
@@ -241,13 +270,21 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     };
   });
 
-  app.get('/v1/incidents', async (request) => {
-    const query = request.query as { status?: string; assetId?: string; limit?: string };
-    const limit = Math.min(Number(query.limit ?? 25) || 25, 100);
+  app.get('/v1/incidents', async (request, reply) => {
+    const parsed = incidentFilterSchema.safeParse(request.query);
+    if (!parsed.success) {
+      return send(
+        reply,
+        problem.badRequest(
+          'Invalid query parameters.',
+          parsed.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
+        ),
+      );
+    }
     const rows = await listIncidents(deps.db, {
-      status: query.status,
-      assetId: query.assetId,
-      limit,
+      status: parsed.data.status,
+      assetId: parsed.data.assetId,
+      limit: parsed.data.limit,
     });
     return {
       items: rows.map((r) => ({
@@ -272,19 +309,23 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
    */
   app.get('/v1/assets/:assetId/timeline', async (request, reply) => {
     const { assetId } = request.params as { assetId: string };
-    const query = request.query as { upToEventId?: string; limit?: string };
+    const query = timelineQuerySchema.safeParse(request.query);
+    if (!query.success) {
+      return send(
+        reply,
+        problem.badRequest(
+          'Invalid timeline query parameters.',
+          query.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
+        ),
+      );
+    }
 
     const asset = await getAsset(deps.db, assetId);
     if (asset === undefined) return send(reply, problem.notFound(`No asset ${assetId}.`));
 
-    if (query.upToEventId !== undefined && !/^[0-9a-f-]{36}$/i.test(query.upToEventId)) {
-      return send(reply, problem.badRequest('upToEventId must be a UUID.'));
-    }
-
-    const limit = Math.min(Number(query.limit ?? 200) || 200, 500);
     const replay = await replayAsset(deps.db, assetId, {
-      upToEventId: query.upToEventId,
-      limit,
+      upToEventId: query.data.upToEventId,
+      limit: query.data.limit,
     });
 
     return {
@@ -325,14 +366,93 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
         );
       }
 
-      const evidence = await deps.loadEvidence(parsed.data.assetId);
-      const response = await runPreflight(parsed.data, evidence, {
-        signer: deps.signer,
-        policy: deps.policy,
-        nowMs: now(),
-        requestId: request.correlationId,
-        receiptId: `0x${randomUUID().replace(/-/g, '').padEnd(64, '0')}`,
+      const principal = request.principal;
+      if (principal === undefined) return send(reply, problem.unauthorized());
+
+      const commandKey = idempotency.data;
+      const requestHash = payloadHash(parsed.data);
+      const outcome = await withTransaction(deps.db, async (client) => {
+        const claim = await claimIdempotentCommand<Awaited<ReturnType<typeof runPreflight>>>(
+          client,
+          {
+            actorId: principal.id,
+            operation: 'preflight',
+            key: commandKey,
+            requestHash,
+          },
+        );
+        if (claim.kind !== 'CLAIMED') return claim;
+
+        const evaluatedAt = now();
+        const evidence = await deps.loadEvidence(parsed.data.assetId);
+        const response = await runPreflight(parsed.data, evidence, {
+          signer: deps.signer,
+          policy: deps.policy,
+          nowMs: evaluatedAt,
+          requestId: request.correlationId,
+          receiptId: `0x${randomUUID().replace(/-/g, '').padEnd(64, '0')}`,
+        });
+
+        const journalCorrelationId =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+            request.correlationId,
+          )
+            ? request.correlationId
+            : randomUUID();
+        const eventType = response.decision === 'ALLOW' ? 'RECEIPT_ISSUED' : 'ACTION_REJECTED';
+        const journal = await appendEvidence(client, {
+          aggregateType: 'asset',
+          aggregateId: parsed.data.assetId,
+          eventType,
+          observedAt: new Date(evaluatedAt),
+          sourceKind: 'SYSTEM',
+          sourceLocator: '/v1/preflight',
+          payload:
+            response.decision === 'ALLOW'
+              ? {
+                  receiptId: response.receipt.receiptId,
+                  chainId: response.receipt.chainId,
+                  adapterAddress: response.receipt.verifyingContract.toLowerCase(),
+                  operationDigest: response.operationDigest,
+                  validAfter: response.receipt.validAfter,
+                  validUntil: response.receipt.validUntil,
+                  principalId: principal.id,
+                  evidenceIds: response.evidence.evidenceIds,
+                }
+              : {
+                  chainId: parsed.data.chainId,
+                  operationDigest: response.operationDigest,
+                  principalId: principal.id,
+                  reasonCodes: response.reasonCodes,
+                  evidenceIds: response.evidence.evidenceIds,
+                },
+          correlationId: journalCorrelationId,
+          producerVersion: `api@${process.env['npm_package_version'] ?? '0.1.0'}`,
+        });
+        await applyEventToProjections(client, journal.event);
+        await completeIdempotentCommand(client, {
+          actorId: principal.id,
+          operation: 'preflight',
+          key: commandKey,
+          requestHash,
+          response,
+        });
+        return { kind: 'COMPLETED' as const, response };
       });
+
+      if (outcome.kind === 'REQUEST_MISMATCH') {
+        return send(
+          reply,
+          problem.conflict('This Idempotency-Key was already used for a different request.'),
+        );
+      }
+      if (outcome.kind === 'IN_FLIGHT') {
+        return send(
+          reply,
+          problem.conflict('This idempotent request is still in progress. Retry shortly.'),
+        );
+      }
+      const response = outcome.response;
 
       logger.info('preflight evaluated', {
         correlationId: request.correlationId,
@@ -363,11 +483,67 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
         );
       }
       const { incidentId } = request.params as { incidentId: string };
+      const principal = request.principal;
+      if (principal === undefined) return send(reply, problem.unauthorized());
+
+      const resolution = await withTransaction(deps.db, async (client) => {
+        const incident = await client.query<{ asset_id: string; status: string }>(
+          `SELECT asset_id, status FROM current_incidents
+           WHERE incident_id::text = $1 FOR UPDATE`,
+          [incidentId],
+        );
+        const row = incident.rows[0];
+        if (row === undefined) return { kind: 'NOT_FOUND' as const };
+        if (row.status === 'RESOLVED' || row.status === 'RECOVERED') {
+          return { kind: 'ALREADY_RESOLVED' as const };
+        }
+
+        const evidence = await client.query<{ id: string }>(
+          `SELECT id::text AS id FROM evidence_events WHERE id::text = ANY($1::text[])`,
+          [parsed.data.evidenceIds],
+        );
+        if (evidence.rows.length !== new Set(parsed.data.evidenceIds).size) {
+          return { kind: 'EVIDENCE_NOT_FOUND' as const };
+        }
+
+        const { event } = await appendEvidence(client, {
+          aggregateType: 'asset',
+          aggregateId: row.asset_id,
+          eventType: 'MANUAL_REVIEW_RESOLVED',
+          observedAt: new Date(now()),
+          sourceKind: 'OPERATOR',
+          sourceLocator: '/v1/incidents/:incidentId/review-resolution',
+          payload: {
+            incidentId,
+            reason: parsed.data.reason,
+            evidenceIds: parsed.data.evidenceIds,
+            actorId: principal.id,
+            protectedActionsResumed: false,
+          },
+          correlationId: randomUUID(),
+          producerVersion: `api@${process.env['npm_package_version'] ?? '0.1.0'}`,
+        });
+        await applyEventToProjections(client, event);
+        return { kind: 'RECORDED' as const };
+      });
+
+      if (resolution.kind === 'NOT_FOUND') {
+        return send(reply, problem.notFound(`No incident ${incidentId}.`));
+      }
+      if (resolution.kind === 'ALREADY_RESOLVED') {
+        return send(reply, problem.conflict(`Incident ${incidentId} is already resolved.`));
+      }
+      if (resolution.kind === 'EVIDENCE_NOT_FOUND') {
+        return send(
+          reply,
+          problem.badRequest('Every evidenceIds entry must reference an existing journal event.'),
+        );
+      }
 
       logger.info('review resolution recorded', {
         correlationId: request.correlationId,
         incidentId,
-        actor: parsed.data.actor,
+        actor: principal.id,
       });
 
       // A resolution records a decision. It cannot assert that the sources now agree, and

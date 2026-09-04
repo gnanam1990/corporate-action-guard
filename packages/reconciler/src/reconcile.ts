@@ -136,7 +136,7 @@ export function reconcileAsset(
 
   const scheduledActivation = input.chain?.scheduledActivation ?? input.api?.scheduledActivation;
 
-  const state = deriveLifecycleState(
+  let state = deriveLifecycleState(
     {
       ...(scheduledActivation !== undefined ? { scheduledActivation } : {}),
       guardBefore: policy.guardBefore,
@@ -157,6 +157,16 @@ export function reconcileAsset(
         : comparison.agreement === 'MATCH' && reasons.length === 0
           ? 'MATCHED'
           : 'MISMATCHED';
+
+  // These two states require memory of the recorded lifecycle and therefore cannot be
+  // derived by the memoryless lifecycle helper alone. A review only recovers after a new
+  // complete match; an applied change becomes reconciled on the following complete match.
+  if (outcome === 'MATCHED' && reasons.length === 0) {
+    if (input.previousState === 'MANUAL_REVIEW') state = 'RECOVERED';
+    else if (input.previousState === 'APPLIED' || input.previousState === 'RECOVERED') {
+      state = 'RECONCILED';
+    }
+  }
 
   const ordered = orderReasons(reasons);
 

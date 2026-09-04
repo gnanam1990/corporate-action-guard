@@ -5,6 +5,7 @@ import {
   preflightRequestSchema,
   preflightResponseSchema,
   reviewResolutionSchema,
+  timelineQuerySchema,
 } from './schemas.js';
 
 /**
@@ -89,6 +90,7 @@ export function buildOpenApiDocument(): Record<string, unknown> {
         Problem: problemSchema,
         Health: jsonSchema(healthResponseSchema),
         AssetFilter: jsonSchema(assetFilterSchema),
+        TimelineQuery: jsonSchema(timelineQuerySchema),
         PreflightRequest: jsonSchema(preflightRequestSchema),
         // A discriminated union: a BLOCK carrying a receipt is not representable.
         PreflightResponse: jsonSchema(preflightResponseSchema),
@@ -140,6 +142,12 @@ export function buildOpenApiDocument(): Record<string, unknown> {
               in: 'query',
               schema: { type: 'string', enum: ['PASS', 'FAIL', 'UNKNOWN'] },
             },
+            {
+              name: 'staleEvidence',
+              in: 'query',
+              schema: { type: 'boolean' },
+              description: 'True selects stale or missing evidence; false selects fresh evidence.',
+            },
             { name: 'search', in: 'query', schema: { type: 'string', maxLength: 64 } },
           ],
           responses: {
@@ -156,6 +164,26 @@ export function buildOpenApiDocument(): Record<string, unknown> {
           responses: {
             '200': { description: 'The asset.' },
             '404': problemResponse('No such asset. An empty shell is never returned in its place.'),
+          },
+        },
+      },
+      '/v1/assets/{assetId}/timeline': {
+        get: {
+          tags: ['evidence'],
+          summary: 'Replay one asset from immutable journal events.',
+          parameters: [
+            { name: 'assetId', in: 'path', required: true, schema: { type: 'string' } },
+            { name: 'upToEventId', in: 'query', schema: { type: 'string', format: 'uuid' } },
+            {
+              name: 'limit',
+              in: 'query',
+              schema: { type: 'integer', minimum: 1, maximum: 500, default: 200 },
+            },
+          ],
+          responses: {
+            '200': { description: 'Journal events and deterministic replay metadata.' },
+            '400': problemResponse('Invalid or unrecognised timeline query parameters.'),
+            '404': problemResponse('No such asset.'),
           },
         },
       },
@@ -241,6 +269,9 @@ export function buildOpenApiDocument(): Record<string, unknown> {
               'Authentication failed. The body is identical for every failure reason.',
             ),
             '403': problemResponse('The key lacks the integrator:preflight scope.'),
+            '409': problemResponse(
+              'The idempotency key is in progress or was reused for a different request.',
+            ),
             '429': problemResponse('Rate limited.'),
           },
         },
@@ -266,7 +297,10 @@ export function buildOpenApiDocument(): Record<string, unknown> {
           responses: {
             '202': { description: 'Recorded. Protected actions are not resumed.' },
             '400': problemResponse('A specific reason and an evidence reference are mandatory.'),
+            '401': problemResponse('Authentication failed.'),
             '403': problemResponse('The key lacks the operator:review scope.'),
+            '404': problemResponse('No such incident.'),
+            '409': problemResponse('The incident was already resolved.'),
           },
         },
       },

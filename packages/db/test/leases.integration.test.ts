@@ -1,6 +1,13 @@
 import type { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { acquireLease, releaseLease, renewLease, withLease } from '../src/index.js';
+import {
+  acquireLease,
+  assertLeaseHeld,
+  LeaseLostError,
+  releaseLease,
+  renewLease,
+  withLease,
+} from '../src/index.js';
 import { createTestPool, dropTestSchema } from './helpers.js';
 
 const SCHEMA = 'cag_test_leases';
@@ -73,6 +80,13 @@ describe('work leases', () => {
     await expect(renewLease(pool, stale!, 30)).resolves.toBe(false);
   });
 
+  it('a superseded fencing token cannot pass the write-time assertion', async () => {
+    const stale = await acquireLease(pool, 'reconcile:FENCE', 'worker-1', 1);
+    await expireLease(pool, 'reconcile:FENCE');
+    await acquireLease(pool, 'reconcile:FENCE', 'worker-2', 30);
+    await expect(assertLeaseHeld(pool, stale!)).rejects.toBeInstanceOf(LeaseLostError);
+  });
+
   it('renews a lease the owner still holds', async () => {
     const lease = await acquireLease(pool, 'reconcile:G', 'worker-1', 30);
     await expect(renewLease(pool, lease!, 60)).resolves.toBe(true);
@@ -105,6 +119,14 @@ describe('work leases', () => {
     });
     expect(result).toBeUndefined();
     expect(ran).toBe(false);
+  });
+
+  it('withLease heartbeats while a cycle runs longer than its original TTL', async () => {
+    const result = await withLease(pool, 'reconcile:HEARTBEAT', 'worker-1', 1, async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1_200));
+      return acquireLease(pool, 'reconcile:HEARTBEAT', 'worker-2', 30);
+    });
+    expect(result).toBeUndefined();
   });
 
   it('two concurrent acquisitions produce exactly one winner', async () => {

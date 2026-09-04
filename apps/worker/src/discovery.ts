@@ -1,17 +1,25 @@
 import { randomUUID } from 'node:crypto';
-import { appendEvidence, applyEventToProjections, withTransaction } from '@cag/db';
+import {
+  appendEvidence,
+  applyEventToProjections,
+  assertLeaseHeld,
+  getAsset,
+  withTransaction,
+  type Lease,
+} from '@cag/db';
 import type { Logger } from '@cag/observability';
 import {
   compareSources,
   DEFAULT_REQUIRED_AGREEMENT_FIELDS,
   EXACT_TOLERANCE,
   instant,
+  millis,
   unsafe,
   type ApiObservation,
   type ChainObservation,
   type SourceComparison,
 } from '@cag/domain';
-import { verifyCanonicality } from '@cag/reconciler';
+import { reconcileAsset, verifyCanonicality } from '@cag/reconciler';
 import { XLayerError, type XLayerReader } from '@cag/xlayer-reader';
 import type { XStocksClient } from '@cag/xstocks-client';
 import { XStocksError, xLayerDeployment, type XStocksAsset } from '@cag/xstocks-client';
@@ -39,6 +47,8 @@ export interface DiscoveryDeps {
   readonly now: () => number;
   /** Cap on assets observed per cycle, so one run cannot exhaust an RPC budget. */
   readonly maxAssets?: number;
+  /** Present in the real worker; tests may omit it when exercising pure cycle behavior. */
+  readonly lease?: Lease;
 }
 
 export interface CycleResult {
@@ -64,6 +74,7 @@ async function recordSourceHealth(
   correlationId: string,
 ): Promise<void> {
   await withTransaction(deps.pool, async (client) => {
+    if (deps.lease !== undefined) await assertLeaseHeld(client, deps.lease, true);
     const { event } = await appendEvidence(client, {
       aggregateType: 'source',
       aggregateId: sourceKind,
@@ -170,14 +181,14 @@ export async function runDiscoveryCycle(deps: DiscoveryDeps): Promise<CycleResul
       // Compare the two sources. Without this the agreement verdict stays unknown and
       // every protected action blocks — the correct direction to be wrong in, but a guard
       // that refuses everything is an outage, not a guard.
-      const comparison = await compareForAsset(
+      const observations = await compareForAsset(
         deps,
         asset.symbol,
         deployment,
         snapshot,
         correlationId,
       );
-      if (comparison.agreement === 'MATCH') agreed++;
+      if (observations.comparison.agreement === 'MATCH') agreed++;
 
       await journalAsset(
         deps,
@@ -187,7 +198,8 @@ export async function runDiscoveryCycle(deps: DiscoveryDeps): Promise<CycleResul
         record.outcome,
         snapshot,
         correlationId,
-        comparison,
+        observations,
+        record,
       );
     } catch (err) {
       failed++;
@@ -230,7 +242,11 @@ async function compareForAsset(
   deployment: { readonly address: string; readonly wrapperAddressV2?: string | undefined },
   snapshot: Awaited<ReturnType<XLayerReader['observeAsset']>>,
   correlationId: string,
-): Promise<SourceComparison> {
+): Promise<{
+  readonly api: ApiObservation;
+  readonly chain: ChainObservation;
+  readonly comparison: SourceComparison;
+}> {
   const nowInstant = instant(deps.now());
 
   // The multiplier endpoint is per symbol and per network, so it is a second call. A
@@ -298,12 +314,13 @@ async function compareForAsset(
       : { scheduledActivation: instant(snapshot.scheduledActivationMs) }),
   };
 
-  return compareSources(api, chain, {
+  const comparison = compareSources(api, chain, {
     // Exact for enforcement. A tolerance here would be a licence to disagree.
     multiplierTolerance: EXACT_TOLERANCE,
     activationToleranceMs: 0,
     requiredAgreementFields: DEFAULT_REQUIRED_AGREEMENT_FIELDS,
   });
+  return { api, chain, comparison };
 }
 
 async function journalAsset(
@@ -314,11 +331,25 @@ async function journalAsset(
   canonicality: 'PASS' | 'FAIL' | 'UNKNOWN',
   snapshot: Awaited<ReturnType<XLayerReader['observeAsset']>> | undefined,
   correlationId: string,
-  comparison?: SourceComparison,
+  observations?: {
+    readonly api: ApiObservation;
+    readonly chain: ChainObservation;
+    readonly comparison: SourceComparison;
+  },
+  canonicalityRecord?: ReturnType<typeof verifyCanonicality>,
 ): Promise<void> {
   const bucket = observationBucket(deps.now());
+  const previous = await getAsset(deps.pool, asset.symbol);
+  const openReview = await deps.pool.query<{ open: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1 FROM current_incidents
+       WHERE asset_id = $1 AND status IN ('OPEN','IN_REVIEW')
+     ) AS open`,
+    [asset.symbol],
+  );
 
   await withTransaction(deps.pool, async (client) => {
+    if (deps.lease !== undefined) await assertLeaseHeld(client, deps.lease, true);
     // The API observation.
     const apiEvent = await appendEvidence(client, {
       aggregateType: 'asset',
@@ -333,6 +364,15 @@ async function journalAsset(
         tokenAddress: tokenAddress.toLowerCase(),
         ...(wrapperAddress === null ? {} : { wrapperAddress: wrapperAddress.toLowerCase() }),
         wrapperIsCurrent: wrapperAddress !== null,
+        ...(observations?.api.multiplier === undefined
+          ? {}
+          : {
+              multiplierValue: observations.api.multiplier.value.toString(),
+              multiplierDecimals: observations.api.multiplier.decimals,
+            }),
+        ...(observations?.api.scheduledActivation === undefined
+          ? {}
+          : { scheduledActivation: new Date(observations.api.scheduledActivation).toISOString() }),
         observationBucket: bucket,
       },
       correlationId,
@@ -363,6 +403,9 @@ async function journalAsset(
         ...(snapshot.currentMultiplier === undefined
           ? {}
           : { currentMultiplier: snapshot.currentMultiplier.toString() }),
+        ...(snapshot.scheduledActivationMs === undefined
+          ? {}
+          : { scheduledActivation: new Date(snapshot.scheduledActivationMs).toISOString() }),
         tokenHasBytecode: snapshot.tokenHasBytecode,
         wrapperHasBytecode: snapshot.wrapperHasBytecode,
         ...(snapshot.wrapperAsset === undefined ? {} : { wrapperAsset: snapshot.wrapperAsset }),
@@ -370,13 +413,13 @@ async function journalAsset(
         failedReads: snapshot.failedReads,
         confirmationDepth: snapshot.confirmationDepth,
         settled: snapshot.settled,
-        ...(comparison === undefined
+        ...(observations === undefined
           ? {}
           : {
-              sourceAgreement: comparison.agreement,
+              sourceAgreement: observations.comparison.agreement,
               // Per-field values, so an operator can see WHICH field disagrees rather than
               // only that something did.
-              comparisonFields: comparison.fields.map((f) => ({
+              comparisonFields: observations.comparison.fields.map((f) => ({
                 field: f.field,
                 agreement: f.agreement,
                 apiValue: f.apiValue ?? null,
@@ -391,5 +434,163 @@ async function journalAsset(
       producerVersion: deps.producerVersion,
     });
     await applyEventToProjections(client, chainEvent.event);
+
+    if (observations === undefined || canonicalityRecord === undefined) return;
+
+    const activationCleared =
+      previous?.scheduledActivation !== null &&
+      previous?.scheduledActivation !== undefined &&
+      observations.chain.scheduledActivation === undefined;
+    const decision = reconcileAsset(
+      {
+        assetId: asset.symbol,
+        api: observations.api,
+        chain: observations.chain,
+        canonicality: canonicalityRecord,
+        chainComplete: snapshot.complete,
+        previousState: (previous?.lifecycleState ?? 'NORMAL') as Parameters<
+          typeof reconcileAsset
+        >[0]['previousState'],
+        manualReviewOpen: openReview.rows[0]?.open ?? false,
+        appliedOnChain: activationCleared,
+      },
+      {
+        tolerance: {
+          multiplierTolerance: EXACT_TOLERANCE,
+          activationToleranceMs: 0,
+          requiredAgreementFields: DEFAULT_REQUIRED_AGREEMENT_FIELDS,
+        },
+        guardBefore: millis(15 * 60_000),
+        guardAfter: millis(15 * 60_000),
+        apiMaxAge: millis(5 * 60_000),
+        chainMaxAge: millis(2 * 60_000),
+        policyVersion: 'v1',
+      },
+      instant(deps.now()),
+    );
+
+    const lifecycleEventType = lifecycleTransitionEvent({
+      nextState: decision.state,
+      previousState: previous?.lifecycleState,
+      previousActivation: previous?.scheduledActivation,
+      nextActivation: observations.chain.scheduledActivation,
+    });
+    const lifecycle =
+      lifecycleEventType === undefined
+        ? undefined
+        : await appendEvidence(client, {
+            aggregateType: 'asset',
+            aggregateId: asset.symbol,
+            eventType: lifecycleEventType,
+            observedAt: new Date(deps.now()),
+            sourceKind: 'SYSTEM',
+            sourceLocator: 'worker/reconciler',
+            payload: {
+              lifecycleState: decision.state,
+              policyVersion: decision.policyVersion,
+              outcome: decision.outcome,
+              reasonCodes: decision.blockReasons,
+              reasonSignature: decision.reasonSignature,
+              ...(observations.chain.scheduledActivation === undefined
+                ? {}
+                : {
+                    scheduledActivation: new Date(
+                      observations.chain.scheduledActivation,
+                    ).toISOString(),
+                  }),
+              ...(snapshot.multiplierNonce === undefined
+                ? {}
+                : { multiplierNonce: snapshot.multiplierNonce.toString() }),
+              observationBucket: bucket,
+            },
+            correlationId,
+            causationId: chainEvent.event.id,
+            producerVersion: deps.producerVersion,
+          });
+    if (lifecycle !== undefined) await applyEventToProjections(client, lifecycle.event);
+
+    const incidentReasons =
+      decision.state === 'MISMATCH' && decision.blockReasons.length === 0
+        ? ['UNAPPLIED_CORPORATE_ACTION']
+        : [...decision.blockReasons];
+    if (decision.state === 'MISMATCH' && incidentReasons.length > 0) {
+      const signature = incidentReasons.join('|');
+      const existing = await client.query(
+        `SELECT 1 FROM current_incidents
+         WHERE asset_id = $1 AND reason_signature = $2 AND status IN ('OPEN','IN_REVIEW')`,
+        [asset.symbol, signature],
+      );
+      if (existing.rows[0] === undefined) {
+        const incident = await appendEvidence(client, {
+          aggregateType: 'asset',
+          aggregateId: asset.symbol,
+          eventType: 'MANUAL_REVIEW_OPENED',
+          observedAt: new Date(deps.now()),
+          sourceKind: 'SYSTEM',
+          sourceLocator: 'worker/reconciler',
+          payload: {
+            incidentId: randomUUID(),
+            severity: 'SAFETY_CRITICAL',
+            reasonCodes: incidentReasons,
+            reasonSignature: signature,
+            lifecycleState: 'MANUAL_REVIEW',
+          },
+          correlationId,
+          causationId: lifecycle?.event.id ?? chainEvent.event.id,
+          producerVersion: deps.producerVersion,
+        });
+        await applyEventToProjections(client, incident.event);
+      }
+    }
   });
+}
+
+type LifecycleState = Parameters<typeof reconcileAsset>[0]['previousState'];
+
+/**
+ * Emit lifecycle facts only for real transitions. Polling the same snapshot again is an
+ * observation, not another schedule/override/reconciliation event.
+ */
+export function lifecycleTransitionEvent(input: {
+  readonly nextState: LifecycleState;
+  readonly previousState: string | undefined;
+  readonly previousActivation: Date | null | undefined;
+  readonly nextActivation: number | undefined;
+}):
+  | 'MULTIPLIER_SCHEDULED'
+  | 'MULTIPLIER_OVERRIDDEN'
+  | 'GUARD_WINDOW_ENTERED'
+  | 'MULTIPLIER_EFFECTIVE'
+  | 'SOURCE_RECOVERED'
+  | 'RECONCILIATION_MISMATCHED'
+  | 'RECONCILIATION_MATCHED'
+  | undefined {
+  const { nextState, previousState, previousActivation, nextActivation } = input;
+
+  if (nextState === 'PENDING') {
+    if (previousActivation === null || previousActivation === undefined) {
+      return 'MULTIPLIER_SCHEDULED';
+    }
+    return previousActivation.getTime() === nextActivation ? undefined : 'MULTIPLIER_OVERRIDDEN';
+  }
+
+  if (nextState === previousState) return undefined;
+
+  switch (nextState) {
+    case 'GUARD_WINDOW':
+      return 'GUARD_WINDOW_ENTERED';
+    case 'APPLIED':
+      return 'MULTIPLIER_EFFECTIVE';
+    case 'RECOVERED':
+      return 'SOURCE_RECOVERED';
+    case 'MISMATCH':
+      return 'RECONCILIATION_MISMATCHED';
+    case 'RECONCILED':
+    case 'NORMAL':
+      return 'RECONCILIATION_MATCHED';
+    case 'MANUAL_REVIEW':
+      // Manual review is opened by its own event below; it must never masquerade as a
+      // successful reconciliation.
+      return undefined;
+  }
 }

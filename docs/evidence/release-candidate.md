@@ -2,6 +2,11 @@
 
 # Release candidate evidence
 
+> **Historical evidence only — implementation v1.** The current adapter declares
+> `IMPLEMENTATION_VERSION = 2` after fail-closed post-window and withdrawal-availability
+> fixes. These transaction hashes remain valid evidence of what v1 did, but they are not a
+> release proof for v2. The deployment loader and proof scripts reject the v1 artifact.
+
 **Chain:** X Layer testnet (1952)
 **Generated:** 2026-09-04T04:38:21.012Z
 **Adapter:** `0x5419941472c4a42FF0D68694c2A88F1b4716C337`

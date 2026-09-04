@@ -4,6 +4,8 @@ import {
   appendEvidence,
   applyEventToProjections,
   JournalMutationError,
+  getStoredApiKey,
+  provisionApiKeyHash,
   rebuildProjections,
   readAggregate,
   withTransaction,
@@ -72,6 +74,41 @@ const chainLog = (over: Partial<AppendEvidenceInput> = {}): AppendEvidenceInput 
   correlationId: uuid(2),
   producerVersion: PRODUCER,
   ...over,
+});
+
+describe('persistent API keys', () => {
+  it('stores only the hash and returns durable scopes', async () => {
+    const hash = 'a'.repeat(64);
+    await provisionApiKeyHash(pool, {
+      keyId: 'integ001',
+      principal: 'integrator-a',
+      hash,
+      scopes: ['integrator:preflight'],
+    });
+    await expect(getStoredApiKey(pool, 'integ001')).resolves.toEqual({
+      keyId: 'integ001',
+      principal: 'integrator-a',
+      hash,
+      scopes: ['integrator:preflight'],
+      revoked: false,
+    });
+    const columns = await pool.query(
+      `SELECT column_name FROM information_schema.columns
+       WHERE table_schema = current_schema() AND table_name = 'api_keys'`,
+    );
+    expect(columns.rows.map((row) => row.column_name)).not.toContain('raw_key');
+  });
+
+  it('rejects unknown scopes at the database boundary', async () => {
+    await expect(
+      provisionApiKeyHash(pool, {
+        keyId: 'badsc001',
+        principal: 'bad-scope',
+        hash: 'b'.repeat(64),
+        scopes: ['admin:everything'],
+      }),
+    ).rejects.toThrow();
+  });
 });
 
 describe('append-only enforcement', () => {
@@ -313,6 +350,32 @@ describe('receipt consumption is single-winner', () => {
       ['rcpt-race-1'],
     );
     expect(res.rowCount).toBe(0);
+  });
+});
+
+describe('asset recovery projection', () => {
+  it('SOURCE_RECOVERED on an asset advances lifecycle without changing source health', async () => {
+    await appendAndProject(apiSnapshot({ aggregateId: 'RECOVERY', correlationId: uuid(60) }));
+    await appendAndProject({
+      aggregateType: 'asset',
+      aggregateId: 'RECOVERY',
+      eventType: 'SOURCE_RECOVERED',
+      observedAt: new Date('2026-09-17T12:02:00.000Z'),
+      sourceKind: 'SYSTEM',
+      sourceLocator: 'worker/reconciler',
+      payload: { lifecycleState: 'RECOVERED', reasonCodes: [] },
+      correlationId: uuid(61),
+      producerVersion: PRODUCER,
+    });
+
+    const asset = await pool.query(
+      "SELECT lifecycle_state FROM current_assets WHERE asset_id = 'RECOVERY'",
+    );
+    const health = await pool.query(
+      "SELECT count(*)::int AS n FROM current_source_health WHERE source_kind = 'SYSTEM'",
+    );
+    expect(asset.rows[0]?.lifecycle_state).toBe('RECOVERED');
+    expect(health.rows[0]?.n).toBe(0);
   });
 });
 

@@ -67,6 +67,11 @@ export interface FreshnessPolicy {
 export interface PreflightInput {
   readonly action: PreflightAction;
   readonly supportedChainIds: readonly ChainId[];
+  readonly supportedTargets: readonly Address[];
+  readonly supportedActionTypes: readonly ActionType[];
+
+  /** Chain on which the registry and contract evidence were observed. */
+  readonly evidenceChainId?: ChainId;
 
   /** Absent when the asset is not in the discovered catalog at all. */
   readonly assetKnown: boolean;
@@ -138,6 +143,18 @@ export function evaluatePreflight(input: PreflightInput, now: Instant): Prefligh
   // --- Scope -------------------------------------------------------------
   if (!input.supportedChainIds.includes(action.chainId)) {
     reasons.push('UNSUPPORTED_CHAIN');
+  }
+
+  if (input.evidenceChainId === undefined || input.evidenceChainId !== action.chainId) {
+    reasons.push('EVIDENCE_CHAIN_MISMATCH');
+  }
+
+  if (!input.supportedTargets.some((target) => addressEquals(target, action.target))) {
+    reasons.push('UNSUPPORTED_TARGET');
+  }
+
+  if (!input.supportedActionTypes.includes(action.actionType)) {
+    reasons.push('UNSUPPORTED_ACTION');
   }
 
   if (!input.assetKnown) {
@@ -233,6 +250,8 @@ export function evaluatePreflight(input: PreflightInput, now: Instant): Prefligh
     );
     if (isInGuardWindow(window, now)) {
       reasons.push('ACTIVATION_WINDOW');
+    } else if (now > window.end) {
+      reasons.push('UNAPPLIED_CORPORATE_ACTION');
     }
   }
 

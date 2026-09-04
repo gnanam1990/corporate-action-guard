@@ -80,8 +80,8 @@ describe('preflight at guard-window boundaries', () => {
     expect(evaluateAt(WINDOW.end).reasons).toContain('ACTIVATION_WINDOW');
   });
 
-  it('ALLOWs one millisecond after the window closes', () => {
-    expect(evaluateAt(WINDOW.end + 1).decision).toBe('ALLOW');
+  it('continues to BLOCK after the window closes until the action is applied', () => {
+    expect(evaluateAt(WINDOW.end + 1).reasons).toContain('UNAPPLIED_CORPORATE_ACTION');
   });
 });
 

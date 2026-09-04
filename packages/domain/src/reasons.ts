@@ -19,12 +19,16 @@ export const BLOCK_REASONS = [
   'STALE_CHAIN_EVIDENCE',
   'SOURCE_MISMATCH',
   'ACTIVATION_WINDOW',
+  'UNAPPLIED_CORPORATE_ACTION',
   'MULTIPLIER_NONCE_MISMATCH',
   'INVALID_OPERATION_BINDING',
   'RECEIPT_NOT_YET_VALID',
   'RECEIPT_EXPIRED',
   'RECEIPT_CONSUMED',
   'UNSUPPORTED_CHAIN',
+  'EVIDENCE_CHAIN_MISMATCH',
+  'UNSUPPORTED_TARGET',
+  'UNSUPPORTED_ACTION',
   'MANUAL_REVIEW_REQUIRED',
 ] as const;
 
@@ -50,6 +54,7 @@ export const REASON_SEVERITY: Readonly<Record<BlockReason, ReasonSeverity>> = {
   SOURCE_MISMATCH: 'SAFETY_CRITICAL',
   MULTIPLIER_NONCE_MISMATCH: 'SAFETY_CRITICAL',
   ACTIVATION_WINDOW: 'SAFETY_CRITICAL',
+  UNAPPLIED_CORPORATE_ACTION: 'SAFETY_CRITICAL',
   MANUAL_REVIEW_REQUIRED: 'SAFETY_CRITICAL',
 
   // Evidence is missing or too old to decide on.
@@ -65,6 +70,9 @@ export const REASON_SEVERITY: Readonly<Record<BlockReason, ReasonSeverity>> = {
   RECEIPT_EXPIRED: 'INPUT_REJECTED',
   RECEIPT_CONSUMED: 'INPUT_REJECTED',
   UNSUPPORTED_CHAIN: 'INPUT_REJECTED',
+  EVIDENCE_CHAIN_MISMATCH: 'SAFETY_CRITICAL',
+  UNSUPPORTED_TARGET: 'INPUT_REJECTED',
+  UNSUPPORTED_ACTION: 'INPUT_REJECTED',
 };
 
 const SEVERITY_RANK: Readonly<Record<ReasonSeverity, number>> = {
@@ -116,6 +124,8 @@ export const REASON_EXPLANATION: Readonly<Record<BlockReason, string>> = {
     'The API and on-chain observations disagree. Disagreement always blocks; it is never averaged or ignored.',
   ACTIVATION_WINDOW:
     'The current time falls inside the guard window around a scheduled multiplier activation.',
+  UNAPPLIED_CORPORATE_ACTION:
+    'The activation window has passed but the scheduled corporate action remains unapplied.',
   MULTIPLIER_NONCE_MISMATCH:
     'The multiplier nonce in the request does not equal the current on-chain nonce.',
   INVALID_OPERATION_BINDING: 'The operation fields do not reproduce the bound operation digest.',
@@ -124,6 +134,10 @@ export const REASON_EXPLANATION: Readonly<Record<BlockReason, string>> = {
   RECEIPT_CONSUMED:
     'This receipt has already been consumed. A receipt authorizes exactly one action.',
   UNSUPPORTED_CHAIN: 'The requested chain is not a supported target for protected actions.',
+  EVIDENCE_CHAIN_MISMATCH:
+    'The evidence was observed on a different chain than the requested protected action.',
+  UNSUPPORTED_TARGET: 'The requested target is not configured for protected actions.',
+  UNSUPPORTED_ACTION: 'The requested action type is not supported by the configured target.',
   MANUAL_REVIEW_REQUIRED:
     'An open incident requires operator review before protected actions on this asset resume.',
 };

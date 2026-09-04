@@ -1,5 +1,6 @@
 {
   "chainId": 1952,
+  "implementationVersion": 1,
   "deployedAtBlock": 40037372,
   "deployer": "0x766842aa3d5eD37c4a8fDB0400764C276015591C",
   "fixtureAsset": "0x16626cD009e3917C90Aa7c3d3c30A67aF7B508E1",

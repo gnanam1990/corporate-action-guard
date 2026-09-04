@@ -142,7 +142,7 @@ Safety-critical rules encoded in the table:
 
 | Check                                                                            | Result                   |
 | -------------------------------------------------------------------------------- | ------------------------ |
-| Table test per reason code, plus a coverage test that fails if a code has no row | 18/18 codes              |
+| Table test per reason code, plus a coverage test that fails if a code has no row | 22/22 codes              |
 | Guard-window boundaries at start−1, start, activation, end, end+1                | asserted individually    |
 | Property: removing evidence never improves the decision                          | 400 runs                 |
 | Property: `ALLOW` iff zero reasons                                               | 500 runs                 |
@@ -150,7 +150,7 @@ Safety-critical rules encoded in the table:
 | Property: reason ordering is input-order independent and duplicate-free          | 500 runs                 |
 | Property: ISO round-trip and agreement with the platform implementation          | 1000 runs                |
 | Exhaustive transition table, legal and illegal                                   | 72 pairs                 |
-| **Mutation test over every predicate**                                           | **23/23 mutants killed** |
+| **Mutation test over every predicate**                                           | **27/27 mutants killed** |
 
 `node scripts/mutate-preflight.mjs` flips each guard in `evaluatePreflight`,
 `isInGuardWindow`, and `isStale` one at a time and requires the suite to fail for every
