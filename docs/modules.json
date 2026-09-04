@@ -95,8 +95,8 @@
     {
       "id": "15",
       "name": "Preflight Lab and testnet execution",
-      "status": "ABSENT",
-      "note": "Blocked on a testnet deployment"
+      "status": "PARTIAL",
+      "note": "Preflight Lab UI, decision panel, bound-field summary, and failure-proof table are built and render. Wallet execution is unavailable until contracts are deployed, and the page says so rather than offering a form that cannot work"
     },
     {
       "id": "16",
@@ -107,8 +107,8 @@
     {
       "id": "17",
       "name": "AI incident explainer",
-      "status": "ABSENT",
-      "note": "Optional. Correctly deferred until the deterministic product is complete"
+      "status": "IMPLEMENTED",
+      "note": "Isolated explainer: citation validation, runbook allowlist, injection delimiting, and a deliberately-good deterministic fallback. No provider wired. Architecture test proves it cannot reach the money path"
     },
     {
       "id": "18",
@@ -137,8 +137,8 @@
     {
       "id": "22",
       "name": "End-to-end proof and submission package",
-      "status": "ABSENT",
-      "note": "Blocked on a testnet deployment"
+      "status": "PARTIAL",
+      "note": "Demo script, submission checklist, accessible architecture diagram, and an evidence file that marks every on-chain scenario NOT PROVEN. The evidence itself requires a deployment"
     },
     {
       "id": "23",

@@ -26,10 +26,13 @@ const LAYER = {
   '@cag/worker': 5,
   '@cag/web': 6,
   '@cag/sdk': 6,
+  // Optional and deliberately isolated: it may import NOTHING, so no model output can
+  // reach a decision. See ADR 0002 and docs/ai-boundary.md.
+  '@cag/explainer': 6,
 };
 
 /** Packages that must not import ANY other workspace package. */
-const ISOLATED = new Set(['@cag/domain', '@cag/config', '@cag/sdk', '@cag/web']);
+const ISOLATED = new Set(['@cag/domain', '@cag/config', '@cag/sdk', '@cag/web', '@cag/explainer']);
 
 const WORKSPACE_DIRS = ['apps', 'packages'];
 const violations = [];

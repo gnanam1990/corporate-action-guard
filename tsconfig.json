@@ -10,6 +10,7 @@
     { "path": "./packages/receipts" },
     { "path": "./packages/reconciler" },
     { "path": "./packages/sdk" },
+    { "path": "./packages/explainer" },
     { "path": "./apps/api" },
     { "path": "./apps/worker" }
   ]
