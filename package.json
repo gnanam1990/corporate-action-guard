@@ -34,7 +34,10 @@
     "check:contrast": "node scripts/check-contrast.mjs",
     "docs:readiness": "node scripts/generate-readiness.mjs",
     "docs:check": "node scripts/generate-readiness.mjs --check",
-    "audit:deps": "node scripts/dependency-audit.mjs"
+    "audit:deps": "node scripts/dependency-audit.mjs",
+    "testnet:status": "node scripts/testnet-status.mjs",
+    "testnet:deploy": "bash scripts/testnet-deploy.sh",
+    "testnet:prove": "node scripts/testnet-prove.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -44,6 +47,7 @@
     "prettier": "^3.9.6",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.69.0",
+    "viem": "^2.56.3",
     "vitest": "^4.1.11"
   }
 }
