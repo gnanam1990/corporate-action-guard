@@ -103,6 +103,7 @@ of the production xStocks contracts themselves.
 ## Verdict
 
 No critical or high finding is outstanding **in the code that exists**. That statement is
-narrower than it sounds: current-v2 testnet proof, deployed operations, production xStocks
-scheduling evidence, and an independent audit are still missing. The release is not claimed
-to be ready. See `docs/final-audit.md`.
+narrower than it sounds: current-v2 testnet proof now exists, while production KMS/IAM,
+hosted operations, production xStocks scheduling evidence, and an independent audit are
+still missing. The prototype is application-ready, not production-ready. See
+`docs/final-audit.md`.

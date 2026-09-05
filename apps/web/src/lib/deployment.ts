@@ -1,5 +1,4 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import deploymentArtifact from '../../../../contracts/deployments/xlayer-testnet.json';
 
 /**
  * Deployed testnet addresses, read from the verified deployment artifact.
@@ -23,16 +22,35 @@ export interface Deployment {
   readonly receiptSigner: string;
 }
 
-const ARTIFACT = path.resolve(process.cwd(), '../../contracts/deployments/xlayer-testnet.json');
+const ADDRESS = /^0x[0-9a-fA-F]{40}$/;
 
-export function readDeployment(): Deployment | undefined {
-  try {
-    if (!fs.existsSync(ARTIFACT)) return undefined;
-    const parsed = JSON.parse(fs.readFileSync(ARTIFACT, 'utf8')) as Deployment;
-    // Refuse anything that is not chain 1952, however it got there.
-    if (parsed.chainId !== 1952 || parsed.implementationVersion !== 2) return undefined;
-    return parsed;
-  } catch {
+export function parseDeployment(raw: unknown): Deployment | undefined {
+  if (typeof raw !== 'object' || raw === null) return undefined;
+  const parsed = raw as Record<string, unknown>;
+  // Refuse a partial, stale, or wrong-chain artifact rather than feeding unsafe defaults
+  // into a transaction form.
+  if (
+    parsed['chainId'] !== 1952 ||
+    parsed['implementationVersion'] !== 2 ||
+    typeof parsed['deployedAtBlock'] !== 'number' ||
+    !Number.isSafeInteger(parsed['deployedAtBlock']) ||
+    parsed['deployedAtBlock'] < 0 ||
+    typeof parsed['actionGuardAdapter'] !== 'string' ||
+    !ADDRESS.test(parsed['actionGuardAdapter']) ||
+    typeof parsed['protectedVault'] !== 'string' ||
+    !ADDRESS.test(parsed['protectedVault']) ||
+    typeof parsed['fixtureAsset'] !== 'string' ||
+    !ADDRESS.test(parsed['fixtureAsset']) ||
+    typeof parsed['fixtureWrapper'] !== 'string' ||
+    !ADDRESS.test(parsed['fixtureWrapper']) ||
+    typeof parsed['receiptSigner'] !== 'string' ||
+    !ADDRESS.test(parsed['receiptSigner'])
+  ) {
     return undefined;
   }
+  return parsed as unknown as Deployment;
+}
+
+export function readDeployment(): Deployment | undefined {
+  return parseDeployment(deploymentArtifact);
 }

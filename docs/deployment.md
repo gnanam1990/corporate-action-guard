@@ -47,13 +47,19 @@ is one whose correctness cannot be demonstrated. Speed lost, verifiability gaine
 ## Local full stack
 
 ```bash
-docker compose -f infra/docker-compose.full.yml up --build
+pnpm testnet:init
+pnpm stack:up
 ```
 
 Brings up PostgreSQL, a one-shot migration job, the API (4000), the worker, and the console
 (3000). The API and worker start only after migrations succeed; the console waits for a
 healthy API. Server-rendered console reads use `http://api:4000` inside the Compose network;
 browser-side requests continue to use `http://localhost:4000`.
+
+The local override explicitly sets `NODE_ENV=development` so the isolated local testnet
+signer is accepted. The base full-stack file keeps `NODE_ENV=production` and therefore
+fails closed unless AWS KMS is configured. `--env-file .env` is mandatory: Compose does not
+implicitly load a repository-root `.env` when invoked from every working directory.
 
 ## Migrations are a release step, not a startup step
 
@@ -177,6 +183,6 @@ rather than replaced with plausible-looking values.
 
 A successful local build is not a production deployment.
 
-The checked-in X Layer testnet artifact is implementation v1. The current contracts are
-implementation v2, and every consumer rejects the obsolete artifact. Redeploy and rerun
-the proof package before considering the testnet service ready.
+The checked-in X Layer testnet artifact is current implementation v2 and is backed by the
+proof package. This remains testnet evidence; the four external checks above still govern
+any claim about a public production deployment.

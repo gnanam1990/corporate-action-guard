@@ -1,3 +1,5 @@
+import { execFileSync } from 'node:child_process';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   authenticate,
@@ -24,6 +26,27 @@ const record = (over: Partial<ApiKeyRecord> = {}): ApiKeyRecord => ({
 const lookup = (r: ApiKeyRecord | undefined) => (id: string) => (id === KEY_ID ? r : undefined);
 
 describe('api key authentication', () => {
+  it('accepts the exact key format produced by the repository generator', async () => {
+    const root = path.resolve(import.meta.dirname, '../../..');
+    const output = execFileSync(process.execPath, ['scripts/generate-api-key.mjs', 'integrator'], {
+      cwd: root,
+      encoding: 'utf8',
+    });
+    const lines = output.split('\n');
+    const raw = lines[1];
+    const hash = lines.find((line) => line.startsWith('INTEGRATOR_API_KEY_HASH='))?.split('=')[1];
+
+    // Keep the generated secret out of assertion output while checking the full boundary.
+    expect(typeof raw === 'string' && /^cag_integ001_[A-Za-z0-9]{32,}$/.test(raw)).toBe(true);
+    expect(typeof hash === 'string' && /^[0-9a-f]{64}$/.test(hash)).toBe(true);
+    if (raw === undefined || hash === undefined) throw new Error('generator output was incomplete');
+
+    const generated = record({ keyId: 'integ001', hash });
+    await expect(
+      authenticate(raw, (keyId) => (keyId === generated.keyId ? generated : undefined)),
+    ).resolves.toMatchObject({ ok: true, keyId: 'integ001' });
+  });
+
   it('accepts a valid key and returns its principal and scopes', async () => {
     const result = await authenticate(RAW, lookup(record()));
     expect(result.ok).toBe(true);

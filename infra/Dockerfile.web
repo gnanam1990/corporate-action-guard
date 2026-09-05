@@ -15,6 +15,11 @@ RUN pnpm install --frozen-lockfile --filter @cag/web... --ignore-scripts
 FROM deps AS build
 WORKDIR /app
 COPY apps/web/ apps/web/
+# The verified public deployment artifact is compiled into the server bundle. It contains
+# addresses and block provenance only, never a key. Copying it explicitly prevents the
+# production image from silently rendering "nothing is deployed" because monorepo files
+# outside apps/web were absent from the build context stage.
+COPY contracts/deployments/xlayer-testnet.json contracts/deployments/xlayer-testnet.json
 
 # The ONLY variable the browser bundle may contain. Anything else with this prefix is
 # rejected by packages/config at startup, and the bundle is scanned after the build.

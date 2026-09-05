@@ -1,8 +1,9 @@
 import Link from 'next/link';
-import { AppShell, type SourceHealth } from '@/components/app-shell';
+import { AppShell } from '@/components/app-shell';
 import { EmptyState, ErrorState, InlineAlert } from '@/components/primitives';
 import { ReasonCode, StatusBadge, type StatusTone } from '@/components/status';
 import { api, type Incident } from '@/lib/api';
+import { shellSources } from '@/lib/source-health';
 
 /**
  * Incidents.
@@ -41,9 +42,7 @@ export default async function IncidentsPage({
     api.sourceHealth(),
   ]);
 
-  const sources: readonly SourceHealth[] | undefined = health.ok
-    ? health.data.sources.map((s) => ({ name: s.sourceKind, healthy: s.healthy, detail: s.detail }))
-    : undefined;
+  const sources = shellSources(health);
 
   return (
     <AppShell

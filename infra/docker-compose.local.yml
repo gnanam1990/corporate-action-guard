@@ -1,0 +1,12 @@
+# Local testnet-demo override for docker-compose.full.yml.
+# Production remains fail-closed on AWS KMS; this file explicitly enables the isolated
+# local receipt signer created by `pnpm testnet:init`.
+services:
+  api:
+    environment:
+      NODE_ENV: development
+  worker:
+    environment:
+      NODE_ENV: development
+      WORKER_MAX_ASSETS: ${WORKER_MAX_ASSETS:-8}
+      WORKER_POLL_INTERVAL_MS: ${WORKER_POLL_INTERVAL_MS:-15000}

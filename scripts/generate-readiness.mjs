@@ -69,11 +69,9 @@ rather than quietly skipped.
 
 | Item | Blocker | Effect |
 | --- | --- | --- |
-| Current X Layer testnet deployment | Requires authorization plus a funded chain-1952 broadcaster key | The checked-in artifact is implementation v1; the safety-fixed adapter is v2 and deliberately rejects that obsolete artifact |
-| Current testnet failure-proof transactions | Depends on a verified v2 deployment | Existing scenario B-H transaction evidence remains historical v1 evidence and is not proof of the changed contracts |
-| Preflight Lab execution (15) | Depends on a verified v2 deployment and same-chain fixture evidence | The UI refuses to call an obsolete or missing adapter |
-| End-to-end proof package (22) | Depends on the v2 deployment above | The historical v1 package must be regenerated against v2 |
 | Deployed environment URLs | No hosting target configured | No live URL may be claimed |
+| Production signer and operations | No production AWS KMS/IAM, hosted monitoring, alert delivery, retention, or operating history | Testnet proof is application evidence, not a production-readiness claim |
+| Independent security audit | No external reviewer has audited the service or contracts | The repository's internal review cannot be called an audit |
 | Verified production xStocks scheduling ABI | The explorer serves no verified ABI without an API key, and no corporate action occurred in the observable log window | Read selectors are confirmed and implemented. The three multiplier **event** signatures are declared \`UNSUPPORTED_CAPABILITY\` rather than invented. Costs the safety path nothing: the verified reads give schedule state directly |
 | ESLint on TypeScript 7 | \`typescript-eslint@8\` refuses to load against the TypeScript 7 API | TypeScript pinned to 6.0.3 so lint can run |
 
@@ -85,12 +83,12 @@ rather than quietly skipped.
 | Live X Layer mainnet smoke read | 2026-09-03 — 11 live read-only tests pass against chain 196 |
 | Live monitoring pipeline | 2026-09-04 — worker discovered 726 assets over 8 pages, observed mainnet at block 69713901, and the console and CLI rendered that evidence. Chain binding intentionally prevents this mainnet evidence from authorizing a testnet receipt |
 | Historical v1 testnet proof | 2026-09-04 — 8/8 scenarios recorded with real chain-1952 transaction hashes. Superseded by implementation v2 and retained only as historical evidence |
+| Current v2 testnet proof | 2026-09-05 — implementation v2 deployed at block 40163577; 8/8 adversarial scenarios passed and authenticated API-to-vault execution succeeded |
 
 ## Hackathon eligibility uncertainty
 
-- The OKX Dev Day 2026 build window is stated as 17–25 September 2026. The exact submission
-  clock time and timezone were not published when researched and must be verified before
-  scheduling final work.
+- The OKX Dev Day 2026 build window is stated as 17–25 September 2026, with project
+  submission listed for 25 September. The application deadline is 11 September at 23:59 UTC.
 - Whether pre-window implementation is permitted is **UNKNOWN**. This repository is being
   built before 17 September 2026; if OKX requires all implementation to occur inside the
   window, this work counts as preparation only and the submission must say so. Every commit

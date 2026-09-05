@@ -2,9 +2,9 @@
 /**
  * Execute the failure proofs against the deployed testnet contracts.
  *
- * These are the scenarios `docs/final-audit.md` currently records as NOT PROVEN, because
- * they cannot be demonstrated without a real chain. Each one submits a REAL transaction to
- * X Layer testnet and records the outcome with its transaction hash and block.
+ * Each scenario submits a REAL transaction or simulated call to X Layer testnet and records
+ * the outcome with its transaction hash and block. Regenerating the artifact is how a new
+ * deployment earns its evidence; an old proof is never inherited.
  *
  * A scenario that is expected to revert must actually revert. A scenario that reverts for
  * the WRONG reason is a failure, not a pass — so each expected failure names the custom

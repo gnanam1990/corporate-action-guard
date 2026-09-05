@@ -52,6 +52,7 @@ pnpm verify
 | `pnpm arch:check`                              | Enforces the layer dependency rule              |
 | `pnpm build:contracts` / `pnpm test:contracts` | Foundry build and test                          |
 | `pnpm infra:up` / `pnpm infra:down`            | PostgreSQL lifecycle                            |
+| `pnpm stack:up` / `pnpm stack:down`            | Full local testnet-demo stack                   |
 
 ## Architecture dependency rule
 
@@ -85,7 +86,13 @@ TypeScript is pinned to **6.0.3**, not the latest 7.0.x. `typescript-eslint@8` r
 load against the TypeScript 7 API, so lint is impossible on 7.0. Revisit when
 typescript-eslint ships TS 7 support (typescript-eslint#10940).
 
-## What is not runnable yet
+## Full testnet demo
 
-See `docs/build-readiness.md`. At the foundation stage the API and worker expose process
-and database reachability only, and the web app renders no product data.
+After `pnpm testnet:init` and the one-time faucet/deployment steps in
+`docs/runbooks/testnet-deployment.md`, `pnpm stack:up` starts the API, worker, and web console
+with the correct Docker-internal API route and local testnet signer. Refresh signed fixture
+intent with `pnpm fixture:evidence:publish`, then run `pnpm demo:testnet` for the complete
+authenticated API-to-vault proof.
+
+Production KMS/IAM, hosted monitoring and retention, and a public URL are intentionally not
+represented by this local profile. See `docs/build-readiness.md` for those remaining gates.

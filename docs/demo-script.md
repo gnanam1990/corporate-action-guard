@@ -61,13 +61,13 @@ Four, in sequence, each with its reason code visible:
 
 ## 2:35 — 3:20 · On-chain rejection
 
-> **NOT CURRENTLY RECORDABLE.** `docs/evidence/release-candidate.md` contains real v1
-> transactions, but the safety-fixed contracts are implementation v2. Redeploy and rerun
-> `pnpm testnet:prove` before recording this segment.
-
-With a current v2 deployment: a valid receipt succeeds once, the replay reverts with
+Use the current v2 deployment and `docs/evidence/release-candidate.md`: a valid receipt succeeds once, the replay reverts with
 `ReceiptAlreadyConsumed`, and a scheduled corporate action kills an outstanding receipt with
 `MultiplierNonceMismatch` — each with an explorer link.
+
+Then show `docs/evidence/end-to-end-preflight.md`: authenticated preflight returned ALLOW
+from fresh same-chain evidence, and that exact signed receipt executed through the SDK,
+adapter, and protected vault in block `40164673`.
 
 ## 3:20 — 3:50 · Truthfulness under failure
 
@@ -91,6 +91,6 @@ Do not skip this. It is the most credible thing in the demo.
 ## What must never be said
 
 - "Audited." Nobody has audited this.
-- "Production ready." The self-audit verdict is BLOCKED.
+- "Production ready." Production KMS, hosted operations, and an independent audit are absent.
 - "Protects X Layer." It protects integrations that opt in.
 - Any traction, user, or partnership claim.

@@ -12,7 +12,9 @@ if (profile === undefined) {
   throw new Error('usage: node scripts/generate-api-key.mjs integrator|operator|fixture');
 }
 
-const raw = `cag_${profile.keyId}_${randomBytes(24).toString('base64url')}`;
+// The authenticator deliberately accepts an alphanumeric secret alphabet. Hex stays
+// inside that contract; base64url may emit '-' or '_' and would create unusable keys.
+const raw = `cag_${profile.keyId}_${randomBytes(24).toString('hex')}`;
 const hash = createHash('sha256').update(raw, 'utf8').digest('hex');
 process.stdout.write(
   [

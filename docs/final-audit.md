@@ -1,21 +1,23 @@
 # Internal release audit
 
-**Review basis:** working tree based on `1d265d25c0e4ee7e6dbad7f37b89842fbb7d358b`
-**Date:** 2026-09-04
+**Review basis:** implementation v2 deployed from source equivalent to `2287207e3b02f697bd5356b72d3ad2d8e8a165bd`, plus the current application-readiness changes
+**Date:** 2026-09-05
 **Reviewer:** implementing team. This is **not** an independent security audit.
 
 ## Verdict
 
-## **BLOCKED for deployment; locally verified**
+## **APPLICATION-READY PROTOTYPE; NOT PRODUCTION-READY**
 
-The core fail-closed design is implemented and passes the repository's deterministic
-checks. The current contracts are implementation v2, however, while the checked-in X Layer
-testnet artifact and release-candidate transactions are implementation v1. The UI, status
-check, deployment recorder, and proof runner deliberately reject that obsolete artifact.
+The core fail-closed design is implemented, passes the repository's deterministic checks,
+and is deployed as implementation v2 on X Layer testnet. Eight adversarial scenarios passed
+against the real chain, and a separate proof traversed authenticated preflight, fresh signed
+same-chain evidence, EIP-712 issuance, SDK encoding, adapter verification, and the protected
+vault.
 
-Release readiness remains blocked until an explicitly authorized, funded v2 testnet
-deployment is followed by a fresh proof run. Production readiness also requires an
-independent audit, a deployed monitoring/retention environment, and operating history.
+That is enough for a truthful hackathon application and live testnet demo. Production
+readiness remains blocked on production AWS KMS/IAM, hosted monitoring/retention and alert
+delivery, operating history, verified production scheduling semantics, and an independent
+security audit.
 
 ## Current evidence
 
@@ -30,38 +32,36 @@ independent audit, a deployed monitoring/retention environment, and operating hi
 | Adapter pause cannot trap an account's existing vault balance                                                     | **PROVEN locally**      | Direct owner-balance withdrawal regression in Foundry                                                    |
 | Worker lease loss prevents a stale worker from committing                                                         | **PROVEN locally**      | Fencing assertion plus renewal/takeover integration tests                                                |
 | Worker observations drive reconciliation, incidents, and recovery states                                          | **PROVEN locally**      | Reconciler and projection regressions; worker composition is wired                                       |
-| The web app can encode and submit the exact ALLOW receipt                                                         | **PROVEN locally**      | Production TypeScript build and SDK calldata test; execution stays disabled for an obsolete deployment   |
-| The current v2 adapter works on X Layer testnet                                                                   | **NOT PROVEN**          | No v2 deployment or v2 transaction evidence exists                                                       |
+| The web app can encode and submit the exact ALLOW receipt                                                         | **PROVEN**              | Production TypeScript build, SDK calldata test, embedded v2 artifact, and API-to-vault execution proof   |
+| The current v2 adapter works on X Layer testnet                                                                   | **PROVEN**              | Deployment block 40163577 and 8/8 current scenario evidence in `docs/evidence/release-candidate.md`      |
 | Live chain-196 evidence authorizes testnet execution                                                              | **INTENTIONALLY FALSE** | Evidence-chain binding returns `EVIDENCE_CHAIN_MISMATCH`; mainnet is monitoring-only                     |
 | Receipt consumption and reorg recovery update projections from finalized adapter logs                             | **PROVEN locally**      | Database-backed index, rewind, compensation, and full-rebuild regression                                 |
 | Production mode keeps a raw receipt key out of the process                                                        | **PROVEN locally**      | Production config rejects local keys; AWS KMS DER recovery and active public-key/address readiness tests |
 | A database backup can be parsed and restored into a disposable database                                           | **PROVEN locally**      | Checksummed custom archive and schema/journal restore drill; repeated in CI                              |
 | Signed chain-1952 intent is independently compared with finalized chain state                                     | **PROVEN locally**      | Dedicated scope, EIP-191 verification, append-only source time, match/mismatch/partial worker tests      |
+| An authenticated API ALLOW executes the protected operation on X Layer testnet                                    | **PROVEN**              | `docs/evidence/end-to-end-preflight.md`, transaction mined successfully in block 40164673                |
 | The system is production ready or externally audited                                                              | **NOT PROVEN**          | No external audit, public deployment, deployed alerting/retention, or operating history                  |
 
-## Historical evidence boundary
+## Evidence boundary
 
-`docs/evidence/release-candidate.md` records real implementation-v1 chain-1952
-transactions for eight scenarios. Those hashes remain authentic historical evidence, but
-they do not prove the changed v2 contracts. They must not be presented as current release
-evidence.
+`docs/evidence/release-candidate.md` is current implementation-v2 chain-1952 evidence.
+`docs/evidence/end-to-end-preflight.md` covers the off-chain-to-on-chain happy path. Both use
+a labelled testnet fixture and do not establish production xStocks scheduling compatibility.
 
 ## Residual risks and missing work
 
-1. Deploy implementation v2 to X Layer testnet and regenerate all on-chain failure proofs.
-2. Run the signed same-chain fixture intent publisher and worker against that deployment;
-   live mainnet evidence must remain unable to cross-authorize.
-3. Provision the documented AWS KMS key/IAM policy, authorize its derived address on the
+1. Provision the documented AWS KMS key/IAM policy, authorize its derived address on the
    adapter, and exercise the two-step rotation procedure.
-4. Deploy WAL/object-store retention, the supplied Prometheus alerts, and a public service;
+2. Deploy WAL/object-store retention, the supplied Prometheus alerts, and a public service;
    schedule recurring restore drills rather than relying only on CI.
-5. Obtain an independent smart-contract and service security audit.
+3. Verify production xStocks scheduling semantics when an authoritative interface is
+   published; do not infer it from the testnet fixture.
+4. Obtain an independent smart-contract and service security audit.
 
 ## Claims that remain forbidden
 
 - “Audited” or “production ready.”
-- “The current version is deployed” until the artifact says implementation v2 and the
-  proof runner succeeds against it.
+- “The current version is deployed to production.” The current deployment is testnet only.
 - “Protects X Layer.” It protects only integrations that route through the adapter; direct
   token transfers and the explicitly documented vault escape path bypass guarded entry.
 - “Production xStocks scheduling compatibility.” Only the read surface was verified.

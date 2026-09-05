@@ -7,6 +7,7 @@ import { ErrorState, InlineAlert } from '@/components/primitives';
 import { EvidenceAge, outcomeTone, ReasonCode, StatusBadge } from '@/components/status';
 import { ComparisonMatrix, EvidenceTimeline } from '@/components/timeline';
 import { api, formatMultiplier, lifecycleTone, type Asset } from '@/lib/api';
+import { shellSources } from '@/lib/source-health';
 
 /**
  * Asset detail.
@@ -32,15 +33,21 @@ export default async function AssetDetailPage({
   const { upToEventId } = await searchParams;
 
   // Fetched together, so the header and the timeline describe the same moment.
-  const [result, timeline] = await Promise.all([
+  const [result, timeline, health] = await Promise.all([
     api.asset(assetId),
     api.timeline(assetId, upToEventId),
+    api.sourceHealth(),
   ]);
+  const sources = shellSources(health);
 
   if (!result.ok && result.reason === 'NOT_FOUND') notFound();
 
   return (
-    <AppShell environmentLabel="LIVE X LAYER MAINNET READS · TESTNET ENFORCEMENT" currentPath="/">
+    <AppShell
+      environmentLabel="LIVE X LAYER MAINNET READS · TESTNET ENFORCEMENT"
+      currentPath="/"
+      {...(sources === undefined ? {} : { sources })}
+    >
       {!result.ok ? (
         <ErrorState
           title="Asset evidence unavailable"

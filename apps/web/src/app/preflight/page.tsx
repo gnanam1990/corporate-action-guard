@@ -1,7 +1,9 @@
 import { AppShell } from '@/components/app-shell';
 import { PreflightForm } from '@/components/preflight-form';
 import { InlineAlert } from '@/components/primitives';
+import { api } from '@/lib/api';
 import { readDeployment } from '@/lib/deployment';
+import { shellSources } from '@/lib/source-health';
 
 /**
  * Preflight Lab.
@@ -51,14 +53,16 @@ const FAILURE_PROOFS = [
   },
 ];
 
-export default function PreflightPage() {
+export default async function PreflightPage() {
   const deployment = readDeployment();
+  const sources = shellSources(await api.sourceHealth());
   const apiBaseUrl = process.env['NEXT_PUBLIC_API_BASE_URL'] ?? 'http://localhost:4000';
 
   return (
     <AppShell
       environmentLabel="LIVE X LAYER MAINNET READS · TESTNET ENFORCEMENT"
       currentPath="/preflight"
+      {...(sources === undefined ? {} : { sources })}
     >
       <header className="page-header">
         <h1 className="page-title">Preflight Lab</h1>

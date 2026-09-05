@@ -1,10 +1,9 @@
 # Runbook — testnet deployment and failure proofs
 
-This is the main external step required to change the audit verdict. Implementation v1 ran
-on a real chain, but the current safety-fixed contracts are implementation v2 and have not
-been deployed or proven there.
+Implementation v2 is deployed and proven on X Layer testnet. This runbook makes that proof
+reproducible with isolated testnet-only identities.
 
-Three commands, one of which needs a human.
+Four commands, one of which needs a human.
 
 ## 0. What you are creating
 
@@ -19,7 +18,18 @@ fails if they are ever the same key.
 
 Never reuse these keys anywhere. Never fund them with anything real.
 
-## 1. Check what is missing
+## 1. Create isolated proof identities
+
+```bash
+pnpm testnet:init
+```
+
+This creates or updates the gitignored `.env` with mode `600`. It generates separate
+deployer and receipt-signer identities plus fixture-admin and integrator API credential
+pairs, preserves valid existing values, rotates malformed generated values, and never prints
+secret material. It is safe to run again.
+
+## 2. Check what is missing
 
 ```bash
 pnpm testnet:status
@@ -39,7 +49,7 @@ It tells you exactly which of the four preconditions is missing, because "it did
 useless when a funded deployer, a reachable RPC, the right chain, and an artifact all have
 to line up.
 
-## 2. Fund the deployer — the only manual step
+## 3. Fund the deployer — the only manual step
 
 Paste the deployer address from step 1 into the X Layer testnet faucet:
 
@@ -50,7 +60,7 @@ faucet drip is far more than enough.
 
 Re-run `pnpm testnet:status` until `deployer funded` reports `ok`.
 
-## 3. Deploy
+## 4. Deploy
 
 ```bash
 pnpm testnet:deploy
@@ -69,7 +79,7 @@ its own guards independently:
 Addresses are then copied into `.env` **from the artifact**, never typed by hand — a typo in
 a contract address is a silent, total failure.
 
-## 4. Prove the failures
+## 5. Prove the failures
 
 ```bash
 pnpm testnet:prove
@@ -99,10 +109,16 @@ it.
 Evidence is written to `docs/evidence/release-candidate.md` with transaction hashes and
 explorer links.
 
-## 5. Prove independent same-chain evidence
+## 6. Prove independent same-chain evidence
 
-Start the migrated API and worker with the deployed addresses, provision the dedicated
-`FIXTURE_API_KEY_HASH`, and publish the administrator's intended fixture state with:
+Commit a future fixture schedule and record the administrator's intended values locally:
+
+```bash
+pnpm fixture:intent:prepare
+```
+
+Then start the migrated API and worker with the deployed addresses, provision the dedicated
+`FIXTURE_API_KEY_HASH`, and publish the signed intended fixture state with:
 
 ```bash
 pnpm fixture:evidence:publish
@@ -112,19 +128,31 @@ Wait for the worker to observe a confirmation-safe block and verify the asset pr
 reports `sourceAgreement=MATCH`, `canonicality=PASS`, and fresh API/chain timestamps. The
 publisher values are signed intent; do not auto-copy the worker's RPC result into them.
 
-## 6. Update the audit
+## 7. Update the audit
 
-Once the proofs pass, edit `docs/modules.json` to move modules 15 and 22 from `PARTIAL` to
-`IMPLEMENTED`, then:
+Once the proofs pass, update `docs/modules.json` with the current evidence, then:
 
 ```bash
 pnpm docs:readiness
 ```
 
-`docs/final-audit.md` should move only the v2 on-chain rows from NOT PROVEN to PROVEN,
-citing the regenerated evidence file and signed fixture event ids. The verdict can then be
-reconsidered; production KMS provisioning, hosted operations, and the independent audit
-remain separate gates.
+`docs/final-audit.md` may move only the demonstrated testnet rows to PROVEN, citing the
+regenerated evidence file and signed fixture event ids. Production KMS provisioning, hosted
+operations, and the independent audit remain separate gates.
+
+## 8. Prove the whole signed path
+
+With the API and worker running from the same `.env`, refresh fixture evidence and execute:
+
+```bash
+pnpm fixture:evidence:publish
+pnpm demo:testnet
+```
+
+The second command authenticates with the local integrator credential, requires an ALLOW
+from fresh evidence, encodes the returned receipt with the SDK, and broadcasts the exact
+zero-value adapter call on chain 1952. Public evidence is written to
+`docs/evidence/end-to-end-preflight.md`; secrets and the receipt signature are omitted.
 
 ## If something goes wrong
 

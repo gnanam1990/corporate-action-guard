@@ -1,6 +1,6 @@
 {
   "$comment": "Single source of truth for module status. docs/build-readiness.md is GENERATED from this file by scripts/generate-readiness.mjs, and CI fails if the two disagree. A hand-maintained status table drifts silently \u2014 this one did, for eleven commits, because a formatter realigned its columns and every subsequent string edit no-opped without complaint.",
-  "recordedAt": "2026-09-04",
+  "recordedAt": "2026-09-05",
   "modules": [
     {
       "id": "00",
@@ -60,13 +60,13 @@
       "id": "09",
       "name": "Solidity TESTNET FIXTURE",
       "status": "IMPLEMENTED",
-      "note": "Asset, wrapper, legacy wrapper; 21 tests including fuzz on nonce monotonicity. The current v2 implementation is not deployed"
+      "note": "Asset, wrapper, legacy wrapper; 21 tests including fuzz on nonce monotonicity; implementation v2 deployed and verified on X Layer testnet"
     },
     {
       "id": "10",
       "name": "ActionGuardAdapter and ProtectedVault",
       "status": "IMPLEMENTED",
-      "note": "35 adversarial tests; digest proven identical to TypeScript. The current v2 adapter and pause-safe vault are not deployed"
+      "note": "35 adversarial tests; digest proven identical to TypeScript; v2 adapter and pause-safe vault deployed and exercised on X Layer testnet"
     },
     {
       "id": "11",
@@ -95,8 +95,8 @@
     {
       "id": "15",
       "name": "Preflight Lab and testnet execution",
-      "status": "PARTIAL",
-      "note": "Preflight Lab now builds and submits the exact adapter transaction with wallet status feedback; it is intentionally disabled until a compatible v2 deployment exists"
+      "status": "IMPLEMENTED",
+      "note": "Preflight Lab builds the exact adapter transaction with wallet status feedback; compatible v2 deployment is embedded and end-to-end execution is proven"
     },
     {
       "id": "16",
@@ -137,8 +137,8 @@
     {
       "id": "22",
       "name": "End-to-end proof and submission package",
-      "status": "PARTIAL",
-      "note": "Historical v1 release evidence has real transaction hashes for 8/8 scenarios; the changed v2 contracts require a fresh deployment and proof run"
+      "status": "IMPLEMENTED",
+      "note": "Current v2 release evidence records 8/8 adversarial scenarios plus authenticated API-to-vault execution with public testnet transaction hashes"
     },
     {
       "id": "23",

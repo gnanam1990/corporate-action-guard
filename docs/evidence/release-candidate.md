@@ -2,17 +2,12 @@
 
 # Release candidate evidence
 
-> **Historical evidence only — implementation v1.** The current adapter declares
-> `IMPLEMENTATION_VERSION = 2` after fail-closed post-window and withdrawal-availability
-> fixes. These transaction hashes remain valid evidence of what v1 did, but they are not a
-> release proof for v2. The deployment loader and proof scripts reject the v1 artifact.
-
 **Chain:** X Layer testnet (1952)
-**Generated:** 2026-09-04T04:38:21.012Z
-**Adapter:** `0x5419941472c4a42FF0D68694c2A88F1b4716C337`
-**Vault:** `0x2Dcb9Fb8044069B4A0eECf3CEaB7db9792Cf1f02`
-**Fixture asset:** `0x16626cD009e3917C90Aa7c3d3c30A67aF7B508E1`
-**Deployed at block:** 40037372
+**Generated:** 2026-09-05T15:34:40.102Z
+**Adapter:** `0xdF956baCC769d11fEb9eee9ee026b620E7dF4533`
+**Vault:** `0xFAAbCA06d0c91A025D11FFFb7719E32532d8f651`
+**Fixture asset:** `0x2347e05FBBd4A2D8ee801FBb67fE745BC2A2ea82`
+**Deployed at block:** 40163577
 
 Every row below is a **real transaction or simulated call against a real chain**. A
 scenario expected to revert must revert _for the named reason_ — reverting for a different
@@ -20,14 +15,14 @@ reason is recorded as a failure, not a pass.
 
 | #   | Scenario                                                        | Expectation                          | Outcome  | Evidence                                                                                                                                                                                         |
 | --- | --------------------------------------------------------------- | ------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| B   | A valid receipt is accepted exactly once                        | transaction succeeds                 | **PASS** | executed in block 40037843; replay reverted with ReceiptAlreadyConsumed · [tx](https://www.oklink.com/x-layer-test/tx/0x9b5d58dff1df3070d2c75e688fd44535718a134a0030f7d9728ba5aa15fa2433)        |
+| B   | A valid receipt is accepted exactly once                        | transaction succeeds                 | **PASS** | executed in block 40163625; replay reverted with ReceiptAlreadyConsumed · [tx](https://www.oklink.com/x-layer-test/tx/0x498c079d4c634ef81033f6d14225847e9c1ec23ee930b9b3745bb6cc4dab28d5)        |
 | C1  | Recipient changed after issuance                                | reverts                              | **PASS** | reverted with OperationDigestMismatch                                                                                                                                                            |
 | C2  | Amount changed after issuance                                   | reverts                              | **PASS** | reverted with OperationDigestMismatch                                                                                                                                                            |
 | D   | Receipt expired                                                 | reverts with ReceiptExpired          | **PASS** | reverted with ReceiptExpired                                                                                                                                                                     |
-| E   | A scheduled corporate action invalidates an outstanding receipt | reverts with MultiplierNonceMismatch | **PASS** | scheduled in block 40037853; old receipt reverted with MultiplierNonceMismatch · [tx](https://www.oklink.com/x-layer-test/tx/0x72c1b440cf0d94e402034b8bb23324aceba406db177ca13e2d0154c04527ff64) |
+| E   | A scheduled corporate action invalidates an outstanding receipt | reverts with MultiplierNonceMismatch | **PASS** | scheduled in block 40163632; old receipt reverted with MultiplierNonceMismatch · [tx](https://www.oklink.com/x-layer-test/tx/0xaf3241dfa78ab946ab93a3f3edb625d66858926196745d18037cf27ee8a1662b) |
 | F   | Inside the guard window, even a fresh receipt is refused        | reverts with InsideGuardWindow       | **PASS** | reverted with InsideGuardWindow                                                                                                                                                                  |
 | G   | An unauthorized signer is refused                               | reverts with UnauthorizedSigner      | **PASS** | reverted with UnauthorizedSigner                                                                                                                                                                 |
-| H   | A direct ERC-20 transfer bypasses the guard entirely            | succeeds — the documented boundary   | **PASS** | transferred without touching the adapter, block 40037864 · [tx](https://www.oklink.com/x-layer-test/tx/0x583446db1a0b1a133a96ff271e9e699d2b2afd2c463aefa31bd77b93f72f6249)                       |
+| H   | A direct ERC-20 transfer bypasses the guard entirely            | succeeds — the documented boundary   | **PASS** | transferred without touching the adapter, block 40163644 · [tx](https://www.oklink.com/x-layer-test/tx/0x206a319637406dc3e3bdc426cc1ca23581833d253e3d854fed6f4edde0ed8764)                       |
 
 ## What this does not prove
 

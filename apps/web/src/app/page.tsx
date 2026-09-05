@@ -1,4 +1,4 @@
-import { AppShell, type SourceHealth } from '@/components/app-shell';
+import { AppShell } from '@/components/app-shell';
 import { AssetTable } from '@/components/asset-table';
 import { EmptyState, ErrorState, MetricCard } from '@/components/primitives';
 import { StatusBadge } from '@/components/status';
@@ -9,6 +9,7 @@ import {
   type Coverage,
   type SourceHealthResponse,
 } from '@/lib/api';
+import { shellSources } from '@/lib/source-health';
 
 /**
  * Coverage dashboard.
@@ -55,13 +56,7 @@ export default async function CoveragePage({
     }),
   ]);
 
-  const sources: readonly SourceHealth[] | undefined = health.ok
-    ? health.data.sources.map((s) => ({
-        name: s.sourceKind,
-        healthy: s.healthy,
-        detail: s.detail,
-      }))
-    : undefined;
+  const sources = shellSources(health);
 
   return (
     <AppShell

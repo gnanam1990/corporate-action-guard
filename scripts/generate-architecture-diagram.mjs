@@ -91,7 +91,7 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560" width
   </g>
 
   <text x="300" y="492" class="s">Mainnet is never written or cross-authorized to testnet.</text>
-  <text x="300" y="506" class="s">Current implementation v2 still requires redeployment.</text>
+  <text x="300" y="506" class="s">Implementation v2 is proven on X Layer testnet.</text>
 </svg>
 `;
 

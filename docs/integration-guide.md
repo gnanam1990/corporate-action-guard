@@ -170,9 +170,10 @@ of the production xStocks token, so the same reader and adapter work against bot
 **not** prove that production scheduling behaves identically, because that behaviour is not
 published in a form this build could verify.
 
-The checked-in deployment is implementation v1 and is intentionally refused by current
-v2 clients. Do not submit transactions until `pnpm testnet:deploy` and
-`pnpm testnet:prove` have produced a verified v2 artifact and fresh evidence.
+The checked-in deployment is implementation v2 and has current testnet evidence in
+`docs/evidence/release-candidate.md`. `docs/evidence/end-to-end-preflight.md` also records an
+authenticated API receipt executed through the adapter and protected vault. Treat these as
+testnet fixture proofs, not production scheduling compatibility.
 
 ## Removal and rollback
 

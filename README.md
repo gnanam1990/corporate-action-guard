@@ -1,18 +1,18 @@
 # Corporate Action Guard
 
-**Status: current implementation v2 is tested locally but not deployed. Not audited.**
+**Status: application-ready prototype; implementation v2 is deployed and proven on X Layer
+testnet. Not production-ready or externally audited.**
 
 The live monitoring path runs against the production xStocks API and read-only X Layer
-mainnet. A prior implementation-v1 adapter also passed **8/8 testnet scenarios**, but the
-safety fixes in this working tree incremented the deployment compatibility version to v2.
-The checked-in v1 addresses and transaction evidence are historical; the UI and proof
-scripts refuse to treat them as current.
+mainnet. The current implementation-v2 adapter passed **8/8 adversarial scenarios** on X
+Layer testnet. A separate end-to-end proof also exercised authenticated preflight, fresh
+same-chain evidence, signed receipt issuance, SDK encoding, adapter verification, and the
+protected vault in one path.
 
-The current release-readiness verdict is **BLOCKED pending a v2 testnet deployment and a
-fresh proof run**. Production startup now requires AWS KMS custody and the repository
-exercises a verified backup/restore drill, but it still cannot be called audited or
-production-ready: production scheduling semantics are unpublished, monitoring/retention
-are not deployed, and no external party has reviewed it.
+The testnet prototype is ready to demonstrate and apply with. Production startup requires
+AWS KMS custody and the repository exercises a verified backup/restore drill, but it still
+cannot be called audited or production-ready: production scheduling semantics are
+unpublished, monitoring/retention are not deployed, and no external party has reviewed it.
 
 - [`docs/build-readiness.md`](docs/build-readiness.md) — module-by-module inventory
 - [`docs/final-audit.md`](docs/final-audit.md) — claim-to-evidence matrix, PROVEN vs NOT PROVEN
@@ -152,7 +152,7 @@ Every claim below is backed by a named, runnable check.
 | Direct ERC-20 transfers bypass the guard                     | Asserted as a **passing test**, not just documented                                        |
 
 ```text
-687 passing tests — 529 unit, 92 database-backed integration, 66 Solidity
+696 passing tests — 538 unit, 92 database-backed integration, 66 Solidity
 27/27 mutants killed on the safety predicate
 28 WCAG contrast pairs verified in CI
 ```
@@ -173,7 +173,7 @@ pnpm --filter @cag/web dev             # http://localhost:3000
 GUARD_API_URL=http://localhost:4000 node packages/sdk/dist/cli.js assets list
 ```
 
-### Historical v1 proof — X Layer testnet, chain 1952
+### Current v2 proof — X Layer testnet, chain 1952
 
 | Scenario                                                    | Result                                    |
 | ----------------------------------------------------------- | ----------------------------------------- |
@@ -186,12 +186,14 @@ GUARD_API_URL=http://localhost:4000 node packages/sdk/dist/cli.js assets list
 | Unauthorized signer                                         | `UnauthorizedSigner`                      |
 | Direct ERC-20 transfer                                      | **succeeds** — the documented bypass      |
 
-Historical v1 adapter `0x5419941472c4a42FF0D68694c2A88F1b4716C337`. Transaction hashes and explorer links
-remain in [`docs/evidence/release-candidate.md`](docs/evidence/release-candidate.md), clearly
-labelled as superseded. A v2 deployment and fresh proof are still required.
+Current v2 adapter `0xdF956baCC769d11fEb9eee9ee026b620E7dF4533`, deployed at block
+`40163577`. Transaction hashes and explorer links are in
+[`docs/evidence/release-candidate.md`](docs/evidence/release-candidate.md). The separately
+generated [`docs/evidence/end-to-end-preflight.md`](docs/evidence/end-to-end-preflight.md)
+binds a live API ALLOW to a successful protected-vault transaction.
 
-**Still not verified:** current-v2 on-chain execution, production xStocks scheduling
-compatibility, a deployed public console, and any external audit.
+**Still not verified:** production xStocks scheduling compatibility, production KMS/IAM,
+a deployed public console and operations stack, and any external audit.
 
 ## Licence
 

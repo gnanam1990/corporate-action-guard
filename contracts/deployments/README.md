@@ -1,40 +1,36 @@
 # Deployment artifacts
 
-Artifacts are written here only after post-broadcast bytecode verification. No artifact
-present means nothing has been deployed. Never hand-write one.
+Artifacts are written only after post-broadcast bytecode verification. No artifact means
+nothing has been deployed. Never hand-write one.
 
-## Source provenance of the live testnet deployment
+## Current X Layer testnet deployment
 
-The adapter at `0x5419941472c4a42FF0D68694c2A88F1b4716C337` (X Layer testnet, block
-40037372) was compiled from the source at commit `480900b`.
+Implementation v2 was compiled from contract source equivalent to commit
+`2287207e3b02f697bd5356b72d3ad2d8e8a165bd` and deployed on X Layer testnet (chain 1952) at
+block `40163577`.
 
-The source has been edited since — comments, and the removal of a declared-but-never-reverted
-`UnsupportedChain` error. Those edits change the trailing CBOR **metadata hash** embedded in
-the runtime bytecode, so a strict byte-for-byte comparison against the deployed address now
-reports a mismatch. **The executable bytecode is unchanged.**
+| Contract | Address |
+| --- | --- |
+| FixtureAsset | `0x2347e05FBBd4A2D8ee801FBb67fE745BC2A2ea82` |
+| FixtureWrapper | `0x3aa6f9def25083C312c88AC190Fa3EEA9Fdd857B` |
+| LegacyFixtureWrapper | `0x88a8a0Fb74193C78D733977ea413e44Acd154c3e` |
+| ActionGuardAdapter | `0xdF956baCC769d11fEb9eee9ee026b620E7dF4533` |
+| ProtectedVault | `0xFAAbCA06d0c91A025D11FFFb7719E32532d8f651` |
 
-That is a claim, so here is how to check it rather than believe it:
+The machine-readable source of truth is `xlayer-testnet.json`. Current 8/8 adversarial
+evidence is in `docs/evidence/release-candidate.md`; the authenticated API-to-vault proof is
+in `docs/evidence/end-to-end-preflight.md`.
 
-```sh
-set -a; . ./.env; set +a
-cast code 0x5419941472c4a42FF0D68694c2A88F1b4716C337 \
-  --rpc-url "${XLAYER_TESTNET_RPC_URL:-https://testrpc.xlayer.tech}" > /tmp/onchain.hex
-(cd contracts && forge build >/dev/null)
-node -e '
-const fs = require("fs");
-const on = fs.readFileSync("/tmp/onchain.hex", "utf8").trim().replace(/^0x/, "");
-const art = JSON.parse(fs.readFileSync("contracts/out/ActionGuardAdapter.sol/ActionGuardAdapter.json", "utf8"));
-const loc = art.deployedBytecode.object.replace(/^0x/, "");
-const strip = (h) => { const n = parseInt(h.slice(-4), 16); return h.slice(0, h.length - 4 - n * 2); };
-console.log("byte-for-byte identical  :", on === loc);
-console.log("identical minus metadata :", strip(on) === strip(loc));
-'
+## Historical v1 deployment
+
+The superseded v1 adapter at `0x5419941472c4a42FF0D68694c2A88F1b4716C337`
+(block `40037372`) remains historical evidence only. Current clients require implementation
+version 2 and must never use it as the active deployment.
+
+Reproduce the current deployment and evidence with:
+
+```bash
+pnpm testnet:status
+pnpm testnet:deploy
+pnpm testnet:prove
 ```
-
-Expected: `false` then `true`. The second line is the one that matters — it says every
-executed instruction is the same. It also demonstrates that the removed error really was
-dead: deleting it changed no executable byte.
-
-Anyone wanting a byte-exact match should redeploy from the current tree. Nothing in this
-repo depends on the existing address, and `pnpm testnet:deploy && pnpm testnet:prove`
-reproduces the whole evidence set against a fresh one.
