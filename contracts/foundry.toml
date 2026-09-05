@@ -24,7 +24,7 @@ runs = 512
 max_test_rejects = 100000
 # Gas snapshots include fuzz-test samples. Pin their generator so the committed baseline is
 # byte-for-byte reproducible across local and CI runs instead of drifting by a few gas.
-seed = "0x0000000000000000000000000000000000000000000000000000000000c0ffee"
+seed = "0x0000000000000000000000000000000000000000000000000000000000c0ffee" # secret-scan:allow — public deterministic test seed
 
 [profile.default.invariant]
 runs = 256
