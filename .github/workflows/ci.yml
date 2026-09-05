@@ -186,7 +186,10 @@ jobs:
           git diff --exit-code packages/receipts/vectors/
 
       - name: Gas snapshot
-        run: forge snapshot --check || echo "::warning::gas snapshot drifted; run 'forge snapshot' and commit"
+        # Fuzz tests still run above. Their mean/median gas aggregation differs slightly
+        # across runner platforms even with an identical seed, so the byte-stable snapshot
+        # covers deterministic tests only.
+        run: forge snapshot --check --no-match-test '^testFuzz_' || echo "::warning::gas snapshot drifted; run 'forge snapshot --no-match-test ^testFuzz_' and commit"
         working-directory: contracts
 
   containers:
