@@ -54,9 +54,14 @@ if (found.length > 0) {
   process.exit(1);
 }
 
-// And the positive assertion: the one variable it SHOULD have is present.
-if (!webBlock.includes('NEXT_PUBLIC_API_BASE_URL')) {
-  console.error('The web service is missing NEXT_PUBLIC_API_BASE_URL.');
+// Positive routing assertions prevent a future compose edit from sending SSR traffic back
+// to localhost inside the web container while retaining the browser-reachable URL.
+if (!/^ {6}API_INTERNAL_BASE_URL: http:\/\/api:4000$/m.test(webBlock)) {
+  console.error('The web service must route server-rendered API calls to http://api:4000.');
+  process.exit(1);
+}
+if (!/^ {6}NEXT_PUBLIC_API_BASE_URL: http:\/\/localhost:4000$/m.test(webBlock)) {
+  console.error('The web service must expose http://localhost:4000 to browser-side calls.');
   process.exit(1);
 }
 

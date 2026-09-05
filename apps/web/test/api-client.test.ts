@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { api, formatMultiplier, lifecycleTone, type LifecycleState } from '../src/lib/api';
+import {
+  api,
+  formatMultiplier,
+  lifecycleTone,
+  resolveApiBaseUrl,
+  type LifecycleState,
+} from '../src/lib/api';
 
 /**
  * The client returns a discriminated result rather than throwing.
@@ -12,6 +18,29 @@ import { api, formatMultiplier, lifecycleTone, type LifecycleState } from '../sr
 const mockFetch = (impl: () => Promise<Response>) => {
   vi.stubGlobal('fetch', impl as unknown as typeof fetch);
 };
+
+describe('API routing', () => {
+  it('uses Docker DNS for server-rendered requests when an internal URL is configured', () => {
+    expect(
+      resolveApiBaseUrl({
+        API_INTERNAL_BASE_URL: 'http://api:4000',
+        NEXT_PUBLIC_API_BASE_URL: 'http://localhost:4000',
+      }),
+    ).toBe('http://api:4000');
+  });
+
+  it('falls back to the browser-reachable URL for a host-run Next server', () => {
+    expect(resolveApiBaseUrl({ NEXT_PUBLIC_API_BASE_URL: 'http://localhost:4000/' })).toBe(
+      'http://localhost:4000',
+    );
+  });
+
+  it('treats blank values as unset and retains the local default', () => {
+    expect(resolveApiBaseUrl({ API_INTERNAL_BASE_URL: ' ', NEXT_PUBLIC_API_BASE_URL: '' })).toBe(
+      'http://localhost:4000',
+    );
+  });
+});
 
 describe('unreachable API', () => {
   it('reports UNAVAILABLE rather than throwing', async () => {

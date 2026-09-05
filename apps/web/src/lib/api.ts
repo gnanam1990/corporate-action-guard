@@ -130,8 +130,17 @@ export type ApiResult<T> =
       readonly detail: string;
     };
 
-/** Only NEXT_PUBLIC_API_BASE_URL is readable here. No server secret is reachable. */
-const BASE = process.env['NEXT_PUBLIC_API_BASE_URL'] ?? 'http://localhost:4000';
+/**
+ * Resolve the API over the container network during SSR, while retaining the public URL
+ * for a host-run Next server. Both values are routing configuration, never credentials.
+ */
+export function resolveApiBaseUrl(env: Readonly<Record<string, string | undefined>>): string {
+  for (const name of ['API_INTERNAL_BASE_URL', 'NEXT_PUBLIC_API_BASE_URL'] as const) {
+    const value = env[name]?.trim();
+    if (value) return value.replace(/\/+$/, '');
+  }
+  return 'http://localhost:4000';
+}
 
 async function request<T>(
   path: string,
@@ -139,7 +148,7 @@ async function request<T>(
 ): Promise<ApiResult<T>> {
   let response: Response;
   try {
-    response = await fetch(`${BASE}${path}`, {
+    response = await fetch(`${resolveApiBaseUrl(process.env)}${path}`, {
       headers: { accept: 'application/json' },
       // Evidence freshness is the product. A cached page would show an operator a state
       // that was true some minutes ago while presenting it as current.

@@ -1,7 +1,7 @@
 # Full local stack: database, API, worker, console.
 #
 # The compose file is where the credential boundary becomes concrete. Note which services
-# receive which secrets — the web container gets exactly one variable, and it is public.
+# receive which secrets — the web container gets only non-secret routing configuration.
 
 name: corporate-action-guard-full
 
@@ -122,9 +122,10 @@ services:
         NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
     environment:
       NODE_ENV: production
-      # EXACTLY ONE variable, and it is public by definition. No database URL, no signer
-      # key, no operator secret reaches this container — enforced by what is absent here
-      # rather than by a comment in the application.
+      # The server-rendered console uses Docker DNS; browser-side preflight calls use the
+      # host-published URL. Neither value is a credential. No database URL, signer key, or
+      # operator secret reaches this container — enforced mechanically below.
+      API_INTERNAL_BASE_URL: http://api:4000
       NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
     ports: ['3000:3000']
     depends_on:

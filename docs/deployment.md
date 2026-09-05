@@ -11,8 +11,10 @@ container is given_, not by discipline inside the application.
 | **worker** |      ✅      |        ✕        | ✅ (read only) |       ✕        |
 | **web**    |      ✕       |        ✕        |       ✕        |       ✅       |
 
-The web container receives **exactly one** variable and it is public by definition. That is
-asserted mechanically: `node scripts/check-compose-secrets.mjs` fails if any server secret
+The web container receives only two non-secret routing values: `API_INTERNAL_BASE_URL`
+routes server-rendered reads over Docker DNS, while `NEXT_PUBLIC_API_BASE_URL` gives the
+browser a host-reachable URL. That boundary is asserted mechanically:
+`node scripts/check-compose-secrets.mjs` fails if either route drifts or any server secret
 name appears in the `web:` service block, and it is verified against a planted leak.
 
 The worker holds the mainnet RPC because it reads chain state. It holds **no signing key**,
@@ -50,7 +52,8 @@ docker compose -f infra/docker-compose.full.yml up --build
 
 Brings up PostgreSQL, a one-shot migration job, the API (4000), the worker, and the console
 (3000). The API and worker start only after migrations succeed; the console waits for a
-healthy API.
+healthy API. Server-rendered console reads use `http://api:4000` inside the Compose network;
+browser-side requests continue to use `http://localhost:4000`.
 
 ## Migrations are a release step, not a startup step
 
