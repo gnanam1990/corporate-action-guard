@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { baseEnvSchema, BASE_SERVER_SECRET_KEYS } from './base-b20.js';
+
 /**
  * Environment contract for Corporate Action Guard.
  *
@@ -86,6 +88,10 @@ export const envSchema = z.object({
     .string()
     .regex(/^[A-Za-z0-9._-]{1,64}$/)
     .default('CAG-FIXTURE'),
+
+  // Base B20 (ADR 0005). Every field is optional and every feature flag defaults to false,
+  // so an X Layer deployment that upgrades for an unrelated reason starts unchanged.
+  ...baseEnvSchema.shape,
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -103,6 +109,7 @@ export const SERVER_SECRET_KEYS = [
   'RECEIPT_SIGNER_PRIVATE_KEY',
   'XLAYER_MAINNET_RPC_URL',
   'XLAYER_TESTNET_RPC_URL',
+  ...BASE_SERVER_SECRET_KEYS,
 ] as const satisfies readonly (keyof Env)[];
 
 /** The only variables allowed to reach the browser. */

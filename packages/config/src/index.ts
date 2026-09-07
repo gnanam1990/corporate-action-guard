@@ -13,3 +13,21 @@ export {
   loadEnv,
   resetEnvCacheForTests,
 } from './load.js';
+
+/* Base B20 — additive. Nothing above changes shape or behaviour. See ADR 0005. */
+export {
+  BASE_MAINNET_CHAIN_ID,
+  BASE_SEPOLIA_CHAIN_ID,
+  BASE_SERVER_SECRET_KEYS,
+  SEPOLIA_WRITE_CONDITIONS,
+  baseEnvSchema,
+  resolveB20Features,
+  resolveBaseMainnetRead,
+  resolveSepoliaWriteGate,
+  validateBaseEnv,
+  type B20FeatureState,
+  type BaseEnv,
+  type BaseMainnetReadConfig,
+  type SepoliaWriteCondition,
+  type SepoliaWriteGate,
+} from './base-b20.js';
