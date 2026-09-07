@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "kind": "b20-capability-matrix",
+  "observation": {
+    "chainId": 8453,
+    "rpcEndpointId": "mainnet.base.org",
+    "blockNumber": "50993686",
+    "blockHash": "0xabf162b62c2a00469cf7e84b20c28749f5eaa926d5e3281cf7571a2d9c52425b",
+    "blockTimestamp": "1788776719",
+    "confirmationsBehindHead": "200",
+    "observedAt": "2026-09-07T10:32:01.501Z"
+  },
+  "selectors": {
+    "multiplier": {
+      "surface": "BERYL",
+      "selector": "0x1b3ed722",
+      "signature": "multiplier()",
+      "outcome": "LIVE"
+    },
+    "toScaledBalance": {
+      "surface": "BERYL",
+      "selector": "0x04f04c99",
+      "signature": "toScaledBalance(uint256)",
+      "outcome": "LIVE"
+    },
+    "toRawBalance": {
+      "surface": "BERYL",
+      "selector": "0x0ca06c44",
+      "signature": "toRawBalance(uint256)",
+      "outcome": "LIVE"
+    },
+    "scaledBalanceOf": {
+      "surface": "BERYL",
+      "selector": "0x1da24f3e",
+      "signature": "scaledBalanceOf(address)",
+      "outcome": "LIVE"
+    },
+    "WAD_PRECISION": {
+      "surface": "BERYL",
+      "selector": "0x664808a8",
+      "signature": "WAD_PRECISION()",
+      "outcome": "LIVE"
+    },
+    "isAnnouncementIdUsed": {
+      "surface": "BERYL",
+      "selector": "0xc0da474e",
+      "signature": "isAnnouncementIdUsed(string)",
+      "outcome": "LIVE"
+    },
+    "contractURI": {
+      "surface": "BERYL",
+      "selector": "0xe8a3d485",
+      "signature": "contractURI()",
+      "outcome": "LIVE"
+    },
+    "supplyCap": {
+      "surface": "BERYL",
+      "selector": "0x8f770ad0",
+      "signature": "supplyCap()",
+      "outcome": "LIVE"
+    },
+    "isPaused": {
+      "surface": "BERYL",
+      "selector": "0xbc61e733",
+      "signature": "isPaused(uint8)",
+      "outcome": "LIVE"
+    },
+    "uiMultiplier": {
+      "surface": "COBALT_ERC8056",
+      "selector": "0xa60bf13d",
+      "signature": "uiMultiplier()",
+      "outcome": "NOT_DIALED"
+    },
+    "newUIMultiplier": {
+      "surface": "COBALT_ERC8056",
+      "selector": "0xdc767007",
+      "signature": "newUIMultiplier()",
+      "outcome": "NOT_DIALED"
+    },
+    "effectiveAt": {
+      "surface": "COBALT_ERC8056",
+      "selector": "0x97a4064f",
+      "signature": "effectiveAt()",
+      "outcome": "NOT_DIALED"
+    },
+    "toUIAmount": {
+      "surface": "COBALT_ERC8056",
+      "selector": "0x3248d4ff",
+      "signature": "toUIAmount(uint256)",
+      "outcome": "NOT_DIALED"
+    },
+    "balanceOfUI": {
+      "surface": "COBALT_ERC8056",
+      "selector": "0x437a9958",
+      "signature": "balanceOfUI(address)",
+      "outcome": "NOT_DIALED"
+    },
+    "totalSupplyUI": {
+      "surface": "COBALT_ERC8056",
+      "selector": "0x9bea6429",
+      "signature": "totalSupplyUI()",
+      "outcome": "NOT_DIALED"
+    },
+    "MAX_UI_MULTIPLIER": {
+      "surface": "COBALT_ERC8056",
+      "selector": "0x785c0cf0",
+      "signature": "MAX_UI_MULTIPLIER()",
+      "outcome": "NOT_DIALED"
+    },
+    "supportsInterface": {
+      "surface": "COBALT_ERC8056",
+      "selector": "0x01ffc9a7",
+      "signature": "supportsInterface(bytes4)",
+      "outcome": "NOT_DIALED"
+    }
+  },
+  "surfaces": {
+    "BERYL": "LIVE",
+    "COBALT_ERC8056": "NOT_ACTIVATED"
+  },
+  "notes": [
+    "A selector the hardfork has not dialed reverts with exactly the four bytes of the called selector.",
+    "NOT_ACTIVATED is an observation at the recorded block. It is never inferred from a date."
+  ]
+}

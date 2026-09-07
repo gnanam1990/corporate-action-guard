@@ -1,0 +1,198 @@
+{
+  "schemaVersion": 1,
+  "kind": "b20-token-feed-pairing",
+  "recordedAt": "2026-09-07T10:32:01.501Z",
+  "observationBlock": {
+    "chainId": 8453,
+    "rpcEndpointId": "mainnet.base.org",
+    "blockNumber": "50993686",
+    "blockHash": "0xabf162b62c2a00469cf7e84b20c28749f5eaa926d5e3281cf7571a2d9c52425b",
+    "blockTimestamp": "1788776719",
+    "confirmationsBehindHead": "200",
+    "observedAt": "2026-09-07T10:32:01.501Z"
+  },
+  "policy": {
+    "productionValuationRequires": "REVIEWED_VERIFIED",
+    "inferredUseIsLimitedTo": ["DISPLAY_POSITION"],
+    "rationale": "Symbol-stem matching is a ticker inference, and a ticker is not an identifier. It is recorded so an operator can review it, and it is refused for QUOTE, TRANSFER, COLLATERAL_VALUE, LIQUIDATION_CHECK, INDEX_REBALANCE, VAULT_DEPOSIT, VAULT_WITHDRAW and AGENT_ORDER until a human promotes it to REVIEWED_VERIFIED with named evidence."
+  },
+  "howToPromote": [
+    "Obtain an issuer- or Chainlink-published statement that names BOTH the Base token contract address and the feed proxy address.",
+    "Record that statement's URL, retrieval time and body sha256 in the entry's `evidence`.",
+    "Set reviewStatus to REVIEWED_VERIFIED and record the reviewer and date.",
+    "A promotion is a commit a human makes. No script may set REVIEWED_VERIFIED."
+  ],
+  "feedsWithNoListedToken": ["COIN", "CRCL", "INTC"],
+  "pairs": [
+    {
+      "chainId": 8453,
+      "tokenAddress": "0xb2000000000000000000001e800a7f5189430cd0",
+      "tokenDisplaySymbol": "TSLAc",
+      "tokenOnchainName": "Tesla Inc.",
+      "feedProxyAddress": "0xfaf869185383a24f8cb00e27bda6b63b9905dcb4",
+      "feedDirectoryName": "Coinbase TSLA",
+      "feedBaseAsset": "TSLA",
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "feedDecimals": 8,
+      "reviewStatus": "INFERRED_UNREVIEWED",
+      "evidence": [
+        "Token display symbol on the official Base list ends in 'c' and its stem equals the Chainlink directory entry's docs.baseAsset.",
+        "Both the token and the feed are published for Base mainnet chain 8453.",
+        "No on-chain link exists between a B20 token and its Chainlink proxy: nothing in IB20Asset references a feed, and nothing in the Chainlink aggregator references a token address."
+      ]
+    },
+    {
+      "chainId": 8453,
+      "tokenAddress": "0xb2000000000000000000002d0ba3164cc74f58b7",
+      "tokenDisplaySymbol": "GOOGLc",
+      "tokenOnchainName": "Alphabet Inc.",
+      "feedProxyAddress": "0x5bf49e0ffa937ce2fff033c739ad7c634c4d34f2",
+      "feedDirectoryName": "Coinbase GOOGL",
+      "feedBaseAsset": "GOOGL",
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "feedDecimals": 8,
+      "reviewStatus": "INFERRED_UNREVIEWED",
+      "evidence": [
+        "Token display symbol on the official Base list ends in 'c' and its stem equals the Chainlink directory entry's docs.baseAsset.",
+        "Both the token and the feed are published for Base mainnet chain 8453.",
+        "No on-chain link exists between a B20 token and its Chainlink proxy: nothing in IB20Asset references a feed, and nothing in the Chainlink aggregator references a token address."
+      ]
+    },
+    {
+      "chainId": 8453,
+      "tokenAddress": "0xb200000000000000000000397293cb8cda9a10c5",
+      "tokenDisplaySymbol": "SNDKc",
+      "tokenOnchainName": "Sandisk Corporation",
+      "feedProxyAddress": "0x388b0dc46c0fb05a74bee0994fa5b02c6fcca2ea",
+      "feedDirectoryName": "Coinbase SNDK",
+      "feedBaseAsset": "SNDK",
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "feedDecimals": 8,
+      "reviewStatus": "INFERRED_UNREVIEWED",
+      "evidence": [
+        "Token display symbol on the official Base list ends in 'c' and its stem equals the Chainlink directory entry's docs.baseAsset.",
+        "Both the token and the feed are published for Base mainnet chain 8453.",
+        "No on-chain link exists between a B20 token and its Chainlink proxy: nothing in IB20Asset references a feed, and nothing in the Chainlink aggregator references a token address."
+      ]
+    },
+    {
+      "chainId": 8453,
+      "tokenAddress": "0xb2000000000000000000004884b426556b92883d",
+      "tokenDisplaySymbol": "MSTRc",
+      "tokenOnchainName": "Strategy Inc.",
+      "feedProxyAddress": "0xb3ce282cd188b35da0e38d8bc7d58e33173d202a",
+      "feedDirectoryName": "Coinbase MSTR",
+      "feedBaseAsset": "MSTR",
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "feedDecimals": 8,
+      "reviewStatus": "INFERRED_UNREVIEWED",
+      "evidence": [
+        "Token display symbol on the official Base list ends in 'c' and its stem equals the Chainlink directory entry's docs.baseAsset.",
+        "Both the token and the feed are published for Base mainnet chain 8453.",
+        "No on-chain link exists between a B20 token and its Chainlink proxy: nothing in IB20Asset references a feed, and nothing in the Chainlink aggregator references a token address."
+      ]
+    },
+    {
+      "chainId": 8453,
+      "tokenAddress": "0xb20000000000000000000078ee7ce2fe4908108c",
+      "tokenDisplaySymbol": "NVDAc",
+      "tokenOnchainName": "NVIDIA Corporation",
+      "feedProxyAddress": "0x04689a41629776563e6822f76f2e57d148d28513",
+      "feedDirectoryName": "Coinbase NVDA",
+      "feedBaseAsset": "NVDA",
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "feedDecimals": 8,
+      "reviewStatus": "INFERRED_UNREVIEWED",
+      "evidence": [
+        "Token display symbol on the official Base list ends in 'c' and its stem equals the Chainlink directory entry's docs.baseAsset.",
+        "Both the token and the feed are published for Base mainnet chain 8453.",
+        "No on-chain link exists between a B20 token and its Chainlink proxy: nothing in IB20Asset references a feed, and nothing in the Chainlink aggregator references a token address."
+      ]
+    },
+    {
+      "chainId": 8453,
+      "tokenAddress": "0xb2000000000000000000007b9fcbd005511acbd5",
+      "tokenDisplaySymbol": "SPCXc",
+      "tokenOnchainName": "Space Exploration Technologies Corp.",
+      "feedProxyAddress": "0x6a634b235903c4ad6376892180d6ff8612e3fa68",
+      "feedDirectoryName": "Coinbase SPCX",
+      "feedBaseAsset": "SPCX",
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "feedDecimals": 8,
+      "reviewStatus": "INFERRED_UNREVIEWED",
+      "evidence": [
+        "Token display symbol on the official Base list ends in 'c' and its stem equals the Chainlink directory entry's docs.baseAsset.",
+        "Both the token and the feed are published for Base mainnet chain 8453.",
+        "No on-chain link exists between a B20 token and its Chainlink proxy: nothing in IB20Asset references a feed, and nothing in the Chainlink aggregator references a token address."
+      ]
+    },
+    {
+      "chainId": 8453,
+      "tokenAddress": "0xb2000000000000000000008bc8786b856e61707c",
+      "tokenDisplaySymbol": "METAc",
+      "tokenOnchainName": "Meta Platforms Inc.",
+      "feedProxyAddress": "0x6526ae6797a76123638b863aee4dd27ba4e4b27d",
+      "feedDirectoryName": "Coinbase META",
+      "feedBaseAsset": "META",
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "feedDecimals": 8,
+      "reviewStatus": "INFERRED_UNREVIEWED",
+      "evidence": [
+        "Token display symbol on the official Base list ends in 'c' and its stem equals the Chainlink directory entry's docs.baseAsset.",
+        "Both the token and the feed are published for Base mainnet chain 8453.",
+        "No on-chain link exists between a B20 token and its Chainlink proxy: nothing in IB20Asset references a feed, and nothing in the Chainlink aggregator references a token address."
+      ]
+    },
+    {
+      "chainId": 8453,
+      "tokenAddress": "0xb200000000000000000000ab99cfa739e253872b",
+      "tokenDisplaySymbol": "MSFTc",
+      "tokenOnchainName": "Microsoft Corporation",
+      "feedProxyAddress": "0xeb10a6c9aa7e537aed766c08c35dae35b321b18c",
+      "feedDirectoryName": "Coinbase MSFT",
+      "feedBaseAsset": "MSFT",
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "feedDecimals": 8,
+      "reviewStatus": "INFERRED_UNREVIEWED",
+      "evidence": [
+        "Token display symbol on the official Base list ends in 'c' and its stem equals the Chainlink directory entry's docs.baseAsset.",
+        "Both the token and the feed are published for Base mainnet chain 8453.",
+        "No on-chain link exists between a B20 token and its Chainlink proxy: nothing in IB20Asset references a feed, and nothing in the Chainlink aggregator references a token address."
+      ]
+    },
+    {
+      "chainId": 8453,
+      "tokenAddress": "0xb200000000000000000000c2e324d24d7eecd1fb",
+      "tokenDisplaySymbol": "AAPLc",
+      "tokenOnchainName": "Apple Inc.",
+      "feedProxyAddress": "0x787f13dea48db0897cbcdd985de77809d837f988",
+      "feedDirectoryName": "Coinbase AAPL",
+      "feedBaseAsset": "AAPL",
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "feedDecimals": 8,
+      "reviewStatus": "INFERRED_UNREVIEWED",
+      "evidence": [
+        "Token display symbol on the official Base list ends in 'c' and its stem equals the Chainlink directory entry's docs.baseAsset.",
+        "Both the token and the feed are published for Base mainnet chain 8453.",
+        "No on-chain link exists between a B20 token and its Chainlink proxy: nothing in IB20Asset references a feed, and nothing in the Chainlink aggregator references a token address."
+      ]
+    },
+    {
+      "chainId": 8453,
+      "tokenAddress": "0xb200000000000000000000d9192b6b456483c2e8",
+      "tokenDisplaySymbol": "AMZNc",
+      "tokenOnchainName": "Amazon.com Inc.",
+      "feedProxyAddress": "0x06a8e4b3abb3b7543d8396fb2b763d22820cb295",
+      "feedDirectoryName": "Coinbase AMZN",
+      "feedBaseAsset": "AMZN",
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "feedDecimals": 8,
+      "reviewStatus": "INFERRED_UNREVIEWED",
+      "evidence": [
+        "Token display symbol on the official Base list ends in 'c' and its stem equals the Chainlink directory entry's docs.baseAsset.",
+        "Both the token and the feed are published for Base mainnet chain 8453.",
+        "No on-chain link exists between a B20 token and its Chainlink proxy: nothing in IB20Asset references a feed, and nothing in the Chainlink aggregator references a token address."
+      ]
+    }
+  ]
+}
