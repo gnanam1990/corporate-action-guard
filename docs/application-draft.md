@@ -1,5 +1,9 @@
 # OKX Dev Day 2026 — builder application draft
 
+> This is the **OKX Dev Day / X Layer** draft. The Base Batches 004 draft is a separate
+> document: [`docs/base-b20/application-draft.md`](base-b20/application-draft.md). They
+> describe the same repository to different programs; do not merge or cross-paste them.
+
 **Verified application deadline:** 11 September 2026, 23:59 UTC.  
 **Primary track:** X Layer: Tokenized stocks and RWA.  
 **Team name:** Corporate Action Guard.

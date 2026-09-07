@@ -131,17 +131,18 @@ Full instructions, ports, and toolchain notes: [`docs/development.md`](docs/deve
 
 ## Documentation
 
-| Document                                                                     | What it covers                                                 |
-| ---------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| [`docs/architecture/system-context.md`](docs/architecture/system-context.md) | Actors, trust zones, per-boundary timeout/retry/fail direction |
-| [`docs/architecture/component-map.md`](docs/architecture/component-map.md)   | Layers, ownership, frozen contracts                            |
-| [`docs/architecture/data-flow.md`](docs/architecture/data-flow.md)           | Six traced flows from discovery to replay                      |
-| [`docs/architecture/decisions/`](docs/architecture/decisions/)               | ADRs 0001–0008                                                 |
-| [`docs/base-b20/product-contract.md`](docs/base-b20/product-contract.md)     | B20 semantics, outcomes, guarantee boundary                    |
-| [`docs/base-b20/invariants.md`](docs/base-b20/invariants.md)                 | Every B20 invariant with its reason code                       |
-| [`docs/base-b20/sources.md`](docs/base-b20/sources.md)                       | Where every Base address and capability came from              |
-| [`docs/build-readiness.md`](docs/build-readiness.md)                         | What exists, what is absent, what is blocked                   |
-| [`docs/module-ownership.md`](docs/module-ownership.md)                       | Lane assignment and change control                             |
+| Document                                                                     | What it covers                                                    |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| [`docs/architecture/system-context.md`](docs/architecture/system-context.md) | Actors, trust zones, per-boundary timeout/retry/fail direction    |
+| [`docs/architecture/component-map.md`](docs/architecture/component-map.md)   | Layers, ownership, frozen contracts                               |
+| [`docs/architecture/data-flow.md`](docs/architecture/data-flow.md)           | Six traced flows from discovery to replay                         |
+| [`docs/architecture/decisions/`](docs/architecture/decisions/)               | ADRs 0001–0008                                                    |
+| [`docs/base-b20/product-contract.md`](docs/base-b20/product-contract.md)     | B20 semantics, outcomes, guarantee boundary                       |
+| [`docs/base-b20/invariants.md`](docs/base-b20/invariants.md)                 | Every B20 invariant with its reason code                          |
+| [`docs/base-b20/sources.md`](docs/base-b20/sources.md)                       | Where every Base address and capability came from                 |
+| [`docs/base-b20/application-draft.md`](docs/base-b20/application-draft.md)   | Base Batches 004 draft, with the claims boundary to check against |
+| [`docs/build-readiness.md`](docs/build-readiness.md)                         | What exists, what is absent, what is blocked                      |
+| [`docs/module-ownership.md`](docs/module-ownership.md)                       | Lane assignment and change control                                |
 
 ## What is actually verified
 
