@@ -20,6 +20,8 @@ const LAYER = {
   '@cag/observability': 2,
   '@cag/xstocks-client': 3,
   '@cag/xlayer-reader': 3,
+  '@cag/b20-reader': 3,
+  '@cag/chainlink-reader': 3,
   '@cag/receipts': 3,
   '@cag/reconciler': 4,
   '@cag/api': 5,
