@@ -23,6 +23,7 @@ const LAYER = {
   '@cag/b20-reader': 3,
   '@cag/chainlink-reader': 3,
   '@cag/receipts': 3,
+  '@cag/conformance': 4,
   '@cag/equity-ledger': 4,
   '@cag/reconciler': 4,
   '@cag/api': 5,

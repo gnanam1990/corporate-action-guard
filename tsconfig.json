@@ -29,6 +29,9 @@
       "path": "./packages/equity-ledger"
     },
     {
+      "path": "./packages/conformance"
+    },
+    {
       "path": "./packages/receipts"
     },
     {

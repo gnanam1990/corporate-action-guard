@@ -18,7 +18,7 @@ The honest inventory. A module is `IMPLEMENTED` only when its code exists in thi
 repository and its own gates have been run. Being described in the prompt pack is not
 evidence that anything exists.
 
-**36 implemented · 1 partial · 0 blocked · 22 absent**, of 59 modules.
+**37 implemented · 1 partial · 0 blocked · 21 absent**, of 59 modules.
 
 ## Status
 
@@ -62,7 +62,7 @@ evidence that anything exists.
 | b20-11 | Brokerage-grade equity position ledger | **IMPLEMENTED** | packages/equity-ledger: raw units and share-equivalents balance independently, a restatement cannot move a raw unit, corrections are new entries, idempotency keys on the chain fact not the entry id |
 | b20-12 | Valuation engine and invariant proof surface | **IMPLEMENTED** | Valuation engine plus the derivation surface: every step recomputable by hand, route B labelled derived not corroborating, and the forbidden route shown computed and marked rejected |
 | b20-13 | B20 reconciliation state machine | **IMPLEMENTED** | packages/reconciler/b20-state-machine: enumerated legal transitions, no path from CONFLICT to VERIFIED, and a named path away from VERIFIED for each of 11 ways evidence can be absent |
-| b20-14 | Integration Conformance Lab and mutation corpus | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-14 | Integration Conformance Lab and mutation corpus | **IMPLEMENTED** | packages/conformance: 15 offline scenarios, an adapter contract with no number in a value position, and 8 mutants each killed by its target scenario. A generic error is not a pass. |
 | b20-15 | B20 operation model and preflight service v2 | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
 | b20-16 | Versioned B20 EIP-712 receipt and replay protection | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
 | b20-17 | Base Sepolia B20 fixture and capability gate | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
