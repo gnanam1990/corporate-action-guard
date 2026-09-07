@@ -9,6 +9,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   correlateB20Cases,
+  isAllowedDestinationAddress,
   isFetchableAnnouncementUri,
   sanitizeAnnouncementText,
   type CorrelationInput,
@@ -245,6 +246,7 @@ describe('announcement text is data', () => {
 describe('announcement URIs are checked before anything is fetched', () => {
   it('accepts a plain https URL', () => {
     expect(isFetchableAnnouncementUri('https://issuer.example/ca/1').ok).toBe(true);
+    expect(isFetchableAnnouncementUri('https://8.8.8.8/x').ok).toBe(true);
   });
 
   it('refuses anything but https', () => {
@@ -253,10 +255,19 @@ describe('announcement URIs are checked before anything is fetched', () => {
     expect(isFetchableAnnouncementUri('gopher://issuer.example/1').ok).toBe(false);
   });
 
+  it('refuses credentials embedded in the URI', () => {
+    expect(isFetchableAnnouncementUri('https://user:pass@issuer.example/x').ok).toBe(false);
+  });
+
+  it('refuses a non-default port', () => {
+    expect(isFetchableAnnouncementUri('https://issuer.example:8443/x').ok).toBe(false);
+  });
+
+  it('refuses something that is not a URI at all', () => {
+    expect(isFetchableAnnouncementUri('not a uri').ok).toBe(false);
+  });
+
   it('refuses loopback, private and link-local destinations', () => {
-    // An announcement URI is issuer-controlled input that this service would fetch from
-    // inside its own network. Every one of these is a route to something not meant to be
-    // reachable from outside.
     for (const uri of [
       'https://localhost/x',
       'https://127.0.0.1/x',
@@ -272,15 +283,74 @@ describe('announcement URIs are checked before anything is fetched', () => {
     }
   });
 
-  it('refuses credentials embedded in the URI', () => {
-    expect(isFetchableAnnouncementUri('https://user:pass@issuer.example/x').ok).toBe(false);
+  it('refuses an IPv4-mapped IPv6 address, which the earlier IPv6 checks missed', () => {
+    // A real bypass, found by a background security review. `[::ffff:169.254.169.254]` reaches
+    // the cloud metadata endpoint: the URL parser rewrites it to `[::ffff:a9fe:a9fe]`, which
+    // matches neither the `::1` test nor any dotted-quad test. Both spellings are now decoded
+    // back to the embedded v4 address, because the normalisation was itself the bypass.
+    for (const uri of [
+      'https://[::ffff:127.0.0.1]/x',
+      'https://[::ffff:169.254.169.254]/x',
+      'https://[::]/x',
+    ]) {
+      expect(isFetchableAnnouncementUri(uri).ok, uri).toBe(false);
+    }
   });
 
-  it('refuses a non-default port', () => {
-    expect(isFetchableAnnouncementUri('https://issuer.example:8443/x').ok).toBe(false);
+  it('refuses ranges the first version of this gate did not list', () => {
+    // Carrier-grade NAT, the benchmarking range and 0.0.0.0/8 are all routable to something
+    // inside a hosted deployment and were all reachable before.
+    for (const uri of ['https://100.64.0.1/x', 'https://198.18.0.1/x', 'https://0.0.0.0/x']) {
+      expect(isFetchableAnnouncementUri(uri).ok, uri).toBe(false);
+    }
   });
 
-  it('refuses something that is not a URI at all', () => {
-    expect(isFetchableAnnouncementUri('not a uri').ok).toBe(false);
+  it('refuses an unqualified hostname, which resolves against the search domain', () => {
+    // `https://vault/` is not a public name; inside a cluster it is a service.
+    expect(isFetchableAnnouncementUri('https://vault/x').ok).toBe(false);
+  });
+
+  it('is not what stops decimal and hex IP literals — the URL parser is', () => {
+    // Worth pinning explicitly, because it is easy to credit the wrong control. `URL`
+    // normalises `2130706433`, `0x7f000001` and `0177.0.0.1` to `127.0.0.1` before this gate
+    // ever sees them. The gate must still handle the un-normalised forms, because
+    // `isAllowedDestinationAddress` is called on raw hostnames that never went through `URL`.
+    expect(new URL('https://2130706433/x').hostname).toBe('127.0.0.1');
+    expect(isFetchableAnnouncementUri('https://2130706433/x').ok).toBe(false);
+  });
+});
+
+describe('the resolved-address check the fetcher owes', () => {
+  it('decodes every IPv4 encoding, since raw input never passed through URL', () => {
+    // DNS results and redirect `Location` headers arrive unparsed. These are the encodings a
+    // hostname blocklist keyed on the string "127." never sees.
+    for (const host of ['2130706433', '0x7f000001', '0177.0.0.1', '127.1', '127.0.0.1']) {
+      expect(isAllowedDestinationAddress(host).ok, host).toBe(false);
+    }
+    for (const host of ['2852039166', '0xa9fea9fe', '169.254.169.254']) {
+      expect(isAllowedDestinationAddress(host).ok, host).toBe(false);
+    }
+  });
+
+  it('is exported separately, because a name check cannot close DNS rebinding', () => {
+    // A hostname that passes the URI gate can still resolve to 169.254.169.254. The fetcher
+    // has to re-check the address DNS returned, and connect to the address it checked.
+    expect(isAllowedDestinationAddress('issuer.example').ok).toBe(true);
+    expect(isAllowedDestinationAddress('169.254.169.254').ok).toBe(false);
+    expect(isAllowedDestinationAddress('::1').ok).toBe(false);
+    expect(isAllowedDestinationAddress('fd00::1').ok).toBe(false);
+    expect(isAllowedDestinationAddress('fe80::1').ok).toBe(false);
+    expect(isAllowedDestinationAddress('ff02::1').ok).toBe(false);
+  });
+
+  it('names the reason, so a refusal is diagnosable', () => {
+    expect(isAllowedDestinationAddress('10.0.0.1').reason).toContain('reserved');
+    expect(isAllowedDestinationAddress('localhost').reason).toContain('internal');
+  });
+
+  it('lets ordinary public addresses through', () => {
+    for (const host of ['8.8.8.8', '1.1.1.1', 'issuer.example', '2606:4700:4700::1111']) {
+      expect(isAllowedDestinationAddress(host).ok, host).toBe(true);
+    }
   });
 });

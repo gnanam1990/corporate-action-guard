@@ -44,6 +44,7 @@ export {
   B20_BUSINESS_EVENTS,
   CASE_OUTCOMES,
   correlateB20Cases,
+  isAllowedDestinationAddress,
   isFetchableAnnouncementUri,
   sanitizeAnnouncementText,
   type AnnouncementBracket,

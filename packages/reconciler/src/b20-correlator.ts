@@ -336,12 +336,161 @@ export function sanitizeAnnouncementText(text: string, maxLength = 512): string 
 }
 /* eslint-enable no-control-regex */
 
+/*
+ * SSRF defence for announcement URIs.
+ *
+ * An announcement URI is issuer-authored input that this service would dereference from
+ * inside its own network, which makes it the highest-value SSRF vector in the product. The
+ * gate below runs before any request is made, and a URI that fails it is still stored as
+ * evidence — it is simply never fetched.
+ *
+ * A hostname-string blocklist is not enough on its own, and the first version of this was
+ * exactly that. `https://2130706433/` is 127.0.0.1 in decimal; `https://0x7f000001/` is the
+ * same address in hex; `https://[::ffff:127.0.0.1]/` is the IPv4-mapped IPv6 form. All three
+ * sail past a `/^127\./` test. So every host is normalised to an address first, and the
+ * decision is made on the address.
+ *
+ * Two gaps remain that a pre-flight string check structurally cannot close, and the fetcher
+ * must close them by calling `isAllowedDestinationAddress` itself:
+ *
+ *  - **DNS rebinding.** A hostname that passes here can resolve to 169.254.169.254. The
+ *    resolved address has to be checked, and the socket has to connect to the address that
+ *    was checked.
+ *  - **Redirects.** A 302 to a private address bypasses any check applied only to the
+ *    original URI. Every hop is a new URI and gets the whole gate again.
+ */
+
+/** Reserved IPv4 ranges, as [network, prefix length]. */
+const BLOCKED_IPV4: readonly (readonly [string, number])[] = [
+  ['0.0.0.0', 8], // "this network"
+  ['10.0.0.0', 8], // RFC 1918
+  ['100.64.0.0', 10], // carrier-grade NAT
+  ['127.0.0.0', 8], // loopback
+  ['169.254.0.0', 16], // link-local, and the cloud metadata endpoint
+  ['172.16.0.0', 12], // RFC 1918
+  ['192.0.0.0', 24], // IETF protocol assignments
+  ['192.168.0.0', 16], // RFC 1918
+  ['198.18.0.0', 15], // benchmarking
+  ['224.0.0.0', 4], // multicast
+  ['240.0.0.0', 4], // reserved, includes 255.255.255.255
+];
+
+/**
+ * Parse an IPv4 literal in every encoding the URL spec and common resolvers accept.
+ *
+ * Dotted quad, but also `127.1`, `2130706433`, `0x7f000001` and `0177.0.0.1`. Returns the
+ * address as a 32-bit number, or undefined when the host is not an IPv4 literal at all.
+ */
+function parseIpv4(host: string): number | undefined {
+  const parts = host.split('.');
+  if (parts.length > 4) return undefined;
+
+  const numbers: number[] = [];
+  for (const part of parts) {
+    if (part === '') return undefined;
+    let value: number;
+    if (/^0[xX][0-9a-fA-F]+$/.test(part)) value = Number.parseInt(part.slice(2), 16);
+    else if (/^0[0-7]+$/.test(part)) value = Number.parseInt(part.slice(1), 8);
+    else if (/^\d+$/.test(part)) value = Number.parseInt(part, 10);
+    else return undefined;
+    if (!Number.isFinite(value) || value < 0) return undefined;
+    numbers.push(value);
+  }
+
+  // The last part absorbs the remaining bytes: `127.1` is 127.0.0.1, `2130706433` is the
+  // whole address in one number.
+  const last = numbers[numbers.length - 1];
+  if (last === undefined) return undefined;
+  const maxLast = 256 ** (4 - numbers.length + 1);
+  if (last >= maxLast) return undefined;
+  for (const value of numbers.slice(0, -1)) if (value > 255) return undefined;
+
+  let address = last;
+  for (let i = 0; i < numbers.length - 1; i++) {
+    address += (numbers[i] ?? 0) * 256 ** (3 - i);
+  }
+  return address >>> 0;
+}
+
+function ipv4InBlockedRange(address: number): boolean {
+  for (const [network, prefix] of BLOCKED_IPV4) {
+    const base = parseIpv4(network);
+    if (base === undefined) continue;
+    const mask = prefix === 0 ? 0 : (0xffffffff << (32 - prefix)) >>> 0;
+    if ((address & mask) >>> 0 === (base & mask) >>> 0) return true;
+  }
+  return false;
+}
+
+/**
+ * Decide whether a destination address or IP-literal host may be connected to.
+ *
+ * Exported so the fetcher can call it again on the address DNS actually returned, and again
+ * on every redirect hop. That is the only way the rebinding and redirect gaps close: this
+ * module cannot resolve a name and must not pretend it has.
+ */
+export function isAllowedDestinationAddress(host: string): {
+  readonly ok: boolean;
+  readonly reason?: string;
+} {
+  const bare = host.replace(/^\[|\]$/g, '').toLowerCase();
+
+  const ipv4 = parseIpv4(bare);
+  if (ipv4 !== undefined) {
+    return ipv4InBlockedRange(ipv4)
+      ? { ok: false, reason: 'IPv4 literal in a reserved, loopback, private or link-local range' }
+      : { ok: true };
+  }
+
+  if (bare.includes(':')) {
+    // IPv4-mapped and IPv4-compatible forms carry the v4 address in the last 32 bits, and
+    // that embedded address is what actually gets connected to. `URL` normalises the dotted
+    // form to hex — `[::ffff:127.0.0.1]` becomes `[::ffff:7f00:1]` — so both spellings have
+    // to be recognised or the normalisation itself becomes the bypass.
+    const dotted = /(\d{1,3}(?:\.\d{1,3}){3})$/.exec(bare);
+    const hexPair = /^(?:0*:)*:?ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/.exec(bare);
+    const mapped =
+      dotted?.[1] !== undefined
+        ? parseIpv4(dotted[1])
+        : hexPair?.[1] !== undefined && hexPair[2] !== undefined
+          ? ((Number.parseInt(hexPair[1], 16) << 16) | Number.parseInt(hexPair[2], 16)) >>> 0
+          : undefined;
+    if (mapped !== undefined && ipv4InBlockedRange(mapped)) {
+      return { ok: false, reason: 'IPv4-mapped IPv6 address in a reserved range' };
+    }
+    if (
+      bare === '::' ||
+      bare === '::1' ||
+      /^fe[89ab][0-9a-f]:/.test(bare) || // link-local
+      /^f[cd][0-9a-f]{2}:/.test(bare) || // unique local
+      /^ff[0-9a-f]{2}:/.test(bare) // multicast
+    ) {
+      return { ok: false, reason: 'IPv6 loopback, link-local, unique-local or multicast address' };
+    }
+    return { ok: true };
+  }
+
+  // A name, not a literal. Only the obviously internal suffixes can be judged here; the
+  // resolved address is what the fetcher must check.
+  if (
+    bare === 'localhost' ||
+    bare.endsWith('.localhost') ||
+    bare.endsWith('.local') ||
+    bare.endsWith('.internal') ||
+    bare.endsWith('.home.arpa') ||
+    !bare.includes('.')
+  ) {
+    return { ok: false, reason: 'internal or unqualified hostname' };
+  }
+  return { ok: true };
+}
+
 /**
  * Whether an announcement URI may be fetched at all.
  *
- * SSRF defence, applied before any request. HTTPS only, no credentials in the URL, no
- * private, loopback or link-local destination, and no non-default port. A URI that fails
- * this is still stored as evidence — it is simply never dereferenced.
+ * Applied before any request, and applied again to every redirect target. Passing this is
+ * necessary and not sufficient: see `isAllowedDestinationAddress` for the resolved-address
+ * check the fetcher still owes.
  */
 export function isFetchableAnnouncementUri(uri: string): {
   readonly ok: boolean;
@@ -360,22 +509,5 @@ export function isFetchableAnnouncementUri(uri: string): {
   if (parsed.port !== '' && parsed.port !== '443') {
     return { ok: false, reason: 'only the default https port is fetched' };
   }
-  const host = parsed.hostname.toLowerCase();
-  if (
-    host === 'localhost' ||
-    host.endsWith('.localhost') ||
-    host.endsWith('.internal') ||
-    host.endsWith('.local') ||
-    /^\[?::1\]?$/.test(host) ||
-    /^127\./.test(host) ||
-    /^10\./.test(host) ||
-    /^192\.168\./.test(host) ||
-    /^169\.254\./.test(host) ||
-    /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
-    /^\[?fd[0-9a-f]{2}:/i.test(host) ||
-    /^\[?fe80:/i.test(host)
-  ) {
-    return { ok: false, reason: 'private, loopback, or link-local destination' };
-  }
-  return { ok: true };
+  return isAllowedDestinationAddress(parsed.hostname);
 }
