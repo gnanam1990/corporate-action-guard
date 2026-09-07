@@ -18,7 +18,7 @@ The honest inventory. A module is `IMPLEMENTED` only when its code exists in thi
 repository and its own gates have been run. Being described in the prompt pack is not
 evidence that anything exists.
 
-**28 implemented · 1 partial · 0 blocked · 30 absent**, of 59 modules.
+**31 implemented · 1 partial · 0 blocked · 27 absent**, of 59 modules.
 
 ## Status
 
@@ -54,9 +54,9 @@ evidence that anything exists.
 | b20-03 | B20 domain quantities and lifecycle types | **IMPLEMENTED** | Branded raw/share/multiplier/price types with basis, floor arithmetic with reported remainder, 38 B20 reason codes, temporal lifecycle reducer; 4 mutants killed |
 | b20-04 | Typed Base configuration and safety gates | **IMPLEMENTED** | Base env schema with no mainnet signer field, five-condition Sepolia write gate, dependency-aware feature flags; an X Layer deployment starts unchanged |
 | b20-05 | Verified B20 asset registry | **IMPLEMENTED** | Identity is (chainId,address) confirmed by official list + isB20Initialized + live reads; prefix refused, rename opens review, manifest parsed strictly |
-| b20-06 | Base B20 reader and reorg-safe indexer | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
-| b20-07 | Chainlink tokenized-equity and sequencer reader | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
-| b20-08 | Append-only Base evidence schema and projections | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-06 | Base B20 reader and reorg-safe indexer | **IMPLEMENTED** | packages/b20-reader: chain asserted before the first read, selector-revert capability probe, pure reorg/range/cursor logic; no signer, wallet or write API exists and a test asserts it |
+| b20-07 | Chainlink tokenized-equity and sequencer reader | **IMPLEMENTED** | packages/chainlink-reader: three separate reads (sequencer, pause, round), per-action freshness policy, EXPECTED_HOLD displayable and never actionable, unreviewed token-feed pairing refused for value |
+| b20-08 | Append-only Base evidence schema and projections | **IMPLEMENTED** | Migration 0008 extends the existing journal; check constraints refuse a checksummed address, an unverified asset marked usable, an actionable non-FRESH price, and "nothing scheduled" from a chain that could not be asked |
 | b20-09 | Temporal B20 lifecycle reducer | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
 | b20-10 | Corporate-action correlator and classification boundary | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
 | b20-11 | Brokerage-grade equity position ledger | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |

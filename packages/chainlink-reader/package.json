@@ -1,0 +1,30 @@
+{
+  "name": "@cag/chainlink-reader",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Chainlink tokenized-equity feed, sequencer uptime, and freshness policy reads.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo"
+  },
+  "dependencies": {
+    "@cag/config": "workspace:*",
+    "@cag/domain": "workspace:*",
+    "viem": "^2.56.3"
+  },
+  "devDependencies": {
+    "fast-check": "^4.9.0"
+  }
+}

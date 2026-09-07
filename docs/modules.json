@@ -185,20 +185,20 @@
     {
       "id": "b20-06",
       "name": "Base B20 reader and reorg-safe indexer",
-      "status": "ABSENT",
-      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+      "status": "IMPLEMENTED",
+      "note": "packages/b20-reader: chain asserted before the first read, selector-revert capability probe, pure reorg/range/cursor logic; no signer, wallet or write API exists and a test asserts it"
     },
     {
       "id": "b20-07",
       "name": "Chainlink tokenized-equity and sequencer reader",
-      "status": "ABSENT",
-      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+      "status": "IMPLEMENTED",
+      "note": "packages/chainlink-reader: three separate reads (sequencer, pause, round), per-action freshness policy, EXPECTED_HOLD displayable and never actionable, unreviewed token-feed pairing refused for value"
     },
     {
       "id": "b20-08",
       "name": "Append-only Base evidence schema and projections",
-      "status": "ABSENT",
-      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+      "status": "IMPLEMENTED",
+      "note": "Migration 0008 extends the existing journal; check constraints refuse a checksummed address, an unverified asset marked usable, an actionable non-FRESH price, and \"nothing scheduled\" from a chain that could not be asked"
     },
     {
       "id": "b20-09",
