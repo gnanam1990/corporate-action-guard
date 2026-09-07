@@ -40,6 +40,8 @@
     "docs:check": "node scripts/generate-readiness.mjs --check",
     "b20:provenance": "node scripts/b20-provenance.mjs capture",
     "b20:provenance:check": "node scripts/b20-provenance.mjs check",
+    "b20:proof": "node scripts/b20-e2e-proof.mjs && pnpm exec prettier --write docs/evidence/b20-end-to-end.md apps/web/src/lib/b20-replay.json",
+    "b20:proof:offline": "node scripts/b20-e2e-proof.mjs --offline",
     "audit:deps": "node scripts/dependency-audit.mjs",
     "testnet:init": "node scripts/init-testnet-env.mjs",
     "testnet:status": "node scripts/testnet-status.mjs",

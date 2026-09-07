@@ -34,6 +34,7 @@ const NAV = [
   { href: '/', label: 'Coverage' },
   { href: '/incidents', label: 'Incidents' },
   { href: '/preflight', label: 'Preflight Lab' },
+  { href: '/b20', label: 'B20 Replay' },
 ] as const;
 
 export function AppShell({

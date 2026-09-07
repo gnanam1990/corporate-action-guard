@@ -347,8 +347,8 @@
     {
       "id": "b20-33",
       "name": "B20 end-to-end proof and demo artifacts",
-      "status": "ABSENT",
-      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+      "status": "PARTIAL",
+      "note": "End-to-end proof and the /b20 split replay are built and reproducible from a clean checkout (pnpm b20:proof). Demo script and shot list written. Still absent: the architecture and sequence diagrams, the recorded video, and the Base Batches application draft."
     },
     {
       "id": "b20-34",
