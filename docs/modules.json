@@ -203,32 +203,32 @@
     {
       "id": "b20-09",
       "name": "Temporal B20 lifecycle reducer",
-      "status": "ABSENT",
-      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+      "status": "IMPLEMENTED",
+      "note": "reduceB20Lifecycle in packages/domain: activation by block timestamp, lazy activation with no event, legacy+canonical folded by transaction AND value, two live schedules reported as impossible chain state; 4 mutants killed"
     },
     {
       "id": "b20-10",
       "name": "Corporate-action correlator and classification boundary",
-      "status": "ABSENT",
-      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+      "status": "IMPLEMENTED",
+      "note": "packages/reconciler/b20-correlator: a 10x increase stays UNKNOWN without structured evidence whose declared ratio reproduces the change; announcement text sanitized, URIs SSRF-gated before any fetch"
     },
     {
       "id": "b20-11",
       "name": "Brokerage-grade equity position ledger",
-      "status": "ABSENT",
-      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+      "status": "IMPLEMENTED",
+      "note": "packages/equity-ledger: raw units and share-equivalents balance independently, a restatement cannot move a raw unit, corrections are new entries, idempotency keys on the chain fact not the entry id"
     },
     {
       "id": "b20-12",
       "name": "Valuation engine and invariant proof surface",
-      "status": "ABSENT",
-      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+      "status": "IMPLEMENTED",
+      "note": "Valuation engine plus the derivation surface: every step recomputable by hand, route B labelled derived not corroborating, and the forbidden route shown computed and marked rejected"
     },
     {
       "id": "b20-13",
       "name": "B20 reconciliation state machine",
-      "status": "ABSENT",
-      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+      "status": "IMPLEMENTED",
+      "note": "packages/reconciler/b20-state-machine: enumerated legal transitions, no path from CONFLICT to VERIFIED, and a named path away from VERIFIED for each of 11 ways evidence can be absent"
     },
     {
       "id": "b20-14",

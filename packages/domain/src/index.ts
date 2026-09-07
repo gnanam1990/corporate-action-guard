@@ -220,3 +220,13 @@ export {
   type B20KnownIdentity,
   type B20SearchCandidate,
 } from './b20/registry.js';
+
+export {
+  deriveQuantity,
+  deriveValuation,
+  derivationToJson,
+  type DerivationEvidence,
+  type DerivationStep,
+  type QuantityDerivation,
+  type ValuationDerivation,
+} from './b20/derivation.js';

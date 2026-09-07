@@ -26,6 +26,9 @@
       "path": "./packages/chainlink-reader"
     },
     {
+      "path": "./packages/equity-ledger"
+    },
+    {
       "path": "./packages/receipts"
     },
     {

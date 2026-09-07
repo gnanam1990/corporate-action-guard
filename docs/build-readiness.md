@@ -18,7 +18,7 @@ The honest inventory. A module is `IMPLEMENTED` only when its code exists in thi
 repository and its own gates have been run. Being described in the prompt pack is not
 evidence that anything exists.
 
-**31 implemented · 1 partial · 0 blocked · 27 absent**, of 59 modules.
+**36 implemented · 1 partial · 0 blocked · 22 absent**, of 59 modules.
 
 ## Status
 
@@ -57,11 +57,11 @@ evidence that anything exists.
 | b20-06 | Base B20 reader and reorg-safe indexer | **IMPLEMENTED** | packages/b20-reader: chain asserted before the first read, selector-revert capability probe, pure reorg/range/cursor logic; no signer, wallet or write API exists and a test asserts it |
 | b20-07 | Chainlink tokenized-equity and sequencer reader | **IMPLEMENTED** | packages/chainlink-reader: three separate reads (sequencer, pause, round), per-action freshness policy, EXPECTED_HOLD displayable and never actionable, unreviewed token-feed pairing refused for value |
 | b20-08 | Append-only Base evidence schema and projections | **IMPLEMENTED** | Migration 0008 extends the existing journal; check constraints refuse a checksummed address, an unverified asset marked usable, an actionable non-FRESH price, and "nothing scheduled" from a chain that could not be asked |
-| b20-09 | Temporal B20 lifecycle reducer | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
-| b20-10 | Corporate-action correlator and classification boundary | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
-| b20-11 | Brokerage-grade equity position ledger | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
-| b20-12 | Valuation engine and invariant proof surface | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
-| b20-13 | B20 reconciliation state machine | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-09 | Temporal B20 lifecycle reducer | **IMPLEMENTED** | reduceB20Lifecycle in packages/domain: activation by block timestamp, lazy activation with no event, legacy+canonical folded by transaction AND value, two live schedules reported as impossible chain state; 4 mutants killed |
+| b20-10 | Corporate-action correlator and classification boundary | **IMPLEMENTED** | packages/reconciler/b20-correlator: a 10x increase stays UNKNOWN without structured evidence whose declared ratio reproduces the change; announcement text sanitized, URIs SSRF-gated before any fetch |
+| b20-11 | Brokerage-grade equity position ledger | **IMPLEMENTED** | packages/equity-ledger: raw units and share-equivalents balance independently, a restatement cannot move a raw unit, corrections are new entries, idempotency keys on the chain fact not the entry id |
+| b20-12 | Valuation engine and invariant proof surface | **IMPLEMENTED** | Valuation engine plus the derivation surface: every step recomputable by hand, route B labelled derived not corroborating, and the forbidden route shown computed and marked rejected |
+| b20-13 | B20 reconciliation state machine | **IMPLEMENTED** | packages/reconciler/b20-state-machine: enumerated legal transitions, no path from CONFLICT to VERIFIED, and a named path away from VERIFIED for each of 11 ways evidence can be absent |
 | b20-14 | Integration Conformance Lab and mutation corpus | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
 | b20-15 | B20 operation model and preflight service v2 | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
 | b20-16 | Versioned B20 EIP-712 receipt and replay protection | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
