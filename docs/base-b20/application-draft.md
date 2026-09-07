@@ -187,10 +187,12 @@ Full shot list in `docs/base-b20/demo-script.md`. The spine:
 5. Eight integration defects caught (1:05–1:20)
 6. The boundary: direct calls bypass us, no customers, no audit (1:20–1:30)
 
-One thing to expect when you record: with the API not running, the console header reads
-_"Source health unknown — treat everything below as unverified."_ That is the product being
-right, not the page being broken. Either start the API so it resolves, or leave it in shot and
-say what it means. Do not hide it.
+One thing to expect when you record: with the API not running, a banner appears above the
+page content reading **Source health unknown.** _"The console could not determine whether its
+evidence sources are healthy. Treat everything below as unverified."_ (verbatim from
+`apps/web/src/components/app-shell.tsx`). That is the product being right, not the page being
+broken. Either start the API so it resolves, or leave it in shot and say what it means. Do not
+hide it.
 
 **Never crop the RECORDED REPLAY banner out of a `/b20` shot.** The page states it twice on
 purpose, and a frame showing the numbers without the label is the same error the product
