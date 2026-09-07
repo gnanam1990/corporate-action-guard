@@ -233,8 +233,8 @@
     {
       "id": "b20-14",
       "name": "Integration Conformance Lab and mutation corpus",
-      "status": "ABSENT",
-      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+      "status": "IMPLEMENTED",
+      "note": "packages/conformance: 15 offline scenarios, an adapter contract with no number in a value position, and 8 mutants each killed by its target scenario. A generic error is not a pass."
     },
     {
       "id": "b20-15",
