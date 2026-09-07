@@ -37,12 +37,13 @@ What the B20 Equity Integrity Layer needs, against what
 
 ## Readers
 
-| Capability                                     | Status                | Evidence / what changes                                                                                     |
-| ---------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Block-stamped reads, reorg-safe indexing shape | IMPLEMENTED (X Layer) | `packages/xlayer-reader`. The _pattern_ is reused; the code is not, per ADR 0005.                           |
-| **`packages/b20-reader`**                      | ABSENT                | Base RPC, chain-8453 assertion, B20 metadata/multiplier reads, capability probing, reorg-safe log indexing. |
-| **`packages/chainlink-reader`**                | ABSENT                | Aggregator reads with round validation, sequencer uptime + grace, per-action freshness policy.              |
-| **Capability detection**                       | ABSENT                | Solved and verified: an undialed selector reverts with its own four bytes. See `sources.md`.                |
+| Capability                                     | Status                | Evidence / what changes                                                                                                                                                                    |
+| ---------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Block-stamped reads, reorg-safe indexing shape | IMPLEMENTED (X Layer) | `packages/xlayer-reader`. The _pattern_ is reused; the code is not, per ADR 0005.                                                                                                          |
+| **`packages/b20-reader`**                      | ABSENT                | Base RPC, chain-8453 assertion, B20 metadata/multiplier reads, capability probing, reorg-safe log indexing.                                                                                |
+| **`packages/chainlink-reader`**                | ABSENT                | Aggregator reads with round validation, sequencer uptime + grace, per-action freshness policy.                                                                                             |
+| **Capability probing (provenance)**            | IMPLEMENTED           | `scripts/b20-provenance.mjs`, `provenance/base-b20/capability-matrix.json`, `test/b20-provenance.test.ts`. The mechanism is settled: an undialed selector reverts with its own four bytes. |
+| **Capability detection (runtime reader)**      | ABSENT                | The reader must re-probe per session and per block; a capture is a snapshot, not a runtime answer.                                                                                         |
 
 ## Contracts
 

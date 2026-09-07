@@ -269,6 +269,57 @@ describe('duplicate emission is folded once, by identity, never by value', () =>
 });
 
 describe('continuity and history', () => {
+  it('flags two live schedules as chain state that cannot exist', () => {
+    // updateUIMultiplier reverts with UIMultiplierUpdateExists when one is already pending.
+    // Observing two with no cancel between them means the fact window is missing something —
+    // letting the later value win would produce a confident wrong effectiveAt.
+    const result = reduceB20Lifecycle({
+      facts: [
+        fact('STATE_SNAPSHOT', 0, { newMultiplierWad: mult(ONE) }),
+        fact('UI_MULTIPLIER_UPDATED', 1, {
+          oldMultiplierWad: mult(ONE),
+          newMultiplierWad: mult(ONE * 10n),
+          effectiveAtSeconds: tsAt(100),
+        }),
+        fact('UI_MULTIPLIER_UPDATED', 2, {
+          oldMultiplierWad: mult(ONE),
+          newMultiplierWad: mult(ONE * 3n),
+          effectiveAtSeconds: tsAt(200),
+        }),
+      ],
+      evaluateAtSeconds: tsAt(10),
+      capabilities: COBALT_CAPABILITIES,
+    });
+    expect(result.reasons).toContain('B20_MULTIPLIER_CONTINUITY_BROKEN');
+  });
+
+  it('accepts a schedule that follows a cancel, which is the legal path', () => {
+    const result = reduceB20Lifecycle({
+      facts: [
+        fact('STATE_SNAPSHOT', 0, { newMultiplierWad: mult(ONE) }),
+        fact('UI_MULTIPLIER_UPDATED', 1, {
+          oldMultiplierWad: mult(ONE),
+          newMultiplierWad: mult(ONE * 10n),
+          effectiveAtSeconds: tsAt(100),
+        }),
+        fact('UI_MULTIPLIER_UPDATE_CANCELLED', 2, {
+          cancelledMultiplierWad: mult(ONE * 10n),
+          cancelledEffectiveAtSeconds: tsAt(100),
+        }),
+        fact('UI_MULTIPLIER_UPDATED', 3, {
+          oldMultiplierWad: mult(ONE),
+          newMultiplierWad: mult(ONE * 3n),
+          effectiveAtSeconds: tsAt(200),
+        }),
+      ],
+      evaluateAtSeconds: tsAt(10),
+      capabilities: COBALT_CAPABILITIES,
+    });
+    expect(result.reasons).not.toContain('B20_MULTIPLIER_CONTINUITY_BROKEN');
+    expect(result.pendingMultiplierWad).toBe(ONE * 3n);
+    expect(result.state).toBe('SCHEDULED_PENDING');
+  });
+
   it('reports a broken epoch chain instead of guessing past the hole', () => {
     const result = reduceB20Lifecycle({
       facts: [

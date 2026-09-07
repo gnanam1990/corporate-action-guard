@@ -20,8 +20,12 @@ AFTER    reconcile actual chain and feed state, update the equity ledger, and
 
 ```text
 rawAmount              balanceOf() / the transfer unit
-shareEquivalent        floor(rawAmount * activeMultiplier / 1e18)
-totalReturnTokenPrice  underlyingEquityPrice * activeMultiplier   (what Chainlink publishes)
+shareEquivalent        floor(rawAmount * multiplierWad / 1e18)
+totalReturnTokenPrice  floor(underlyingEquityPrice * multiplierWad / 1e18)
+                       (what Chainlink publishes)
+
+multiplierWad is scaled by 1e18, so both derivations divide it back out. Leaving the
+WAD factor in would make route A exceed route B by exactly 1e18.
 
 valid   route A   rawAmount       * totalReturnTokenPrice
 valid   route B   shareEquivalent * underlyingEquityPrice

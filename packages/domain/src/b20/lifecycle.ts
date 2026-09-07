@@ -18,6 +18,11 @@
  *    `MultiplierUpdated` and the canonical `UIMultiplierUpdated`. They are one business
  *    fact. Folding them is a semantic step, kept strictly separate from deduplication by
  *    event identity — two genuine updates to the same value must both survive.
+ * 4. **A schedule cannot replace a live schedule.** `updateUIMultiplier` reverts with
+ *    `UIMultiplierUpdateExists` when one is already pending, so observing two live schedules
+ *    with no cancel between them describes chain state that cannot exist. (The upstream
+ *    events table says otherwise; the interface wins, and the disagreement is recorded in
+ *    docs/base-b20/sources.md.) That is contradictory evidence, not a later value winning.
  *
  * There is no clock in this file. `Date` is banned in this package by lint, and the
  * evaluation timestamp is always an argument, which is what makes replay reproducible.
@@ -303,6 +308,12 @@ export function reduceB20Lifecycle(input: B20LifecycleInput): B20LifecycleResult
       fact.effectiveAtSeconds > at;
 
     if (scheduled) {
+      if (pendingMultiplier !== undefined) {
+        // On chain this reverts. Seeing it means the fact window is missing a cancel, or two
+        // observations came from different branches. Letting the later value win would
+        // produce a confident wrong effectiveAt for the next corporate action.
+        reasons.push('B20_MULTIPLIER_CONTINUITY_BROKEN');
+      }
       pendingMultiplier = fact.newMultiplierWad;
       pendingEffectiveAt = fact.effectiveAtSeconds;
       lastInstantOverride = false;

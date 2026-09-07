@@ -58,12 +58,32 @@ timestamp and never from event arrival.
 
 ## 4. Chainlink normal, paused, off-hours, stale
 
-One `latestRoundData` read produces four distinguishable outcomes, resolved in this order:
-sequencer down or in grace → `SEQUENCER_UNAVAILABLE`; issuer pause → `ISSUER_PAUSED`; invalid
-round (zero or negative answer, `updatedAt` zero or in the future, `answeredInRound` behind
-`roundId`, wrong decimals) → `INVALID_ROUND`; age beyond the action class's limit →
-`EXPECTED_HOLD` only when a declared session policy says so and source state is otherwise
-fresh, else `STALE`. Off-hours is never silently called fresh.
+A price verdict needs **three separate reads**, not one. `latestRoundData` on an equity feed
+knows nothing about the sequencer and nothing about the token's pause state, so a verdict
+derived from it alone would call unsafe data fresh:
+
+| Read                                                   | Answers                                          |
+| ------------------------------------------------------ | ------------------------------------------------ |
+| Chainlink L2 sequencer uptime feed `latestRoundData`   | is the sequencer up, and how long since recovery |
+| B20 token `isPaused(PausableFeature)` and policy state | has the issuer paused this asset's transfers     |
+| Equity feed `latestRoundData` + `decimals`             | the round itself                                 |
+
+Each records its own block, round and observed time. Two reads at incompatible blocks are not
+compared — that is `B20_EVIDENCE_BLOCK_MISMATCH`, not agreement.
+
+The verdict resolves in this order, and the order matters because each earlier condition
+makes the later readings meaningless:
+
+1. sequencer down, or recovered within the grace period → `SEQUENCER_UNAVAILABLE`
+2. issuer or token pause covering this operation → `ISSUER_PAUSED`
+3. invalid round — non-positive answer, `updatedAt` zero or in the future, `answeredInRound`
+   behind `roundId`, decimals differing from the manifest → `INVALID_ROUND`
+4. age beyond the action class's limit → `EXPECTED_HOLD` **only** when a declared session
+   policy explains the hold and every other source is fresh; otherwise `STALE`
+5. otherwise `FRESH`
+
+Off-hours is never silently called fresh, and only `FRESH` is actionable for a money-moving
+decision.
 
 ## 5. Wallet position materialization
 
