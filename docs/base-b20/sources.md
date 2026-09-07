@@ -202,6 +202,28 @@ Consequence for module b20-17: the Sepolia capability probe must treat an unreco
 selector from the activation registry as `REVERTED` with the raw four bytes recorded, never
 as a decode failure and never as "feature not activated".
 
+## Base Sepolia can create a B20 asset
+
+Recorded in `provenance/base-b20/sepolia-capability.json` at Sepolia block 46509021.
+
+The documented gate is `IActivationRegistry.isActivated(bytes32)`, and it could not be used:
+the feature-key encoding is not derivable from the pinned sources. Both `keccak("B20Asset")`
+and the right-padded `bytes32("B20Asset")` return `false` on Base **mainnet**, where B20
+assets demonstrably exist — so the real key is something else, and any value tried would be a
+guess. Reporting a guessed key's answer as a capability would be worse than not asking.
+
+The behavioural probe needs no key. A read-only `eth_call` of `createB20` with
+`variant = ASSET` returns a predicted address rather than reverting with
+`FeatureNotActivated` (`0xb9b2a425`), and `getB20Address` for the same
+`(variant, sender, salt)` returns the identical address while `isB20Initialized` returns
+`false` — so the simulation predicted a creation rather than reporting an existing token.
+
+Module b20-17 is therefore **not blocked**. Nothing has been deployed:
+`contracts/script/DeployBaseSepolia.s.sol` prepares the deployment and runs only when a human
+invokes it with `--broadcast`. The same simulation was run against Base mainnet purely to
+compare behaviour, as a read-only `eth_call`; no transaction was broadcast to chain 8453 and
+no write path to it exists in this repository.
+
 ## Deliberate gaps
 
 | Unknown                                                  | Why it is still unknown                                             | How it gets resolved                                                                                                                             |

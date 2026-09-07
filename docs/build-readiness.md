@@ -18,7 +18,7 @@ The honest inventory. A module is `IMPLEMENTED` only when its code exists in thi
 repository and its own gates have been run. Being described in the prompt pack is not
 evidence that anything exists.
 
-**37 implemented · 1 partial · 0 blocked · 21 absent**, of 59 modules.
+**41 implemented · 1 partial · 0 blocked · 17 absent**, of 59 modules.
 
 ## Status
 
@@ -63,10 +63,10 @@ evidence that anything exists.
 | b20-12 | Valuation engine and invariant proof surface | **IMPLEMENTED** | Valuation engine plus the derivation surface: every step recomputable by hand, route B labelled derived not corroborating, and the forbidden route shown computed and marked rejected |
 | b20-13 | B20 reconciliation state machine | **IMPLEMENTED** | packages/reconciler/b20-state-machine: enumerated legal transitions, no path from CONFLICT to VERIFIED, and a named path away from VERIFIED for each of 11 ways evidence can be absent |
 | b20-14 | Integration Conformance Lab and mutation corpus | **IMPLEMENTED** | packages/conformance: 15 offline scenarios, an adapter contract with no number in a value position, and 8 mutants each killed by its target scenario. A generic error is not a pass. |
-| b20-15 | B20 operation model and preflight service v2 | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
-| b20-16 | Versioned B20 EIP-712 receipt and replay protection | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
-| b20-17 | Base Sepolia B20 fixture and capability gate | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
-| b20-18 | B20GuardAdapter and protected vault | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-15 | B20 operation model and preflight service v2 | **IMPLEMENTED** | Per-action-class evidence matrix in packages/domain; durable intent persisted before the decision, with 8-way concurrency proven against real PostgreSQL and a decided intent made immutable by trigger |
+| b20-16 | Versioned B20 EIP-712 receipt and replay protection | **IMPLEMENTED** | Separate B20 EIP-712 struct and domain; every one of 16 bound fields mutation-tested; issuance re-reads inside a bounded window and refuses to sign anything but a fresh ALLOW |
+| b20-17 | Base Sepolia B20 fixture and capability gate | **IMPLEMENTED** | Sepolia B20 creation confirmed available by read-only createB20 simulation at block 46509021 (isActivated could not be used: the feature key is not derivable). Local B20FixtureAsset with a toggleable ERC-8056 surface; deploy script written, nothing broadcast. |
+| b20-18 | B20GuardAdapter and protected vault | **IMPLEMENTED** | B20GuardAdapter re-reads multiplier, pending schedule and pause on chain; B20ProtectedVault holds raw units only. 32 Foundry tests including a 512-run solvency fuzz and a passing test asserting the direct-transfer bypass exists. |
 | b20-19 | Fastify /v1/b20 API and OpenAPI contract | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
 | b20-20 | Base worker ingestion, reconciliation, backfill | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
 | b20-21 | SDK, CLI and authenticated webhooks for B20 | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |

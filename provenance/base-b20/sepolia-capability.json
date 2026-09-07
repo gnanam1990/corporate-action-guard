@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "kind": "b20-sepolia-capability-record",
+  "observedAt": "2026-09-07T13:05:31.426351Z",
+  "chainId": 84532,
+  "rpcEndpointId": "sepolia.base.org",
+  "observedAtBlock": "46509021",
+  "question": "Can this product create a native B20 ASSET fixture on Base Sepolia?",
+  "answer": "YES",
+  "method": [
+    "eth_call (read-only simulation, no transaction broadcast) of IB20Factory.createB20 with",
+    "variant=ASSET(0), a fixed salt, and an ABI-encoded B20AssetCreateParams(version=1, name,",
+    "symbol, initialAdmin, decimals=8). A variant that is not activated reverts with",
+    "FeatureNotActivated(bytes32) (selector 0xb9b2a425); this call returned an address instead.",
+    "Cross-checked against IB20Factory.getB20Address for the same (variant, sender, salt),",
+    "which returned the identical address, and against isB20Initialized, which returned false",
+    "\u2014 confirming the simulation predicted a creation rather than reporting an existing token."
+  ],
+  "predictedAddress": "0xb200000000000000000000cc69885fda6bcc1a4a",
+  "evidence": {
+    "createB20SimulationReverted": false,
+    "getB20AddressMatchesSimulation": true,
+    "predictedAddressAlreadyInitialized": false
+  },
+  "whyIsActivatedWasNotUsed": [
+    "IActivationRegistry.isActivated(bytes32) is the documented gate, but the feature-key",
+    "encoding is not derivable from the pinned base-std sources. keccak(\"B20Asset\") and the",
+    "right-padded bytes32(\"B20Asset\") both return false on Base MAINNET, where B20 assets",
+    "demonstrably exist \u2014 so the key is something else and any value we tried would be a guess.",
+    "Guessing a key and reporting its answer as a capability would be worse than not asking.",
+    "The behavioural probe above needs no key and answers the question directly."
+  ],
+  "deploymentAuthorization": "NOT AUTHORIZED. Nothing has been deployed. contracts/script/DeployBaseSepolia.s.sol prepares the deployment and runs only when a human invokes it with --broadcast.",
+  "mainnetBoundary": "The same simulation was run against Base mainnet as a read-only eth_call to compare behaviour. No transaction was broadcast to chain 8453 and no write path to it exists in this repository."
+}

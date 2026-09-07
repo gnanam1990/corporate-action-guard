@@ -239,26 +239,26 @@
     {
       "id": "b20-15",
       "name": "B20 operation model and preflight service v2",
-      "status": "ABSENT",
-      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+      "status": "IMPLEMENTED",
+      "note": "Per-action-class evidence matrix in packages/domain; durable intent persisted before the decision, with 8-way concurrency proven against real PostgreSQL and a decided intent made immutable by trigger"
     },
     {
       "id": "b20-16",
       "name": "Versioned B20 EIP-712 receipt and replay protection",
-      "status": "ABSENT",
-      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+      "status": "IMPLEMENTED",
+      "note": "Separate B20 EIP-712 struct and domain; every one of 16 bound fields mutation-tested; issuance re-reads inside a bounded window and refuses to sign anything but a fresh ALLOW"
     },
     {
       "id": "b20-17",
       "name": "Base Sepolia B20 fixture and capability gate",
-      "status": "ABSENT",
-      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+      "status": "IMPLEMENTED",
+      "note": "Sepolia B20 creation confirmed available by read-only createB20 simulation at block 46509021 (isActivated could not be used: the feature key is not derivable). Local B20FixtureAsset with a toggleable ERC-8056 surface; deploy script written, nothing broadcast."
     },
     {
       "id": "b20-18",
       "name": "B20GuardAdapter and protected vault",
-      "status": "ABSENT",
-      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+      "status": "IMPLEMENTED",
+      "note": "B20GuardAdapter re-reads multiplier, pending schedule and pause on chain; B20ProtectedVault holds raw units only. 32 Foundry tests including a 512-run solvency fuzz and a passing test asserting the direct-transfer bypass exists."
     },
     {
       "id": "b20-19",

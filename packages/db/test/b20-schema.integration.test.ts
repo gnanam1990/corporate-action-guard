@@ -81,6 +81,7 @@ describe('the migration applies on top of the existing schema', () => {
       'b20_ingest_cursors',
       'b20_multiplier_epochs',
       'b20_pending_schedules',
+      'b20_preflight_intents',
     ]);
   });
 
