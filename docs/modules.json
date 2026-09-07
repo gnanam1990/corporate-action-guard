@@ -1,6 +1,6 @@
 {
-  "$comment": "Single source of truth for module status. docs/build-readiness.md is GENERATED from this file by scripts/generate-readiness.mjs, and CI fails if the two disagree. A hand-maintained status table drifts silently \u2014 this one did, for eleven commits, because a formatter realigned its columns and every subsequent string edit no-opped without complaint.",
-  "recordedAt": "2026-09-05",
+  "$comment": "Single source of truth for module status. docs/build-readiness.md is GENERATED from this file by scripts/generate-readiness.mjs, and CI fails if the two disagree. A hand-maintained status table drifts silently — this one did, for eleven commits, because a formatter realigned its columns and every subsequent string edit no-opped without complaint. Modules 00-23 are the X Layer product; ids prefixed b20- are the Base B20 Equity Integrity Layer extension sequenced in docs/base-b20/implementation-sequence.md.",
+  "recordedAt": "2026-09-07",
   "modules": [
     {
       "id": "00",
@@ -145,6 +145,216 @@
       "name": "Final independent audit",
       "status": "ABSENT",
       "note": "The repository contains an internal review only. No independent security audit has been performed"
+    },
+    {
+      "id": "b20-00",
+      "name": "B20 repository audit and gap map",
+      "status": "IMPLEMENTED",
+      "note": "docs/base-b20 baseline, reuse/gap map, risk register, sequence; no product source touched"
+    },
+    {
+      "id": "b20-01",
+      "name": "B20 product contract and architecture freeze",
+      "status": "IMPLEMENTED",
+      "note": "Product contract, invariants, system context, component map, data flows, ADRs 0005-0008"
+    },
+    {
+      "id": "b20-02",
+      "name": "Official interface and capability provenance gate",
+      "status": "IMPLEMENTED",
+      "note": "base-std pinned at be6d0450; 10 official assets and 13 Chainlink feeds captured and live-verified at Base block 50993686; Cobalt/ERC-8056 measured NOT_DIALED"
+    },
+    {
+      "id": "b20-03",
+      "name": "B20 domain quantities and lifecycle types",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-04",
+      "name": "Typed Base configuration and safety gates",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-05",
+      "name": "Verified B20 asset registry",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-06",
+      "name": "Base B20 reader and reorg-safe indexer",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-07",
+      "name": "Chainlink tokenized-equity and sequencer reader",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-08",
+      "name": "Append-only Base evidence schema and projections",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-09",
+      "name": "Temporal B20 lifecycle reducer",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-10",
+      "name": "Corporate-action correlator and classification boundary",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-11",
+      "name": "Brokerage-grade equity position ledger",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-12",
+      "name": "Valuation engine and invariant proof surface",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-13",
+      "name": "B20 reconciliation state machine",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-14",
+      "name": "Integration Conformance Lab and mutation corpus",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-15",
+      "name": "B20 operation model and preflight service v2",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-16",
+      "name": "Versioned B20 EIP-712 receipt and replay protection",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-17",
+      "name": "Base Sepolia B20 fixture and capability gate",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-18",
+      "name": "B20GuardAdapter and protected vault",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-19",
+      "name": "Fastify /v1/b20 API and OpenAPI contract",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-20",
+      "name": "Base worker ingestion, reconciliation, backfill",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-21",
+      "name": "SDK, CLI and authenticated webhooks for B20",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-22",
+      "name": "Read-only MCP server for agent integrations",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-23",
+      "name": "Optional x402 access for premium artifacts",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-24",
+      "name": "B20 interface foundation and application shell",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-25",
+      "name": "B20 operations overview and source health",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-26",
+      "name": "Asset detail, quantity math, evidence inspector",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-27",
+      "name": "Operations, incidents and reconciliation workbench",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-28",
+      "name": "Conformance and fault-injection lab",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-29",
+      "name": "Evidence ledger, exports and integration onboarding",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-30",
+      "name": "B20 observability, SLOs and fault injection",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-31",
+      "name": "B20 security, privacy and adversarial review",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-32",
+      "name": "B20 CI, containers, migrations and release readiness",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-33",
+      "name": "B20 end-to-end proof and demo artifacts",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+    },
+    {
+      "id": "b20-34",
+      "name": "Pilot packaging and final independent audit",
+      "status": "ABSENT",
+      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
     }
   ]
 }

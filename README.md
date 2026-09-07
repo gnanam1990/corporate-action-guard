@@ -14,8 +14,14 @@ AWS KMS custody and the repository exercises a verified backup/restore drill, bu
 cannot be called audited or production-ready: production scheduling semantics are
 unpublished, monitoring/retention are not deployed, and no external party has reviewed it.
 
+A second product line, the **B20 Equity Integrity Layer**, extends the same engine to
+Coinbase Tokenized Stocks on Base. It is under construction: the provenance gate is built and
+its findings are recorded, and no Base product code exists yet. Nothing about Base is claimed
+beyond what [`docs/base-b20/sources.md`](docs/base-b20/sources.md) shows was measured.
+
 - [`docs/build-readiness.md`](docs/build-readiness.md) — module-by-module inventory
 - [`docs/final-audit.md`](docs/final-audit.md) — claim-to-evidence matrix, PROVEN vs NOT PROVEN
+- [`docs/base-b20/`](docs/base-b20/) — the Base B20 extension: contract, invariants, provenance
 
 ---
 
@@ -130,7 +136,10 @@ Full instructions, ports, and toolchain notes: [`docs/development.md`](docs/deve
 | [`docs/architecture/system-context.md`](docs/architecture/system-context.md) | Actors, trust zones, per-boundary timeout/retry/fail direction |
 | [`docs/architecture/component-map.md`](docs/architecture/component-map.md)   | Layers, ownership, frozen contracts                            |
 | [`docs/architecture/data-flow.md`](docs/architecture/data-flow.md)           | Six traced flows from discovery to replay                      |
-| [`docs/architecture/decisions/`](docs/architecture/decisions/)               | ADRs 0001–0003                                                 |
+| [`docs/architecture/decisions/`](docs/architecture/decisions/)               | ADRs 0001–0008                                                 |
+| [`docs/base-b20/product-contract.md`](docs/base-b20/product-contract.md)     | B20 semantics, outcomes, guarantee boundary                    |
+| [`docs/base-b20/invariants.md`](docs/base-b20/invariants.md)                 | Every B20 invariant with its reason code                       |
+| [`docs/base-b20/sources.md`](docs/base-b20/sources.md)                       | Where every Base address and capability came from              |
 | [`docs/build-readiness.md`](docs/build-readiness.md)                         | What exists, what is absent, what is blocked                   |
 | [`docs/module-ownership.md`](docs/module-ownership.md)                       | Lane assignment and change control                             |
 
