@@ -47,13 +47,13 @@ What the B20 Equity Integrity Layer needs, against what
 
 ## Contracts
 
-| Capability                          | Status               | Evidence / what changes                                                                                             |
-| ----------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Receipt-verifying adapter           | REUSABLE_WITH_CHANGE | `contracts/src/ActionGuardAdapter.sol` is deployed on X Layer testnet. `B20GuardAdapter` is a sibling, not an edit. |
-| Protected vault                     | REUSABLE_WITH_CHANGE | `contracts/src/ProtectedVault.sol`. Same shape for a B20 test asset.                                                |
-| TESTNET FIXTURE asset               | REUSABLE_WITH_CHANGE | `contracts/src/fixtures/FixtureAsset.sol`. A B20 fixture must expose the _B20_ surface.                             |
-| Golden vectors shared TS/Solidity   | IMPLEMENTED          | `packages/receipts/vectors`, `contracts/test/GoldenVectors.t.sol`. B20 receipts get their own set.                  |
-| **Native Base Sepolia B20 fixture** | BLOCKED              | Verified by probing chain 84532's factory and activation registry. Unprobed as of this map.                         |
+| Capability                          | Status      | Evidence / what changes                                                                                                                                     |
+| ----------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Receipt-verifying adapter           | IMPLEMENTED | `contracts/src/B20GuardAdapter.sol`, a sibling of the deployed X Layer adapter. Re-reads the multiplier, the pending schedule and the pause state on chain. |
+| Protected vault                     | IMPLEMENTED | `contracts/src/B20ProtectedVault.sol`. Raw units only; `sharesOf` is a view so nothing stores a share count the next corporate action invalidates.          |
+| TESTNET FIXTURE asset               | IMPLEMENTED | `contracts/src/fixtures/B20FixtureAsset.sol`, with a toggleable ERC-8056 surface so the adapter is tested both with and without it.                         |
+| Golden vectors shared TS/Solidity   | IMPLEMENTED | `packages/receipts/vectors`, `contracts/test/GoldenVectors.t.sol`. B20 receipts get their own set.                                                          |
+| **Native Base Sepolia B20 fixture** | BLOCKED     | Verified by probing chain 84532's factory and activation registry. Unprobed as of this map.                                                                 |
 
 ## Runtime, SDK and UI
 
