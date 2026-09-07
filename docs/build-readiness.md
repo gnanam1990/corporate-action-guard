@@ -18,7 +18,7 @@ The honest inventory. A module is `IMPLEMENTED` only when its code exists in thi
 repository and its own gates have been run. Being described in the prompt pack is not
 evidence that anything exists.
 
-**25 implemented · 1 partial · 0 blocked · 33 absent**, of 59 modules.
+**28 implemented · 1 partial · 0 blocked · 30 absent**, of 59 modules.
 
 ## Status
 
@@ -51,9 +51,9 @@ evidence that anything exists.
 | b20-00 | B20 repository audit and gap map | **IMPLEMENTED** | docs/base-b20 baseline, reuse/gap map, risk register, sequence; no product source touched |
 | b20-01 | B20 product contract and architecture freeze | **IMPLEMENTED** | Product contract, invariants, system context, component map, data flows, ADRs 0005-0008 |
 | b20-02 | Official interface and capability provenance gate | **IMPLEMENTED** | base-std pinned at be6d0450; 10 official assets and 13 Chainlink feeds captured and live-verified at Base block 50993686; Cobalt/ERC-8056 measured NOT_DIALED |
-| b20-03 | B20 domain quantities and lifecycle types | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
-| b20-04 | Typed Base configuration and safety gates | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
-| b20-05 | Verified B20 asset registry | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-03 | B20 domain quantities and lifecycle types | **IMPLEMENTED** | Branded raw/share/multiplier/price types with basis, floor arithmetic with reported remainder, 38 B20 reason codes, temporal lifecycle reducer; 4 mutants killed |
+| b20-04 | Typed Base configuration and safety gates | **IMPLEMENTED** | Base env schema with no mainnet signer field, five-condition Sepolia write gate, dependency-aware feature flags; an X Layer deployment starts unchanged |
+| b20-05 | Verified B20 asset registry | **IMPLEMENTED** | Identity is (chainId,address) confirmed by official list + isB20Initialized + live reads; prefix refused, rename opens review, manifest parsed strictly |
 | b20-06 | Base B20 reader and reorg-safe indexer | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
 | b20-07 | Chainlink tokenized-equity and sequencer reader | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
 | b20-08 | Append-only Base evidence schema and projections | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
