@@ -18,7 +18,7 @@ The honest inventory. A module is `IMPLEMENTED` only when its code exists in thi
 repository and its own gates have been run. Being described in the prompt pack is not
 evidence that anything exists.
 
-**41 implemented · 1 partial · 0 blocked · 17 absent**, of 59 modules.
+**41 implemented · 2 partial · 0 blocked · 16 absent**, of 59 modules.
 
 ## Status
 
@@ -81,7 +81,7 @@ evidence that anything exists.
 | b20-30 | B20 observability, SLOs and fault injection | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
 | b20-31 | B20 security, privacy and adversarial review | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
 | b20-32 | B20 CI, containers, migrations and release readiness | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
-| b20-33 | B20 end-to-end proof and demo artifacts | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-33 | B20 end-to-end proof and demo artifacts | **PARTIAL** | End-to-end proof and the /b20 split replay are built and reproducible from a clean checkout (pnpm b20:proof). Demo script and shot list written. Still absent: the architecture and sequence diagrams, the recorded video, and the Base Batches application draft. |
 | b20-34 | Pilot packaging and final independent audit | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
 
 ## Blocked items
