@@ -1,3 +1,4 @@
+import { validateBaseEnv } from './base-b20.js';
 import { envSchema, PUBLIC_KEYS, SERVER_SECRET_KEYS, type Env } from './schema.js';
 
 export class ConfigError extends Error {
@@ -93,6 +94,17 @@ export function loadEnv(source: Record<string, string | undefined> = process.env
   }
 
   assertNoMainnetSigner(parsed.data);
+
+  // Base configuration is validated in the same pass, so a deployment cannot start with a
+  // Base surface half-enabled and discover it during an incident.
+  const baseIssues = validateBaseEnv(parsed.data, parsed.data.NODE_ENV);
+  if (baseIssues.length > 0) {
+    throw new ConfigError(
+      `Invalid Base B20 configuration (${baseIssues.length} problem(s)).`,
+      baseIssues,
+    );
+  }
+
   return parsed.data;
 }
 

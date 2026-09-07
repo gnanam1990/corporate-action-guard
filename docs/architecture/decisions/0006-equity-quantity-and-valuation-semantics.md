@@ -12,9 +12,15 @@ two of the three are routinely confused:
 
 ```text
 rawAmount             balanceOf() / the transfer unit. Never changed by a corporate action.
-shareEquivalent       floor(rawAmount * multiplier / 1e18). What a holder thinks they own.
-totalReturnPrice      underlyingEquityPrice * multiplier. What Chainlink publishes.
+shareEquivalent       floor(rawAmount * multiplierWad / 1e18). What a holder thinks they own.
+totalReturnPrice      floor(underlyingEquityPrice * multiplierWad / 1e18). What Chainlink
+                      publishes.
 ```
+
+`multiplierWad` is scaled by `WAD_PRECISION` (1e18), so both derivations divide it back out.
+Writing the price as a bare `underlyingEquityPrice * multiplier` would leave the WAD factor
+in, and route A would exceed route B by exactly 1e18 — a scaling bug wearing the costume of
+the semantic bug this ADR is about.
 
 Two errors follow, and neither reverts:
 
@@ -71,8 +77,9 @@ evidence. Disagreement beyond it is `CONFLICT`, not an average.
 ### `underlyingEquityPrice` is currently derived, and labelled as such
 
 Chainlink publishes only the total-return price on Base. The underlying price is therefore
-`totalReturnPrice / multiplier`, which is a derivation from one source, not a second
-independent source. It is labelled `DERIVED_FROM_TOTAL_RETURN` and must not be presented as
+`floor(totalReturnPrice * 1e18 / multiplierWad)`, which is a derivation from one source, not
+a second independent source — and it floors, so route B carries that loss on top of the one
+in `shareEquivalent`. It is labelled `DERIVED_FROM_TOTAL_RETURN` and must not be presented as
 corroboration of Route A. Route B is genuinely independent only when a real underlying feed
 exists.
 

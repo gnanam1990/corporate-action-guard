@@ -167,20 +167,20 @@
     {
       "id": "b20-03",
       "name": "B20 domain quantities and lifecycle types",
-      "status": "ABSENT",
-      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+      "status": "IMPLEMENTED",
+      "note": "Branded raw/share/multiplier/price types with basis, floor arithmetic with reported remainder, 38 B20 reason codes, temporal lifecycle reducer; 4 mutants killed"
     },
     {
       "id": "b20-04",
       "name": "Typed Base configuration and safety gates",
-      "status": "ABSENT",
-      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+      "status": "IMPLEMENTED",
+      "note": "Base env schema with no mainnet signer field, five-condition Sepolia write gate, dependency-aware feature flags; an X Layer deployment starts unchanged"
     },
     {
       "id": "b20-05",
       "name": "Verified B20 asset registry",
-      "status": "ABSENT",
-      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+      "status": "IMPLEMENTED",
+      "note": "Identity is (chainId,address) confirmed by official list + isB20Initialized + live reads; prefix refused, rename opens review, manifest parsed strictly"
     },
     {
       "id": "b20-06",

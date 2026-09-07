@@ -147,6 +147,61 @@ guessing. A hold that is expected under a declared session policy and a feed tha
 stopped publishing produce the same `updatedAt`; only an explicit, versioned session policy
 plus fresh source state can distinguish them, and neither may be silently called "fresh".
 
+## Upstream documentation that disagrees with the upstream interface
+
+Three places where `base/base-std` at `be6d0450` contradicts itself. The snapshot in
+`provenance/base-b20/base-std/` is **verbatim and stays verbatim** — editing it would change
+the recorded hashes and destroy the chain it exists to establish. What follows is how this
+product resolves each, and in every case the resolution is the same shape: trust the Solidity
+interface over the prose, and capability-detect rather than assume.
+
+### A scheduled update cannot replace a live pending one
+
+`docs/reference/events.md` says `UIMultiplierUpdateCancelled` is emitted by
+`cancelUIMultiplierUpdate` _and_ by `updateUIMultiplier` "when it clears a live pending
+update". But `IB20Asset.updateUIMultiplier` documents that it **reverts** with
+`UIMultiplierUpdateExists` when a live pending update already exists.
+
+Both cannot be true. The interface is the machine contract, so this product takes it:
+
+- A scheduled update while one is already pending **reverts**. It cannot replace.
+- The only thing that clears a pending update is `cancelUIMultiplierUpdate`, or the
+  deprecated instant `updateMultiplier`, whose own `@notice` says it "cancels any live pending
+  update without a scheduling window".
+
+The consequence is a real one for the lifecycle reducer: observing two live scheduled updates
+with no cancel between them describes a chain state that cannot exist. That is contradictory
+evidence, and the reducer returns `B20_MULTIPLIER_CONTINUITY_BROKEN` with both event ids
+rather than letting the later one silently overwrite the earlier.
+
+Upstream is aware of an adjacent conflict and says so: `events.md` carries a footnote
+flagging that the `MultiplierUpdated` event's own doc-comment names `updateUIMultiplier` as
+an emitter while `updateUIMultiplier`'s `@notice` does not. This product folds legacy and
+canonical emissions by transaction **and value**, which is correct under either reading.
+
+### `SEIZE_HOLDER_POLICY` does not exist
+
+`docs/reference/constants.md` lists a `SEIZE_HOLDER_POLICY` scope. `IB20.sol` and
+`B20Constants.sol` both expose `SEIZE_EXEMPT_POLICY` instead, and `seizeWithMemo`'s own
+`@dev` lines consult `SEIZE_EXEMPT_POLICY`. The documented name is not on the interface, so
+querying it would consult a scope the token does not implement.
+
+Not on this product's path — nothing here calls a seize policy — but recorded because a
+constants table that names a non-existent scope is exactly the kind of thing an integrator
+copies.
+
+### `AlreadyDeactivated` is documented but not declared
+
+`IActivationRegistry.deactivate` documents reverting with `AlreadyDeactivated(bytes32)`. The
+interface declares `Unauthorized`, `AlreadyActivated`, `FeatureNotActivated`,
+`DelegateCallNotAllowed` and `StaticCallNotAllowed` — and no `AlreadyDeactivated`. A typed
+Solidity consumer cannot reference it, and a decoder keyed on the declared errors will not
+recognise it if the implementation does emit it.
+
+Consequence for module b20-17: the Sepolia capability probe must treat an unrecognised revert
+selector from the activation registry as `REVERTED` with the raw four bytes recorded, never
+as a decode failure and never as "feature not activated".
+
 ## Deliberate gaps
 
 | Unknown                                                  | Why it is still unknown                                             | How it gets resolved                                                                                                                             |
