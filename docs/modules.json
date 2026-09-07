@@ -239,14 +239,14 @@
     {
       "id": "b20-15",
       "name": "B20 operation model and preflight service v2",
-      "status": "ABSENT",
-      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+      "status": "IMPLEMENTED",
+      "note": "Per-action-class evidence matrix in packages/domain; durable intent persisted before the decision, with 8-way concurrency proven against real PostgreSQL and a decided intent made immutable by trigger"
     },
     {
       "id": "b20-16",
       "name": "Versioned B20 EIP-712 receipt and replay protection",
-      "status": "ABSENT",
-      "note": "Not started. Sequenced in docs/base-b20/implementation-sequence.md"
+      "status": "IMPLEMENTED",
+      "note": "Separate B20 EIP-712 struct and domain; every one of 16 bound fields mutation-tested; issuance re-reads inside a bounded window and refuses to sign anything but a fresh ALLOW"
     },
     {
       "id": "b20-17",
