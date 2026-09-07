@@ -20,19 +20,18 @@
  * evaluation time — arrives as an argument.
  */
 
-/** The action classes whose evidence requirements differ. Data-driven and versioned. */
-export const ACTION_CLASSES = [
-  'DISPLAY_POSITION',
-  'QUOTE',
-  'TRANSFER',
-  'VAULT_DEPOSIT',
-  'VAULT_WITHDRAW',
-  'COLLATERAL_VALUE',
-  'LIQUIDATION_CHECK',
-  'INDEX_REBALANCE',
-  'AGENT_ORDER',
-] as const;
-export type ActionClass = (typeof ACTION_CLASSES)[number];
+/**
+ * The action classes whose evidence requirements differ.
+ *
+ * Re-exported from `@cag/domain` rather than declared again here. Two lists would drift, and
+ * the failure mode is silent: a class added to the preflight matrix with no freshness rule
+ * would fall back to whatever the lookup returned for `undefined`.
+ */
+export {
+  B20_ACTION_CLASSES as ACTION_CLASSES,
+  type B20ActionClass as ActionClass,
+} from '@cag/domain';
+import type { B20ActionClass } from '@cag/domain';
 
 export const PRICE_VERDICTS = [
   'FRESH',
@@ -57,7 +56,7 @@ export type PriceVerdict = (typeof PRICE_VERDICTS)[number];
 export interface FreshnessPolicy {
   readonly version: string;
   readonly rules: Readonly<
-    Record<ActionClass, { maxAgeSeconds: bigint; allowExpectedHold: boolean }>
+    Record<B20ActionClass, { maxAgeSeconds: bigint; allowExpectedHold: boolean }>
   >;
 }
 
@@ -117,7 +116,7 @@ export interface FreshnessInput {
   readonly sequencerGraceSeconds: bigint;
   /** Decimals recorded in the reviewed feed manifest, to compare against the live read. */
   readonly manifestDecimals: number;
-  readonly action: ActionClass;
+  readonly action: B20ActionClass;
   readonly policy?: FreshnessPolicy;
 }
 
@@ -155,6 +154,14 @@ export interface FreshnessResult {
 export function evaluateFreshness(input: FreshnessInput): FreshnessResult {
   const policy = input.policy ?? DEFAULT_FRESHNESS_POLICY;
   const rule = policy.rules[input.action];
+  if (rule === undefined) {
+    // Only reachable if an action class exists in the shared list with no freshness rule.
+    // Refusing is the safe direction: an unknown class must not inherit a permissive default.
+    throw new RangeError(
+      `no freshness rule for action class ${input.action}; every class in B20_ACTION_CLASSES ` +
+        'must have one',
+    );
+  }
   const age = input.evaluateAtSeconds - input.round.updatedAt;
 
   const result = (verdict: PriceVerdict, detail: string, actionable = false): FreshnessResult => ({

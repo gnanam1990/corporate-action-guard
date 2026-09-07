@@ -230,3 +230,19 @@ export {
   type QuantityDerivation,
   type ValuationDerivation,
 } from './b20/derivation.js';
+
+export {
+  B20_ACTION_CLASSES,
+  B20_DECISIONS,
+  DEFAULT_B20_POLICY,
+  canonicalizeB20Operation,
+  evaluateB20Preflight,
+  type B20ActionClass,
+  type B20Decision,
+  type B20EvidenceRequirement,
+  type B20Operation,
+  type B20PolicyMatrix,
+  type B20PreflightEvidence,
+  type B20PreflightInput,
+  type B20PreflightResult,
+} from './b20/preflight.js';

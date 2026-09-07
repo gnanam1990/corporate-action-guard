@@ -57,3 +57,18 @@ export {
   type SourceHealthRow,
 } from './queries.js';
 export { replayAsset, type ReplayEvent, type ReplayResult } from './replay.js';
+
+/* Base B20 — additive. See ADR 0005. */
+export {
+  CLAIM_OUTCOMES,
+  IdempotencyConflictError,
+  attachReceipt,
+  claimPreflightIntent,
+  hashCanonicalOperation,
+  readPreflightIntent,
+  recordPreflightDecision,
+  type ClaimOutcome,
+  type ClaimResult,
+  type PreflightIntentInput,
+  type StoredDecision,
+} from './b20-idempotency.js';
