@@ -11,3 +11,8 @@ contracts/deployments/
 # disagreeing over the same files produces an unwinnable check.
 *.sol
 docs/build-readiness.md
+
+# Verbatim upstream copies with recorded sha256 hashes. Reformatting them would change the
+# hashes and destroy the provenance chain they exist to establish. Refresh by re-cloning
+# base/base-std at a new commit, never by editing in place.
+provenance/base-b20/base-std/

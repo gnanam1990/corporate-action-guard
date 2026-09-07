@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "kind": "upstream-source-snapshot",
+  "repository": "https://github.com/base/base-std",
+  "publisher": "Base (Coinbase)",
+  "commit": "be6d0450890e20fc4a739aeaff5e839f234d12a6",
+  "commitDate": "2026-09-03T18:11:45-04:00",
+  "retrievalMethod": "git clone --depth 1 https://github.com/base/base-std.git",
+  "retrievedAt": "2026-09-07T10:21:28.780Z",
+  "license": "MIT — see LICENSE in this directory",
+  "note": "Verbatim copies. Edit nothing here; refresh by re-cloning at a new commit and re-recording every sha256.",
+  "files": [
+    {
+      "path": "LICENSE",
+      "upstreamPath": "LICENSE",
+      "sha256": "0x476e778897d1d1d334e634ef9cffde9fd5b12d41ce93a51a3b9b79914db5c387",
+      "bytes": 1061
+    },
+    {
+      "path": "docs/02_Cobalt_B20Asset_multiplier.md",
+      "upstreamPath": "changelog/02_Cobalt_B20Asset_multiplier.md",
+      "sha256": "0xa385a1d98817d4cd8561de22116394e09fb7a6ac472677f89bb661402ae810cf",
+      "bytes": 26218
+    },
+    {
+      "path": "docs/constants.md",
+      "upstreamPath": "docs/reference/constants.md",
+      "sha256": "0x666231845eb623f3a80096cd6d2877bf6f56a590fe6fdb27ccb4e2b9e604c51b",
+      "bytes": 5870
+    },
+    {
+      "path": "docs/events.md",
+      "upstreamPath": "docs/reference/events.md",
+      "sha256": "0x0292fb05d0b91d9a6d13d247a706edf3887730749afdc81f1525e6325ce12f57",
+      "bytes": 7564
+    },
+    {
+      "path": "docs/multipliers.md",
+      "upstreamPath": "docs/concepts/multipliers.md",
+      "sha256": "0xa83f3412de112c24a0612d5d6a545e941481ff6af2e6cbce56c99408623d49a8",
+      "bytes": 6456
+    },
+    {
+      "path": "src/StdPrecompiles.sol",
+      "upstreamPath": "src/StdPrecompiles.sol",
+      "sha256": "0xb51fda6154c32ef99f26fa56495a265585fbd656eb849f37dfc243f505126a9b",
+      "bytes": 1084
+    },
+    {
+      "path": "src/interfaces/IActivationRegistry.sol",
+      "upstreamPath": "src/interfaces/IActivationRegistry.sol",
+      "sha256": "0xd0db520f242328bb8319c2c2f0983481b2a8da856b26175dfa6ce1451c1f71ea",
+      "bytes": 3706
+    },
+    {
+      "path": "src/interfaces/IB20.sol",
+      "upstreamPath": "src/interfaces/IB20.sol",
+      "sha256": "0x432e93e2c83ed31b4b9ea414d54f23d636119301b3c730e575bb904f43b1b486",
+      "bytes": 35570
+    },
+    {
+      "path": "src/interfaces/IB20Asset.sol",
+      "upstreamPath": "src/interfaces/IB20Asset.sol",
+      "sha256": "0xcf6d94c9eb36c7788f7c43beb29a3ffd0e461f1ba9a834059e0961e7e66e5d06",
+      "bytes": 14826
+    },
+    {
+      "path": "src/interfaces/IB20Factory.sol",
+      "upstreamPath": "src/interfaces/IB20Factory.sol",
+      "sha256": "0x15209e20f635cae06c306b368e4487d0315e02cbedf953c72de4ed9a806dab1f",
+      "bytes": 10026
+    },
+    {
+      "path": "src/interfaces/IERC165.sol",
+      "upstreamPath": "src/interfaces/IERC165.sol",
+      "sha256": "0x80da1194bb8c3544cb4dff6ddbe76d6e3950a8f6404c6d0a4d2e65db01901df4",
+      "bytes": 712
+    },
+    {
+      "path": "src/interfaces/IERC8056.sol",
+      "upstreamPath": "src/interfaces/IERC8056.sol",
+      "sha256": "0x1f593be8b6b2ac5cb17f4ad70c5bba8bf8256de47a41cfca8bfc2e01855aa206",
+      "bytes": 3381
+    },
+    {
+      "path": "src/interfaces/IPolicyRegistry.sol",
+      "upstreamPath": "src/interfaces/IPolicyRegistry.sol",
+      "sha256": "0x6020b9e610ab7d0313069b76f6f6e8d87dd948b66698728f1b4f0fc463e57fbd",
+      "bytes": 15379
+    },
+    {
+      "path": "src/lib/B20Constants.sol",
+      "upstreamPath": "src/lib/B20Constants.sol",
+      "sha256": "0xfc8899167fb155eb695aee7c17cc354e63c730f5e5843771d5d9ffd74b29fa9c",
+      "bytes": 2490
+    }
+  ]
+}

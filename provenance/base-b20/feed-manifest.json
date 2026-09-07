@@ -1,0 +1,316 @@
+{
+  "schemaVersion": 1,
+  "kind": "chainlink-b20-feed-manifest",
+  "observation": {
+    "chainId": 8453,
+    "rpcEndpointId": "mainnet.base.org",
+    "blockNumber": "50993686",
+    "blockHash": "0xabf162b62c2a00469cf7e84b20c28749f5eaa926d5e3281cf7571a2d9c52425b",
+    "blockTimestamp": "1788776719",
+    "confirmationsBehindHead": "200",
+    "observedAt": "2026-09-07T10:32:01.501Z"
+  },
+  "directory": {
+    "url": "https://reference-data-directory.vercel.app/feeds-ethereum-mainnet-base-1.json",
+    "publisher": "Chainlink",
+    "method": "HTTPS GET of the machine-readable feed directory for Base mainnet",
+    "licensing": "Public reference data published by Chainlink Labs.",
+    "retrievedAt": "2026-09-07T10:32:01.501Z",
+    "bodySha256": "0xd7cdd2076d3d198f89b7cbd7b472d63114be61babad2e4f490f97d079b9af25f",
+    "bodyBytes": 247881,
+    "entryCount": 186
+  },
+  "sequencerUptimeFeed": {
+    "chainId": 8453,
+    "proxyAddress": "0xbcf85224fc0756b9fa45aa7892530b47e10b6433",
+    "directoryName": "L2 Sequencer Uptime Status Feed",
+    "answerSemantics": {
+      "0": "SEQUENCER_UP",
+      "1": "SEQUENCER_DOWN"
+    },
+    "source": "https://reference-data-directory.vercel.app/feeds-ethereum-mainnet-base-1.json",
+    "live": {
+      "roundId": "18446744073709551636",
+      "answer": "0",
+      "startedAt": "1782491507",
+      "updatedAt": "1788714199",
+      "answeredInRound": "18446744073709551636"
+    }
+  },
+  "feeds": [
+    {
+      "chainId": 8453,
+      "proxyAddress": "0x787f13dea48db0897cbcdd985de77809d837f988",
+      "directoryName": "Coinbase AAPL",
+      "baseAsset": "AAPL",
+      "quoteAsset": "USD",
+      "directoryDecimals": 8,
+      "heartbeatSeconds": 86400,
+      "deviationThresholdPercent": 0.5,
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "source": "https://reference-data-directory.vercel.app/feeds-ethereum-mainnet-base-1.json",
+      "live": {
+        "decimals": 8,
+        "description": "Coinbase AAPL",
+        "roundId": "36893488147419103373",
+        "answer": "32008000000",
+        "startedAt": "1788551901",
+        "updatedAt": "1788551915",
+        "answeredInRound": "36893488147419103373"
+      }
+    },
+    {
+      "chainId": 8453,
+      "proxyAddress": "0x06a8e4b3abb3b7543d8396fb2b763d22820cb295",
+      "directoryName": "Coinbase AMZN",
+      "baseAsset": "AMZN",
+      "quoteAsset": "USD",
+      "directoryDecimals": 8,
+      "heartbeatSeconds": 86400,
+      "deviationThresholdPercent": 0.5,
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "source": "https://reference-data-directory.vercel.app/feeds-ethereum-mainnet-base-1.json",
+      "live": {
+        "decimals": 8,
+        "description": "Coinbase AMZN",
+        "roundId": "36893488147419103408",
+        "answer": "25769395000",
+        "startedAt": "1788552460",
+        "updatedAt": "1788552475",
+        "answeredInRound": "36893488147419103408"
+      }
+    },
+    {
+      "chainId": 8453,
+      "proxyAddress": "0x408e44f504a7371a345f03a73ddc96a4b48e8aa7",
+      "directoryName": "Coinbase COIN",
+      "baseAsset": "COIN",
+      "quoteAsset": "USD",
+      "directoryDecimals": 8,
+      "heartbeatSeconds": 86400,
+      "deviationThresholdPercent": 0.5,
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "source": "https://reference-data-directory.vercel.app/feeds-ethereum-mainnet-base-1.json",
+      "live": {
+        "decimals": 8,
+        "description": "Coinbase COIN",
+        "roundId": "36893488147419104123",
+        "answer": "18473500000",
+        "startedAt": "1788552086",
+        "updatedAt": "1788552101",
+        "answeredInRound": "36893488147419104123"
+      }
+    },
+    {
+      "chainId": 8453,
+      "proxyAddress": "0x0231cf2635d1e17bb5c2462cc7504ba1fbd61f33",
+      "directoryName": "Coinbase CRCL",
+      "baseAsset": "CRCL",
+      "quoteAsset": "USD",
+      "directoryDecimals": 8,
+      "heartbeatSeconds": 86400,
+      "deviationThresholdPercent": 0.5,
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "source": "https://reference-data-directory.vercel.app/feeds-ethereum-mainnet-base-1.json",
+      "live": {
+        "decimals": 8,
+        "description": "Coinbase CRCL",
+        "roundId": "36893488147419104633",
+        "answer": "10165745000",
+        "startedAt": "1788548568",
+        "updatedAt": "1788548583",
+        "answeredInRound": "36893488147419104633"
+      }
+    },
+    {
+      "chainId": 8453,
+      "proxyAddress": "0x5bf49e0ffa937ce2fff033c739ad7c634c4d34f2",
+      "directoryName": "Coinbase GOOGL",
+      "baseAsset": "GOOGL",
+      "quoteAsset": "USD",
+      "directoryDecimals": 8,
+      "heartbeatSeconds": 86400,
+      "deviationThresholdPercent": 0.5,
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "source": "https://reference-data-directory.vercel.app/feeds-ethereum-mainnet-base-1.json",
+      "live": {
+        "decimals": 8,
+        "description": "Coinbase GOOGL",
+        "roundId": "36893488147419103351",
+        "answer": "33871195000",
+        "startedAt": "1788531867",
+        "updatedAt": "1788531881",
+        "answeredInRound": "36893488147419103351"
+      }
+    },
+    {
+      "chainId": 8453,
+      "proxyAddress": "0xab657c39bac0d5886250d70849e2e3e008f2eecb",
+      "directoryName": "Coinbase INTC",
+      "baseAsset": "INTC",
+      "quoteAsset": "USD",
+      "directoryDecimals": 8,
+      "heartbeatSeconds": 86400,
+      "deviationThresholdPercent": 0.5,
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "source": "https://reference-data-directory.vercel.app/feeds-ethereum-mainnet-base-1.json",
+      "live": {
+        "decimals": 8,
+        "description": "Coinbase INTC",
+        "roundId": "36893488147419104077",
+        "answer": "9561505000",
+        "startedAt": "1788551710",
+        "updatedAt": "1788551725",
+        "answeredInRound": "36893488147419104077"
+      }
+    },
+    {
+      "chainId": 8453,
+      "proxyAddress": "0x6526ae6797a76123638b863aee4dd27ba4e4b27d",
+      "directoryName": "Coinbase META",
+      "baseAsset": "META",
+      "quoteAsset": "USD",
+      "directoryDecimals": 8,
+      "heartbeatSeconds": 86400,
+      "deviationThresholdPercent": 0.5,
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "source": "https://reference-data-directory.vercel.app/feeds-ethereum-mainnet-base-1.json",
+      "live": {
+        "decimals": 8,
+        "description": "Coinbase META",
+        "roundId": "36893488147419103532",
+        "answer": "61523000000",
+        "startedAt": "1788548993",
+        "updatedAt": "1788549007",
+        "answeredInRound": "36893488147419103532"
+      }
+    },
+    {
+      "chainId": 8453,
+      "proxyAddress": "0xeb10a6c9aa7e537aed766c08c35dae35b321b18c",
+      "directoryName": "Coinbase MSFT",
+      "baseAsset": "MSFT",
+      "quoteAsset": "USD",
+      "directoryDecimals": 8,
+      "heartbeatSeconds": 86400,
+      "deviationThresholdPercent": 0.5,
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "source": "https://reference-data-directory.vercel.app/feeds-ethereum-mainnet-base-1.json",
+      "live": {
+        "decimals": 8,
+        "description": "Coinbase MSFT",
+        "roundId": "36893488147419103400",
+        "answer": "49977800000",
+        "startedAt": "1788536292",
+        "updatedAt": "1788536305",
+        "answeredInRound": "36893488147419103400"
+      }
+    },
+    {
+      "chainId": 8453,
+      "proxyAddress": "0xb3ce282cd188b35da0e38d8bc7d58e33173d202a",
+      "directoryName": "Coinbase MSTR",
+      "baseAsset": "MSTR",
+      "quoteAsset": "USD",
+      "directoryDecimals": 8,
+      "heartbeatSeconds": 86400,
+      "deviationThresholdPercent": 0.5,
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "source": "https://reference-data-directory.vercel.app/feeds-ethereum-mainnet-base-1.json",
+      "live": {
+        "decimals": 8,
+        "description": "Coinbase MSTR",
+        "roundId": "36893488147419104539",
+        "answer": "14263235000",
+        "startedAt": "1788557378",
+        "updatedAt": "1788557393",
+        "answeredInRound": "36893488147419104539"
+      }
+    },
+    {
+      "chainId": 8453,
+      "proxyAddress": "0x04689a41629776563e6822f76f2e57d148d28513",
+      "directoryName": "Coinbase NVDA",
+      "baseAsset": "NVDA",
+      "quoteAsset": "USD",
+      "directoryDecimals": 8,
+      "heartbeatSeconds": 86400,
+      "deviationThresholdPercent": 0.5,
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "source": "https://reference-data-directory.vercel.app/feeds-ethereum-mainnet-base-1.json",
+      "live": {
+        "decimals": 8,
+        "description": "Coinbase NVDA",
+        "roundId": "36893488147419103545",
+        "answer": "22995730000",
+        "startedAt": "1788545041",
+        "updatedAt": "1788545055",
+        "answeredInRound": "36893488147419103545"
+      }
+    },
+    {
+      "chainId": 8453,
+      "proxyAddress": "0x388b0dc46c0fb05a74bee0994fa5b02c6fcca2ea",
+      "directoryName": "Coinbase SNDK",
+      "baseAsset": "SNDK",
+      "quoteAsset": "USD",
+      "directoryDecimals": 8,
+      "heartbeatSeconds": 86400,
+      "deviationThresholdPercent": 0.5,
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "source": "https://reference-data-directory.vercel.app/feeds-ethereum-mainnet-base-1.json",
+      "live": {
+        "decimals": 8,
+        "description": "Coinbase SNDK",
+        "roundId": "36893488147419104831",
+        "answer": "173286740000",
+        "startedAt": "1788553038",
+        "updatedAt": "1788553053",
+        "answeredInRound": "36893488147419104831"
+      }
+    },
+    {
+      "chainId": 8453,
+      "proxyAddress": "0x6a634b235903c4ad6376892180d6ff8612e3fa68",
+      "directoryName": "Coinbase SPCX",
+      "baseAsset": "SPCX",
+      "quoteAsset": "USD",
+      "directoryDecimals": 8,
+      "heartbeatSeconds": 86400,
+      "deviationThresholdPercent": 0.5,
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "source": "https://reference-data-directory.vercel.app/feeds-ethereum-mainnet-base-1.json",
+      "live": {
+        "decimals": 8,
+        "description": "Coinbase SPCX",
+        "roundId": "36893488147419104200",
+        "answer": "14810000000",
+        "startedAt": "1788551613",
+        "updatedAt": "1788551627",
+        "answeredInRound": "36893488147419104200"
+      }
+    },
+    {
+      "chainId": 8453,
+      "proxyAddress": "0xfaf869185383a24f8cb00e27bda6b63b9905dcb4",
+      "directoryName": "Coinbase TSLA",
+      "baseAsset": "TSLA",
+      "quoteAsset": "USD",
+      "directoryDecimals": 8,
+      "heartbeatSeconds": 86400,
+      "deviationThresholdPercent": 0.5,
+      "priceBasis": "TOTAL_RETURN_TOKEN_PRICE",
+      "source": "https://reference-data-directory.vercel.app/feeds-ethereum-mainnet-base-1.json",
+      "live": {
+        "decimals": 8,
+        "description": "Coinbase TSLA",
+        "roundId": "36893488147419103612",
+        "answer": "35333495000",
+        "startedAt": "1788552142",
+        "updatedAt": "1788552157",
+        "answeredInRound": "36893488147419103612"
+      }
+    }
+  ],
+  "pairingPolicy": "REVIEWED_EXPLICIT_ONLY"
+}

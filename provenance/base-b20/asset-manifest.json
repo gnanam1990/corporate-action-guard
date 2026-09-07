@@ -1,0 +1,1142 @@
+{
+  "schemaVersion": 1,
+  "kind": "b20-official-asset-manifest",
+  "observation": {
+    "chainId": 8453,
+    "rpcEndpointId": "mainnet.base.org",
+    "blockNumber": "50993686",
+    "blockHash": "0xabf162b62c2a00469cf7e84b20c28749f5eaa926d5e3281cf7571a2d9c52425b",
+    "blockTimestamp": "1788776719",
+    "confirmationsBehindHead": "200",
+    "observedAt": "2026-09-07T10:32:01.501Z"
+  },
+  "officialList": {
+    "url": "https://www.base.org/stocks",
+    "publisher": "Base (Coinbase)",
+    "method": "HTTPS GET; token addresses parsed from the per-row BaseScan links",
+    "licensing": "Public webpage; addresses are factual identifiers, not copyrightable content.",
+    "retrievedAt": "2026-09-07T10:32:01.501Z",
+    "bodySha256": "0x7604a7564c32fc5fd4462f3294bb4200b471124d57b332bb7737337ce2530f9e",
+    "bodyBytes": 302892,
+    "parsedAssetCount": 10
+  },
+  "precompiles": {
+    "b20Factory": {
+      "address": "0xb20f000000000000000000000000000000000000",
+      "source": "https://github.com/base/base-std/blob/be6d0450890e20fc4a739aeaff5e839f234d12a6/src/StdPrecompiles.sol",
+      "liveProbe": "RESPONDS"
+    },
+    "policyRegistry": {
+      "address": "0x8453000000000000000000000000000000000002",
+      "source": "https://github.com/base/base-std/blob/be6d0450890e20fc4a739aeaff5e839f234d12a6/src/StdPrecompiles.sol",
+      "liveProbe": "NOT_PROBED"
+    },
+    "activationRegistry": {
+      "address": "0x8453000000000000000000000000000000000001",
+      "source": "https://github.com/base/base-std/blob/be6d0450890e20fc4a739aeaff5e839f234d12a6/src/StdPrecompiles.sol",
+      "liveProbe": "NOT_PROBED"
+    }
+  },
+  "assets": [
+    {
+      "chainId": 8453,
+      "address": "0xb2000000000000000000001e800a7f5189430cd0",
+      "displaySymbol": "TSLAc",
+      "onchainName": "Tesla Inc.",
+      "onchainSymbol": "TSLAc",
+      "decimals": 8,
+      "totalSupplyRaw": "172744000000",
+      "multiplierWad": "1000000000000000000",
+      "isB20Initialized": true,
+      "observedCodeBytes": 1,
+      "issuerSource": "https://www.base.org/stocks",
+      "explorerUrl": "https://basescan.org/token/0xb2000000000000000000001e800a7f5189430cd0",
+      "capabilities": {
+        "multiplier": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x1b3ed722",
+          "returnDataBytes": 32
+        },
+        "toScaledBalance": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x04f04c99",
+          "returnDataBytes": 32
+        },
+        "toRawBalance": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x0ca06c44",
+          "returnDataBytes": 32
+        },
+        "scaledBalanceOf": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x1da24f3e",
+          "returnDataBytes": 32
+        },
+        "WAD_PRECISION": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x664808a8",
+          "returnDataBytes": 32
+        },
+        "isAnnouncementIdUsed": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xc0da474e",
+          "returnDataBytes": 32
+        },
+        "contractURI": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xe8a3d485",
+          "returnDataBytes": 320
+        },
+        "supplyCap": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x8f770ad0",
+          "returnDataBytes": 32
+        },
+        "isPaused": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xbc61e733",
+          "returnDataBytes": 32
+        },
+        "uiMultiplier": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0xa60bf13d"
+        },
+        "newUIMultiplier": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0xdc767007"
+        },
+        "effectiveAt": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x97a4064f"
+        },
+        "toUIAmount": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x3248d4ff"
+        },
+        "balanceOfUI": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x437a9958"
+        },
+        "totalSupplyUI": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x9bea6429"
+        },
+        "MAX_UI_MULTIPLIER": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x785c0cf0"
+        },
+        "supportsInterface": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x01ffc9a7"
+        }
+      }
+    },
+    {
+      "chainId": 8453,
+      "address": "0xb2000000000000000000002d0ba3164cc74f58b7",
+      "displaySymbol": "GOOGLc",
+      "onchainName": "Alphabet Inc.",
+      "onchainSymbol": "GOOGLc",
+      "decimals": 8,
+      "totalSupplyRaw": "611369380000",
+      "multiplierWad": "1000000000000000000",
+      "isB20Initialized": true,
+      "observedCodeBytes": 1,
+      "issuerSource": "https://www.base.org/stocks",
+      "explorerUrl": "https://basescan.org/token/0xb2000000000000000000002d0ba3164cc74f58b7",
+      "capabilities": {
+        "multiplier": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x1b3ed722",
+          "returnDataBytes": 32
+        },
+        "toScaledBalance": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x04f04c99",
+          "returnDataBytes": 32
+        },
+        "toRawBalance": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x0ca06c44",
+          "returnDataBytes": 32
+        },
+        "scaledBalanceOf": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x1da24f3e",
+          "returnDataBytes": 32
+        },
+        "WAD_PRECISION": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x664808a8",
+          "returnDataBytes": 32
+        },
+        "isAnnouncementIdUsed": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xc0da474e",
+          "returnDataBytes": 32
+        },
+        "contractURI": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xe8a3d485",
+          "returnDataBytes": 320
+        },
+        "supplyCap": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x8f770ad0",
+          "returnDataBytes": 32
+        },
+        "isPaused": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xbc61e733",
+          "returnDataBytes": 32
+        },
+        "uiMultiplier": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0xa60bf13d"
+        },
+        "newUIMultiplier": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0xdc767007"
+        },
+        "effectiveAt": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x97a4064f"
+        },
+        "toUIAmount": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x3248d4ff"
+        },
+        "balanceOfUI": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x437a9958"
+        },
+        "totalSupplyUI": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x9bea6429"
+        },
+        "MAX_UI_MULTIPLIER": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x785c0cf0"
+        },
+        "supportsInterface": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x01ffc9a7"
+        }
+      }
+    },
+    {
+      "chainId": 8453,
+      "address": "0xb200000000000000000000397293cb8cda9a10c5",
+      "displaySymbol": "SNDKc",
+      "onchainName": "Sandisk Corporation",
+      "onchainSymbol": "SNDKc",
+      "decimals": 8,
+      "totalSupplyRaw": "14144000000",
+      "multiplierWad": "1000000000000000000",
+      "isB20Initialized": true,
+      "observedCodeBytes": 1,
+      "issuerSource": "https://www.base.org/stocks",
+      "explorerUrl": "https://basescan.org/token/0xb200000000000000000000397293cb8cda9a10c5",
+      "capabilities": {
+        "multiplier": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x1b3ed722",
+          "returnDataBytes": 32
+        },
+        "toScaledBalance": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x04f04c99",
+          "returnDataBytes": 32
+        },
+        "toRawBalance": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x0ca06c44",
+          "returnDataBytes": 32
+        },
+        "scaledBalanceOf": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x1da24f3e",
+          "returnDataBytes": 32
+        },
+        "WAD_PRECISION": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x664808a8",
+          "returnDataBytes": 32
+        },
+        "isAnnouncementIdUsed": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xc0da474e",
+          "returnDataBytes": 32
+        },
+        "contractURI": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xe8a3d485",
+          "returnDataBytes": 352
+        },
+        "supplyCap": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x8f770ad0",
+          "returnDataBytes": 32
+        },
+        "isPaused": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xbc61e733",
+          "returnDataBytes": 32
+        },
+        "uiMultiplier": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0xa60bf13d"
+        },
+        "newUIMultiplier": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0xdc767007"
+        },
+        "effectiveAt": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x97a4064f"
+        },
+        "toUIAmount": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x3248d4ff"
+        },
+        "balanceOfUI": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x437a9958"
+        },
+        "totalSupplyUI": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x9bea6429"
+        },
+        "MAX_UI_MULTIPLIER": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x785c0cf0"
+        },
+        "supportsInterface": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x01ffc9a7"
+        }
+      }
+    },
+    {
+      "chainId": 8453,
+      "address": "0xb2000000000000000000004884b426556b92883d",
+      "displaySymbol": "MSTRc",
+      "onchainName": "Strategy Inc.",
+      "onchainSymbol": "MSTRc",
+      "decimals": 8,
+      "totalSupplyRaw": "152763437389",
+      "multiplierWad": "1000000000000000000",
+      "isB20Initialized": true,
+      "observedCodeBytes": 1,
+      "issuerSource": "https://www.base.org/stocks",
+      "explorerUrl": "https://basescan.org/token/0xb2000000000000000000004884b426556b92883d",
+      "capabilities": {
+        "multiplier": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x1b3ed722",
+          "returnDataBytes": 32
+        },
+        "toScaledBalance": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x04f04c99",
+          "returnDataBytes": 32
+        },
+        "toRawBalance": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x0ca06c44",
+          "returnDataBytes": 32
+        },
+        "scaledBalanceOf": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x1da24f3e",
+          "returnDataBytes": 32
+        },
+        "WAD_PRECISION": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x664808a8",
+          "returnDataBytes": 32
+        },
+        "isAnnouncementIdUsed": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xc0da474e",
+          "returnDataBytes": 32
+        },
+        "contractURI": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xe8a3d485",
+          "returnDataBytes": 320
+        },
+        "supplyCap": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x8f770ad0",
+          "returnDataBytes": 32
+        },
+        "isPaused": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xbc61e733",
+          "returnDataBytes": 32
+        },
+        "uiMultiplier": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0xa60bf13d"
+        },
+        "newUIMultiplier": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0xdc767007"
+        },
+        "effectiveAt": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x97a4064f"
+        },
+        "toUIAmount": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x3248d4ff"
+        },
+        "balanceOfUI": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x437a9958"
+        },
+        "totalSupplyUI": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x9bea6429"
+        },
+        "MAX_UI_MULTIPLIER": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x785c0cf0"
+        },
+        "supportsInterface": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x01ffc9a7"
+        }
+      }
+    },
+    {
+      "chainId": 8453,
+      "address": "0xb20000000000000000000078ee7ce2fe4908108c",
+      "displaySymbol": "NVDAc",
+      "onchainName": "NVIDIA Corporation",
+      "onchainSymbol": "NVDAc",
+      "decimals": 8,
+      "totalSupplyRaw": "1373108020000",
+      "multiplierWad": "1000000000000000000",
+      "isB20Initialized": true,
+      "observedCodeBytes": 1,
+      "issuerSource": "https://www.base.org/stocks",
+      "explorerUrl": "https://basescan.org/token/0xb20000000000000000000078ee7ce2fe4908108c",
+      "capabilities": {
+        "multiplier": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x1b3ed722",
+          "returnDataBytes": 32
+        },
+        "toScaledBalance": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x04f04c99",
+          "returnDataBytes": 32
+        },
+        "toRawBalance": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x0ca06c44",
+          "returnDataBytes": 32
+        },
+        "scaledBalanceOf": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x1da24f3e",
+          "returnDataBytes": 32
+        },
+        "WAD_PRECISION": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x664808a8",
+          "returnDataBytes": 32
+        },
+        "isAnnouncementIdUsed": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xc0da474e",
+          "returnDataBytes": 32
+        },
+        "contractURI": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xe8a3d485",
+          "returnDataBytes": 320
+        },
+        "supplyCap": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x8f770ad0",
+          "returnDataBytes": 32
+        },
+        "isPaused": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xbc61e733",
+          "returnDataBytes": 32
+        },
+        "uiMultiplier": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0xa60bf13d"
+        },
+        "newUIMultiplier": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0xdc767007"
+        },
+        "effectiveAt": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x97a4064f"
+        },
+        "toUIAmount": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x3248d4ff"
+        },
+        "balanceOfUI": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x437a9958"
+        },
+        "totalSupplyUI": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x9bea6429"
+        },
+        "MAX_UI_MULTIPLIER": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x785c0cf0"
+        },
+        "supportsInterface": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x01ffc9a7"
+        }
+      }
+    },
+    {
+      "chainId": 8453,
+      "address": "0xb2000000000000000000007b9fcbd005511acbd5",
+      "displaySymbol": "SPCXc",
+      "onchainName": "Space Exploration Technologies Corp.",
+      "onchainSymbol": "SPCXc",
+      "decimals": 8,
+      "totalSupplyRaw": "572345000000",
+      "multiplierWad": "1000000000000000000",
+      "isB20Initialized": true,
+      "observedCodeBytes": 1,
+      "issuerSource": "https://www.base.org/stocks",
+      "explorerUrl": "https://basescan.org/token/0xb2000000000000000000007b9fcbd005511acbd5",
+      "capabilities": {
+        "multiplier": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x1b3ed722",
+          "returnDataBytes": 32
+        },
+        "toScaledBalance": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x04f04c99",
+          "returnDataBytes": 32
+        },
+        "toRawBalance": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x0ca06c44",
+          "returnDataBytes": 32
+        },
+        "scaledBalanceOf": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x1da24f3e",
+          "returnDataBytes": 32
+        },
+        "WAD_PRECISION": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x664808a8",
+          "returnDataBytes": 32
+        },
+        "isAnnouncementIdUsed": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xc0da474e",
+          "returnDataBytes": 32
+        },
+        "contractURI": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xe8a3d485",
+          "returnDataBytes": 352
+        },
+        "supplyCap": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x8f770ad0",
+          "returnDataBytes": 32
+        },
+        "isPaused": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xbc61e733",
+          "returnDataBytes": 32
+        },
+        "uiMultiplier": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0xa60bf13d"
+        },
+        "newUIMultiplier": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0xdc767007"
+        },
+        "effectiveAt": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x97a4064f"
+        },
+        "toUIAmount": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x3248d4ff"
+        },
+        "balanceOfUI": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x437a9958"
+        },
+        "totalSupplyUI": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x9bea6429"
+        },
+        "MAX_UI_MULTIPLIER": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x785c0cf0"
+        },
+        "supportsInterface": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x01ffc9a7"
+        }
+      }
+    },
+    {
+      "chainId": 8453,
+      "address": "0xb2000000000000000000008bc8786b856e61707c",
+      "displaySymbol": "METAc",
+      "onchainName": "Meta Platforms Inc.",
+      "onchainSymbol": "METAc",
+      "decimals": 8,
+      "totalSupplyRaw": "222888510000",
+      "multiplierWad": "1000000000000000000",
+      "isB20Initialized": true,
+      "observedCodeBytes": 1,
+      "issuerSource": "https://www.base.org/stocks",
+      "explorerUrl": "https://basescan.org/token/0xb2000000000000000000008bc8786b856e61707c",
+      "capabilities": {
+        "multiplier": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x1b3ed722",
+          "returnDataBytes": 32
+        },
+        "toScaledBalance": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x04f04c99",
+          "returnDataBytes": 32
+        },
+        "toRawBalance": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x0ca06c44",
+          "returnDataBytes": 32
+        },
+        "scaledBalanceOf": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x1da24f3e",
+          "returnDataBytes": 32
+        },
+        "WAD_PRECISION": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x664808a8",
+          "returnDataBytes": 32
+        },
+        "isAnnouncementIdUsed": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xc0da474e",
+          "returnDataBytes": 32
+        },
+        "contractURI": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xe8a3d485",
+          "returnDataBytes": 352
+        },
+        "supplyCap": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x8f770ad0",
+          "returnDataBytes": 32
+        },
+        "isPaused": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xbc61e733",
+          "returnDataBytes": 32
+        },
+        "uiMultiplier": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0xa60bf13d"
+        },
+        "newUIMultiplier": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0xdc767007"
+        },
+        "effectiveAt": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x97a4064f"
+        },
+        "toUIAmount": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x3248d4ff"
+        },
+        "balanceOfUI": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x437a9958"
+        },
+        "totalSupplyUI": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x9bea6429"
+        },
+        "MAX_UI_MULTIPLIER": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x785c0cf0"
+        },
+        "supportsInterface": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x01ffc9a7"
+        }
+      }
+    },
+    {
+      "chainId": 8453,
+      "address": "0xb200000000000000000000ab99cfa739e253872b",
+      "displaySymbol": "MSFTc",
+      "onchainName": "Microsoft Corporation",
+      "onchainSymbol": "MSFTc",
+      "decimals": 8,
+      "totalSupplyRaw": "55970000000",
+      "multiplierWad": "1000000000000000000",
+      "isB20Initialized": true,
+      "observedCodeBytes": 1,
+      "issuerSource": "https://www.base.org/stocks",
+      "explorerUrl": "https://basescan.org/token/0xb200000000000000000000ab99cfa739e253872b",
+      "capabilities": {
+        "multiplier": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x1b3ed722",
+          "returnDataBytes": 32
+        },
+        "toScaledBalance": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x04f04c99",
+          "returnDataBytes": 32
+        },
+        "toRawBalance": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x0ca06c44",
+          "returnDataBytes": 32
+        },
+        "scaledBalanceOf": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x1da24f3e",
+          "returnDataBytes": 32
+        },
+        "WAD_PRECISION": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x664808a8",
+          "returnDataBytes": 32
+        },
+        "isAnnouncementIdUsed": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xc0da474e",
+          "returnDataBytes": 32
+        },
+        "contractURI": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xe8a3d485",
+          "returnDataBytes": 352
+        },
+        "supplyCap": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x8f770ad0",
+          "returnDataBytes": 32
+        },
+        "isPaused": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xbc61e733",
+          "returnDataBytes": 32
+        },
+        "uiMultiplier": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0xa60bf13d"
+        },
+        "newUIMultiplier": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0xdc767007"
+        },
+        "effectiveAt": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x97a4064f"
+        },
+        "toUIAmount": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x3248d4ff"
+        },
+        "balanceOfUI": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x437a9958"
+        },
+        "totalSupplyUI": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x9bea6429"
+        },
+        "MAX_UI_MULTIPLIER": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x785c0cf0"
+        },
+        "supportsInterface": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x01ffc9a7"
+        }
+      }
+    },
+    {
+      "chainId": 8453,
+      "address": "0xb200000000000000000000c2e324d24d7eecd1fb",
+      "displaySymbol": "AAPLc",
+      "onchainName": "Apple Inc.",
+      "onchainSymbol": "AAPLc",
+      "decimals": 8,
+      "totalSupplyRaw": "619402990000",
+      "multiplierWad": "1000000000000000000",
+      "isB20Initialized": true,
+      "observedCodeBytes": 1,
+      "issuerSource": "https://www.base.org/stocks",
+      "explorerUrl": "https://basescan.org/token/0xb200000000000000000000c2e324d24d7eecd1fb",
+      "capabilities": {
+        "multiplier": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x1b3ed722",
+          "returnDataBytes": 32
+        },
+        "toScaledBalance": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x04f04c99",
+          "returnDataBytes": 32
+        },
+        "toRawBalance": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x0ca06c44",
+          "returnDataBytes": 32
+        },
+        "scaledBalanceOf": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x1da24f3e",
+          "returnDataBytes": 32
+        },
+        "WAD_PRECISION": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x664808a8",
+          "returnDataBytes": 32
+        },
+        "isAnnouncementIdUsed": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xc0da474e",
+          "returnDataBytes": 32
+        },
+        "contractURI": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xe8a3d485",
+          "returnDataBytes": 320
+        },
+        "supplyCap": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x8f770ad0",
+          "returnDataBytes": 32
+        },
+        "isPaused": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xbc61e733",
+          "returnDataBytes": 32
+        },
+        "uiMultiplier": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0xa60bf13d"
+        },
+        "newUIMultiplier": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0xdc767007"
+        },
+        "effectiveAt": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x97a4064f"
+        },
+        "toUIAmount": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x3248d4ff"
+        },
+        "balanceOfUI": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x437a9958"
+        },
+        "totalSupplyUI": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x9bea6429"
+        },
+        "MAX_UI_MULTIPLIER": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x785c0cf0"
+        },
+        "supportsInterface": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x01ffc9a7"
+        }
+      }
+    },
+    {
+      "chainId": 8453,
+      "address": "0xb200000000000000000000d9192b6b456483c2e8",
+      "displaySymbol": "AMZNc",
+      "onchainName": "Amazon.com Inc.",
+      "onchainSymbol": "AMZNc",
+      "decimals": 8,
+      "totalSupplyRaw": "297454000000",
+      "multiplierWad": "1000000000000000000",
+      "isB20Initialized": true,
+      "observedCodeBytes": 1,
+      "issuerSource": "https://www.base.org/stocks",
+      "explorerUrl": "https://basescan.org/token/0xb200000000000000000000d9192b6b456483c2e8",
+      "capabilities": {
+        "multiplier": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x1b3ed722",
+          "returnDataBytes": 32
+        },
+        "toScaledBalance": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x04f04c99",
+          "returnDataBytes": 32
+        },
+        "toRawBalance": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x0ca06c44",
+          "returnDataBytes": 32
+        },
+        "scaledBalanceOf": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x1da24f3e",
+          "returnDataBytes": 32
+        },
+        "WAD_PRECISION": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x664808a8",
+          "returnDataBytes": 32
+        },
+        "isAnnouncementIdUsed": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xc0da474e",
+          "returnDataBytes": 32
+        },
+        "contractURI": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xe8a3d485",
+          "returnDataBytes": 320
+        },
+        "supplyCap": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0x8f770ad0",
+          "returnDataBytes": 32
+        },
+        "isPaused": {
+          "surface": "BERYL",
+          "outcome": "LIVE",
+          "selector": "0xbc61e733",
+          "returnDataBytes": 32
+        },
+        "uiMultiplier": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0xa60bf13d"
+        },
+        "newUIMultiplier": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0xdc767007"
+        },
+        "effectiveAt": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x97a4064f"
+        },
+        "toUIAmount": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x3248d4ff"
+        },
+        "balanceOfUI": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x437a9958"
+        },
+        "totalSupplyUI": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x9bea6429"
+        },
+        "MAX_UI_MULTIPLIER": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x785c0cf0"
+        },
+        "supportsInterface": {
+          "surface": "COBALT_ERC8056",
+          "outcome": "NOT_DIALED",
+          "selector": "0x01ffc9a7"
+        }
+      }
+    }
+  ]
+}

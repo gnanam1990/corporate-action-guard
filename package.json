@@ -38,6 +38,8 @@
     "check:contrast": "node scripts/check-contrast.mjs",
     "docs:readiness": "node scripts/generate-readiness.mjs",
     "docs:check": "node scripts/generate-readiness.mjs --check",
+    "b20:provenance": "node scripts/b20-provenance.mjs capture",
+    "b20:provenance:check": "node scripts/b20-provenance.mjs check",
     "audit:deps": "node scripts/dependency-audit.mjs",
     "testnet:init": "node scripts/init-testnet-env.mjs",
     "testnet:status": "node scripts/testnet-status.mjs",

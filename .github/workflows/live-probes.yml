@@ -32,3 +32,11 @@ jobs:
       - name: Live contract and read-only mainnet probes
         # Read-only throughout: no signing, no transaction, no mainnet write path exists.
         run: pnpm exec vitest run --project integration packages/xstocks-client packages/xlayer-reader
+
+      - name: Base B20 provenance drift
+        # Re-reads base.org/stocks, the Chainlink feed directory and Base mainnet, then
+        # diffs against the committed manifests. Deliberately NOT a required check: a
+        # changed address or capability is a review event for a human, and a third-party
+        # outage must never block a merge. The script exits 0 with an explicit SKIPPED
+        # reason when a source is unreachable, rather than reporting a check it did not run.
+        run: pnpm b20:provenance:check

@@ -23,6 +23,9 @@ const BADGE = {
   IMPLEMENTED: '**IMPLEMENTED**',
   PARTIAL: '**PARTIAL**',
   ABSENT: 'ABSENT',
+  // A module that cannot be built until an external capability is verified. Distinct from
+  // ABSENT: nobody is waiting on us, we are waiting on a chain.
+  BLOCKED: '**BLOCKED**',
 };
 
 const counts = manifest.modules.reduce((acc, m) => {
@@ -54,7 +57,7 @@ The honest inventory. A module is \`IMPLEMENTED\` only when its code exists in t
 repository and its own gates have been run. Being described in the prompt pack is not
 evidence that anything exists.
 
-**${counts.IMPLEMENTED ?? 0} implemented · ${counts.PARTIAL ?? 0} partial · ${counts.ABSENT ?? 0} absent**, of ${manifest.modules.length} modules.
+**${counts.IMPLEMENTED ?? 0} implemented · ${counts.PARTIAL ?? 0} partial · ${counts.BLOCKED ?? 0} blocked · ${counts.ABSENT ?? 0} absent**, of ${manifest.modules.length} modules.
 
 ## Status
 
@@ -112,5 +115,5 @@ if (process.argv.includes('--check')) {
 fs.writeFileSync(TARGET, document);
 console.log(
   `Wrote docs/build-readiness.md — ${counts.IMPLEMENTED ?? 0} implemented, ` +
-    `${counts.PARTIAL ?? 0} partial, ${counts.ABSENT ?? 0} absent.`,
+    `${counts.PARTIAL ?? 0} partial, ${counts.BLOCKED ?? 0} blocked, ${counts.ABSENT ?? 0} absent.`,
 );

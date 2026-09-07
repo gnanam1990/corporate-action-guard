@@ -12,13 +12,13 @@
 
 # Build readiness
 
-**Recorded at:** 2026-09-05.
+**Recorded at:** 2026-09-07.
 
 The honest inventory. A module is `IMPLEMENTED` only when its code exists in this
 repository and its own gates have been run. Being described in the prompt pack is not
 evidence that anything exists.
 
-**22 implemented · 1 partial · 1 absent**, of 24 modules.
+**25 implemented · 1 partial · 0 blocked · 33 absent**, of 59 modules.
 
 ## Status
 
@@ -48,6 +48,41 @@ evidence that anything exists.
 | 21 | CI, containers, deployment | **IMPLEMENTED** | Seven-job CI, non-root multi-stage images, full compose stack, secret-boundary checks, and a checksummed backup plus disposable restore drill |
 | 22 | End-to-end proof and submission package | **IMPLEMENTED** | Current v2 release evidence records 8/8 adversarial scenarios plus authenticated API-to-vault execution with public testnet transaction hashes |
 | 23 | Final independent audit | ABSENT | The repository contains an internal review only. No independent security audit has been performed |
+| b20-00 | B20 repository audit and gap map | **IMPLEMENTED** | docs/base-b20 baseline, reuse/gap map, risk register, sequence; no product source touched |
+| b20-01 | B20 product contract and architecture freeze | **IMPLEMENTED** | Product contract, invariants, system context, component map, data flows, ADRs 0005-0008 |
+| b20-02 | Official interface and capability provenance gate | **IMPLEMENTED** | base-std pinned at be6d0450; 10 official assets and 13 Chainlink feeds captured and live-verified at Base block 50993686; Cobalt/ERC-8056 measured NOT_DIALED |
+| b20-03 | B20 domain quantities and lifecycle types | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-04 | Typed Base configuration and safety gates | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-05 | Verified B20 asset registry | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-06 | Base B20 reader and reorg-safe indexer | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-07 | Chainlink tokenized-equity and sequencer reader | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-08 | Append-only Base evidence schema and projections | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-09 | Temporal B20 lifecycle reducer | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-10 | Corporate-action correlator and classification boundary | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-11 | Brokerage-grade equity position ledger | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-12 | Valuation engine and invariant proof surface | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-13 | B20 reconciliation state machine | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-14 | Integration Conformance Lab and mutation corpus | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-15 | B20 operation model and preflight service v2 | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-16 | Versioned B20 EIP-712 receipt and replay protection | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-17 | Base Sepolia B20 fixture and capability gate | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-18 | B20GuardAdapter and protected vault | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-19 | Fastify /v1/b20 API and OpenAPI contract | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-20 | Base worker ingestion, reconciliation, backfill | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-21 | SDK, CLI and authenticated webhooks for B20 | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-22 | Read-only MCP server for agent integrations | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-23 | Optional x402 access for premium artifacts | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-24 | B20 interface foundation and application shell | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-25 | B20 operations overview and source health | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-26 | Asset detail, quantity math, evidence inspector | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-27 | Operations, incidents and reconciliation workbench | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-28 | Conformance and fault-injection lab | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-29 | Evidence ledger, exports and integration onboarding | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-30 | B20 observability, SLOs and fault injection | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-31 | B20 security, privacy and adversarial review | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-32 | B20 CI, containers, migrations and release readiness | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-33 | B20 end-to-end proof and demo artifacts | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
+| b20-34 | Pilot packaging and final independent audit | ABSENT | Not started. Sequenced in docs/base-b20/implementation-sequence.md |
 
 ## Blocked items
 

@@ -6,7 +6,13 @@ export default defineConfig({
       {
         test: {
           name: 'unit',
-          include: ['packages/*/test/**/*.test.ts', 'apps/{api,worker,web}/test/**/*.test.ts'],
+          include: [
+            'packages/*/test/**/*.test.ts',
+            'apps/{api,worker,web}/test/**/*.test.ts',
+            // Repository-level gates that belong to no single package — currently the
+            // committed Base B20 provenance artifacts.
+            'test/**/*.test.ts',
+          ],
           exclude: ['**/*.integration.test.ts'],
           environment: 'node',
         },
