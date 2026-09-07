@@ -39,3 +39,33 @@ export {
   type B20RegistryChangeKind,
   type B20RegistryEntry,
 } from './b20-registry.js';
+
+export {
+  B20_BUSINESS_EVENTS,
+  CASE_OUTCOMES,
+  correlateB20Cases,
+  isFetchableAnnouncementUri,
+  sanitizeAnnouncementText,
+  type AnnouncementBracket,
+  type B20BusinessEvent,
+  type CaseOutcome,
+  type CorrelatedCase,
+  type CorrelationInput,
+  type FeedRoundFact,
+  type MultiplierChangeFact,
+  type PauseFact,
+  type StructuredActionEvidence,
+} from './b20-correlator.js';
+
+export {
+  B20_STATES,
+  IllegalTransitionError,
+  allLegalB20Transitions,
+  incidentSignature,
+  isLegalTransition,
+  needsNewEvidence,
+  nextB20State,
+  type B20MachineInput,
+  type B20State,
+  type B20Transition,
+} from './b20-state-machine.js';
