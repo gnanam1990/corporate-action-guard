@@ -1,0 +1,62 @@
+name: Foundry toolchain
+description: >-
+  Install a pinned Foundry release, retrying when the download fails transiently.
+
+inputs:
+  version:
+    description: >-
+      Foundry release to install. Gas snapshots are toolchain-specific, so callers
+      pin an exact version rather than tracking "stable".
+    required: true
+
+runs:
+  using: composite
+  steps:
+    # foundry-rs/foundry-toolchain downloads a release tarball from GitHub. On #17
+    # that download answered `HTTP 504 Gateway Timeout` on a docs-only change; the
+    # toolchain never installed, zero Foundry tests ran, the check went red, and it
+    # took a manual `gh run rerun --failed` to clear. The same job had passed in 52s
+    # on the parent commit. A gateway error is not a test result, so it is retried
+    # here instead of being reported as one.
+    - id: attempt-1
+      uses: foundry-rs/foundry-toolchain@v1
+      continue-on-error: true
+      with:
+        version: ${{ inputs.version }}
+
+    - if: steps.attempt-1.outcome == 'failure'
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      run: |
+        echo "::warning::Foundry $VERSION did not install; retrying in 10s"
+        sleep 10
+
+    - id: attempt-2
+      if: steps.attempt-1.outcome == 'failure'
+      uses: foundry-rs/foundry-toolchain@v1
+      continue-on-error: true
+      with:
+        version: ${{ inputs.version }}
+
+    - if: steps.attempt-2.outcome == 'failure'
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      run: |
+        echo "::warning::Foundry $VERSION did not install twice; retrying in 30s"
+        sleep 30
+
+    # Third and last attempt, deliberately without `continue-on-error`. Three
+    # failures spread over 40s is not a transient blip, and the job must go red
+    # rather than continue without a toolchain.
+    - if: steps.attempt-2.outcome == 'failure'
+      uses: foundry-rs/foundry-toolchain@v1
+      with:
+        version: ${{ inputs.version }}
+
+    # Asserted, not assumed. #17 failed several steps later, at the first command
+    # that happened to need `forge`; this fails at the install with the version it
+    # actually got.
+    - shell: bash
+      run: forge --version
